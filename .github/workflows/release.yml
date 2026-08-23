@@ -1,6 +1,12 @@
 name: Publish Block Engine release
 
 on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to build and publish
+        required: true
+        default: v2.2.2
   push:
     tags:
       - 'v*'
@@ -33,8 +39,9 @@ jobs:
         shell: powershell
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
         run: |
-          $tag = "${{ github.ref_name }}"
+          $tag = $env:RELEASE_TAG
           $repo = $env:GITHUB_REPOSITORY
           $assets = @(Get-ChildItem -LiteralPath (Join-Path $PWD 'release') -File | ForEach-Object FullName)
 
@@ -42,10 +49,14 @@ jobs:
             throw 'No release assets were produced.'
           }
 
-          # Keep the workflow idempotent: a manually-created release should be
-          # updated instead of causing `gh release create` to fail.
-          gh release view $tag --repo $repo *> $null
-          if ($LASTEXITCODE -eq 0) {
+          # Keep the workflow idempotent. GitHub CLI reports a missing release
+          # on stderr; do not let that expected lookup miss terminate the job.
+          $previousPreference = $ErrorActionPreference
+          $ErrorActionPreference = 'Continue'
+          gh release view $tag --repo $repo 2>$null
+          $viewExitCode = $LASTEXITCODE
+          $ErrorActionPreference = $previousPreference
+          if ($viewExitCode -eq 0) {
             gh release upload $tag @assets --repo $repo --clobber
           } else {
             gh release create $tag @assets --repo $repo --title "Block Engine $tag" --generate-notes
