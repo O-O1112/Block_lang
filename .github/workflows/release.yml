@@ -17,7 +17,9 @@ jobs:
 
       - name: Build and verify release artifacts
         shell: powershell
-        run: .\build-release.ps1 -ReleaseDirectory (Join-Path $PWD 'release')
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          .\build-release.ps1 -Version $version -ReleaseDirectory (Join-Path $PWD 'release')
 
       - name: Run complete release test suite
         shell: powershell

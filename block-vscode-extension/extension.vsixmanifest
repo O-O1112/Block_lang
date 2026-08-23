@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Language="en-US" Id="block-language" Version="2.2.0" Publisher="block-team" />
+    <Identity Language="en-US" Id="block-language" Version="2.2.2" Publisher="block-team" />
     <DisplayName>Block Language (Polyglot Orchestrator)</DisplayName>
-    <Description xml:space="preserve">Official VS Code Extension for Block Engine v2.2.0 (Ecosystem Edition)</Description>
+    <Description xml:space="preserve">Official VS Code Extension for Block Engine v2.2.2 (Ecosystem Edition)</Description>
     <Tags>snippet,keybindings,block,Block,BlockLite,BlockPlus,ecosystem,__ext_blk,__ext_block,__ext_blkl,__ext_blkp</Tags>
     <Categories>Programming Languages,Snippets,Formatters</Categories>
     <GalleryFlags>Public</GalleryFlags>

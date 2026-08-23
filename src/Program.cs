@@ -43,11 +43,11 @@ namespace BlockEngine
             if (arg0 == "--version" || arg0 == "-v" || arg0 == "version")
             {
 #if BLOCK_LITE
-                Console.WriteLine("Block Lite Engine v2.2.0 (Lite Edition)");
+                Console.WriteLine("Block Lite Engine v" + BlockVersion.Value + " (Lite Edition)");
 #elif BLOCK_PLUS
-                Console.WriteLine("Block+ Engine v2.2.0 (Flagship Edition)");
+                Console.WriteLine("Block+ Engine v" + BlockVersion.Value + " (Flagship Edition)");
 #else
-                Console.WriteLine("Block Language Engine v2.2.0 (Standard Edition)");
+                Console.WriteLine("Block Language Engine v" + BlockVersion.Value + " (Standard Edition)");
 #endif
                 return;
             }
@@ -229,11 +229,11 @@ namespace BlockEngine
                 "         |____/|______\\____/ \\____|_|\\_\\                     ",
                 "                                                               ",
 #if BLOCK_LITE
-                "          BLOCK LITE ENGINE v2.2.0                         ",
+                "          BLOCK LITE ENGINE v" + BlockVersion.Value + "                         ",
 #elif BLOCK_PLUS
-                "          BLOCK+ ENGINE v2.2.0                             ",
+                "          BLOCK+ ENGINE v" + BlockVersion.Value + "                             ",
 #else
-                "          BLOCK LANGUAGE ENGINE v2.2.0                     ",
+                "          BLOCK LANGUAGE ENGINE v" + BlockVersion.Value + "                     ",
 #endif
                 "          Official Website: block.blockengine.workers.dev      ",
                 "   =========================================================   ",

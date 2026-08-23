@@ -1,12 +1,15 @@
 param(
     [string]$ReleaseDirectory = $PSScriptRoot,
     [switch]$SkipEngineBuild,
-    [switch]$SkipExecutableExecution
+    [switch]$SkipExecutableExecution,
+    [string]$Version = ""
 )
 
 $ErrorActionPreference = 'Stop'
 $ReleaseDirectory = [IO.Path]::GetFullPath($ReleaseDirectory)
 $root = [IO.Path]::GetFullPath($PSScriptRoot)
+if ([string]::IsNullOrWhiteSpace($Version)) { $Version = (Get-Content -LiteralPath (Join-Path $root 'VERSION') -Raw).Trim() }
+if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid release version: $Version" }
 $powershell = (Get-Command powershell.exe -ErrorAction Stop).Source
 New-Item -ItemType Directory -Force -Path $ReleaseDirectory | Out-Null
 
@@ -19,14 +22,14 @@ if (-not $SkipEngineBuild) {
     Invoke-ReleaseStep 'build.ps1' @('-OutputDirectory', $ReleaseDirectory, '-SkipHash')
 }
 Invoke-ReleaseStep 'package-engine.ps1' @('-EngineDirectory', $ReleaseDirectory, '-OutputDirectory', $ReleaseDirectory)
-Invoke-ReleaseStep 'package-extensions.ps1' @('-OutputDirectory', $ReleaseDirectory)
-Invoke-ReleaseStep 'build-installer.ps1' @('-ReleaseDirectory', $ReleaseDirectory, '-OutputDirectory', $ReleaseDirectory)
+Invoke-ReleaseStep 'package-extensions.ps1' @('-OutputDirectory', $ReleaseDirectory, '-Version', $Version)
+Invoke-ReleaseStep 'build-installer.ps1' @('-ReleaseDirectory', $ReleaseDirectory, '-OutputDirectory', $ReleaseDirectory, '-Version', $Version)
 
 $artifacts = @(
     'block.exe', 'block-lite.exe', 'block-plus.exe',
     'block.zip', 'block-lite.zip', 'block-plus.zip',
-    'BlockSetup-v2.2.0.exe', 'BlockSetup.exe',
-    'block-language-2.2.0.vsix', 'acode-plugin-block-2.2.0.zip'
+    "BlockSetup-v$Version.exe", 'BlockSetup.exe',
+    "block-language-$Version.vsix", "acode-plugin-block-$Version.zip"
 )
 $hashFile = Join-Path $ReleaseDirectory 'SHA256SUMS.txt'
 $lines = foreach ($name in $artifacts) {
@@ -37,7 +40,7 @@ $lines = foreach ($name in $artifacts) {
 }
 $hashText = ($lines -join "`n") + "`n"
 [IO.File]::WriteAllText($hashFile, $hashText, [Text.Encoding]::ASCII)
-$verifyArguments = @('-ReleaseDirectory', $ReleaseDirectory)
+$verifyArguments = @('-ReleaseDirectory', $ReleaseDirectory, '-Version', $Version)
 if ($SkipExecutableExecution) { $verifyArguments += '-SkipExecutableExecution' }
 Invoke-ReleaseStep 'verify-release.ps1' $verifyArguments
-Write-Host "Block Engine v2.2.0 release completed in $ReleaseDirectory"
+Write-Host "Block Engine v$Version release completed in $ReleaseDirectory"

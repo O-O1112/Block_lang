@@ -1,11 +1,14 @@
 param(
     [string]$ReleaseDirectory = $PSScriptRoot,
-    [string]$OutputDirectory = $ReleaseDirectory
+    [string]$OutputDirectory = $ReleaseDirectory,
+    [string]$Version = ""
 )
 
 $ErrorActionPreference = 'Stop'
 $ReleaseDirectory = [IO.Path]::GetFullPath($ReleaseDirectory)
 $OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
+if ([string]::IsNullOrWhiteSpace($Version)) { $Version = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'VERSION') -Raw).Trim() }
+if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid release version: $Version" }
 $compilerCandidates = @(
     (Join-Path $env:WINDIR 'Microsoft.NET\Framework\v4.0.30319\csc.exe'),
     (Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe')
@@ -25,7 +28,7 @@ if (-not (Test-Path -LiteralPath $source)) { throw "Installer source not found: 
 if (-not (Test-Path -LiteralPath $icon)) { throw "Installer icon not found: $icon" }
 
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
-$primary = Join-Path $OutputDirectory 'BlockSetup-v2.2.0.exe'
+$primary = Join-Path $OutputDirectory "BlockSetup-v$Version.exe"
 $arguments = @(
     '/nologo',
     '/target:winexe',

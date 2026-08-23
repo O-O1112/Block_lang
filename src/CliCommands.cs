@@ -65,7 +65,7 @@ namespace BlockEngine
             EngineConfig cfg = Config.LoadConfig();
             Console.WriteLine("Block Engine information");
             Console.WriteLine("  Edition: " + EditionName);
-            Console.WriteLine("  Version: 2.2.0");
+            Console.WriteLine("  Version: " + BlockVersion.Value);
             Console.WriteLine("  Config: " + Config.GetConfigPath());
             Console.WriteLine("  Sandbox: " + cfg.SandboxDir);
             Console.WriteLine("  Workspace: " + (string.IsNullOrWhiteSpace(cfg.WorkspaceDir) ? "(not set)" : cfg.WorkspaceDir));
