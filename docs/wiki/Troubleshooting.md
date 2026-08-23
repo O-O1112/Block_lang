@@ -15,14 +15,29 @@ if you want the runtime checklist refreshed.
 
 ## `Script file not found`
 
-Quote paths containing spaces or use an absolute path:
+First inspect the safe search roots and candidates:
+
+```powershell
+block workspace show
+block find main
+```
+
+For a project with `block.project.json`, run its entry from any child directory:
+
+```powershell
+block project root
+block project run
+```
+
+If multiple scripts have the same name, use an absolute path. Quote paths
+containing spaces:
 
 ```powershell
 block-plus "C:\Projects\My Block\main.blkp"
 ```
 
 Confirm the extension and filename are correct; Windows Explorer may hide the
-real extension.
+real extension. Block does not scan the entire drive automatically.
 
 ## A language block cannot start
 

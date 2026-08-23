@@ -18,21 +18,25 @@ The current release line focuses on making the core workflow usable and reviewab
 - smoke tests, release verification, checksums, security guidance, and versioned
   documentation.
 
-## Next: reduce first-run friction
+## Next: v2.2.2 core stability and first-run friction
 
-These are the highest-value improvements proposed for the next cycle:
+These are the highest-value improvements for the next patch release:
 
-1. Make the first five minutes more reproducible with more copy-ready examples and
+1. Make native logical expressions, loop limits, process timeouts, and state
+   transfer failures deterministic and regression-tested.
+2. Let the CLI resolve scripts through project roots and configured workspaces
+   without requiring repeated directory changes.
+3. Make the first five minutes more reproducible with more copy-ready examples and
    clearer runtime diagnostics.
-2. Publish every stable build as a GitHub Release with release notes, checksums,
+4. Publish every stable build as a GitHub Release with release notes, checksums,
    installer links, and extension assets.
-3. Improve error messages for missing host runtimes, path quoting, state
+5. Improve error messages for missing host runtimes, path quoting, state
    serialization, and edition mismatches.
-4. Add regression coverage for installer behavior, runtime discovery, imports,
+6. Add regression coverage for installer behavior, runtime discovery, imports,
    and cross-runtime state edge cases.
-5. Keep the README, visual documentation site, Markdown Wiki, installer screen,
+7. Keep the README, visual documentation site, Markdown Wiki, installer screen,
    and release manifest aligned to the same version.
-6. Collect independent validation reports from users running real local workflows.
+8. Collect independent validation reports from users running real local workflows.
 
 ## Explore: community-driven directions
 

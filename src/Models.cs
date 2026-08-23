@@ -19,6 +19,7 @@ namespace BlockEngine
             // Custom definitions execute arbitrary commands; opt in explicitly.
             AllowCustomDefinitions = false;
             SandboxDir = Environment.CurrentDirectory;
+            WorkspaceDir = "";
             ExecutionTimeoutSeconds = 15;
             MaxRequestBodyBytes = 1024 * 1024 * 4; // 4 MB
         }
@@ -32,6 +33,7 @@ namespace BlockEngine
         public bool SqlEnabled { get; set; }
         public bool NetworkBlocked { get; set; }
         public bool AllowCustomDefinitions { get; set; }
+        public string WorkspaceDir { get; set; }
 
         // F2: Configurable sandbox dir with validation
         private string _sandboxDir;

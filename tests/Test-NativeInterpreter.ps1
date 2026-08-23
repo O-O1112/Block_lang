@@ -58,6 +58,9 @@ func local_scope(value):
 block
 
 printer = "not-a-print-call"
+short_or = true || missing_variable
+short_and = false && missing_variable
+logic_precedence = false || true && true
 print(status)
 print(profile["name"])
 print(profile.total)
@@ -66,6 +69,7 @@ print(sum(items), str(total), type(profile), contains(items, 3))
 print(greet("Block"))
 print(local_scope("local"), outside)
 print(printer)
+print(short_or, short_and, logic_precedence)
 '@
 
     $state = [System.Collections.Generic.Dictionary[string, object]]::new()
@@ -74,7 +78,7 @@ print(printer)
     [void]$method.Invoke($null, [object[]]@($code, $state, $callback))
     $text = $output -join ''
 
-    $expected = @('elif-ok', 'Block Language', '2 4', '10 10 map true', 'Hello Block', 'local global', 'not-a-print-call')
+$expected = @('elif-ok', 'Block Language', '2 4', '10 10 map true', 'Hello Block', 'local global', 'not-a-print-call', 'true false true')
     foreach ($value in $expected) {
         if ($text -notmatch [regex]::Escape($value)) { throw "Native interpreter output missing '$value': $text" }
     }

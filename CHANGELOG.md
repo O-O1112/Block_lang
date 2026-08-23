@@ -2,6 +2,19 @@
 
 All notable changes to the Block execution engine will be documented in this file.
 
+## [Unreleased] - v2.2.2
+
+### CLI workspace and project discovery
+- Added safe relative script resolution from the current directory, nearest
+  `block.project.json`, and a configured workspace.
+- Added `workspace show|set|clear`, `find`, and `project root|run` commands.
+- Added ambiguity reporting instead of selecting an arbitrary same-named script.
+- Added cross-directory path regression coverage and synchronized CLI/site/wiki
+  documentation.
+
+Core language and process-stability fixes remain part of the v2.2.2 gate and
+must pass before a release tag is created.
+
 ## [2.2.0] - 2026-08-18
 
 ### 🚀 Features & Enhancements

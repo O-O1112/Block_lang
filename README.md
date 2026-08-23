@@ -269,13 +269,37 @@ in the v2.2.0 Windows build:
 | `<engine> info [file]` / `capabilities` | ✓ | ✓ | ✓ | Show engine settings and optionally inspect a document's blocks |
 | `<engine> runtimes` | ✓ | ✓ | ✓ | Detect optional runtimes on the current `PATH` |
 | `<engine> doctor` | ✓ | ✓ | ✓ | Run read-only environment and configuration diagnostics |
+| `<engine> workspace show\|set\|clear` | ✓ | ✓ | ✓ | Configure and inspect a safe workspace root for script discovery |
+| `<engine> find [name]` | ✓ | ✓ | ✓ | Find scripts in the current project and workspace without scanning the drive |
+| `<engine> project root\|run [path]` | ✓ | ✓ | ✓ | Discover a project manifest or run its configured entry file |
 | `<engine> serve [port]` | — | ✓ | ✓ | Start a local HTTP server document |
 | `<engine> ecosystem ...` / `project ...` | — | ✓ | ✓ | Create, add, and list local packages |
 | `block-plus fmt <file>` | — | — | ✓ | Format a Plus document and keep a `.bak` backup |
 | `block-plus doc <file>` | — | — | ✓ | Generate a `.doc.md` block summary |
 
-Aliases `eco`, `pkg`, and `project` are accepted for `ecosystem`. `run` is an
-explicit execution form; the original `<engine> <file>` form remains supported.
+Aliases `eco` and `pkg` are accepted for `ecosystem`. `run` is an explicit
+execution form; the original `<engine> <file>` form remains supported. Relative
+script paths are resolved from the current directory, the nearest
+`block.project.json`, and the configured workspace. The resolver never scans an
+entire drive and reports ambiguous matches instead of choosing randomly.
+
+For a project created with `block ecosystem init`, run its entry file from any
+child directory:
+
+```powershell
+block project root
+block project run
+block run main.blk
+```
+
+Set a workspace once when you keep several Block projects together:
+
+```powershell
+block workspace set C:\Users\you\BlockProjects
+block workspace show
+block find hello
+```
+
 Paths containing spaces should be quoted:
 
 ```powershell
@@ -575,6 +599,15 @@ Initialize a project:
 block ecosystem init . my-project
 ```
 
+The generated `block.project.json` makes `main.blk` discoverable from the
+project's child directories. You can inspect or run that entry without changing
+the current directory:
+
+```powershell
+block project root
+block project run
+```
+
 Directory structure created:
 
 ```text
@@ -794,7 +827,7 @@ Executable logic must reside inside explicit tags like `<py>...</py>` or `<js>..
 | Symptom | First checks |
 | --- | --- |
 | `block` is not recognized | Open a new terminal, check the selected install directory, and run the executable by its full path |
-| `Script file not found` | Quote paths containing spaces; confirm the real extension is not hidden by Explorer |
+| `Script file not found` | Run `block find <name>`; check the project root/workspace, quote paths containing spaces, and confirm the real extension is not hidden by Explorer |
 | Optional runtime installation failed | Install the runtime manually, verify its command on `PATH`, then run the installer again if needed |
 | A language block cannot start | Run the host runtime directly, confirm the selected edition supports the tag, and check both opening and closing tags |
 | State is missing in the next stage | Return plain serializable values and check stage order; handles and functions cannot cross processes |
@@ -817,6 +850,8 @@ All editions include read-only diagnostics:
 block doctor
 block runtimes
 block config show
+block workspace show
+block find hello-polyglot
 block info examples\hello-polyglot.blk
 block check examples\hello-polyglot.blk
 block run examples\hello-polyglot.blk
