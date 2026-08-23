@@ -38,6 +38,7 @@ jobs:
           .\tests\Test-NativeLanguage.ps1 -EngineDirectory (Join-Path $PWD 'release')
           .\tests\Test-NativeInterpreter.ps1 -SourcePath (Join-Path $PWD 'src\NativeBlockProgram.cs')
           .\tests\Test-WebsiteLinks.ps1 -RepositoryRoot $PWD
+          .\tests\Test-WebsiteSecurity.ps1 -RepositoryRoot $PWD
 
       - name: Publish GitHub release
         shell: powershell

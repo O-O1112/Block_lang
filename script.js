@@ -265,7 +265,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 } else {
                     const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
-                    line.innerHTML = `<span class="timestamp">[${time}]</span> ${item.text}`;
+                    const timestamp = document.createElement('span');
+                    timestamp.className = 'timestamp';
+                    timestamp.textContent = `[${time}]`;
+                    line.append(timestamp, document.createTextNode(` ${item.text}`));
                     terminal.appendChild(line);
                 }
                 if (!reducedMotion && item.wait) await new Promise(resolve => setTimeout(resolve, item.wait));
