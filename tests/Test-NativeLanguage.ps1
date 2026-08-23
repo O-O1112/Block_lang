@@ -104,6 +104,9 @@ block
     $limit = Invoke-Block 'block.exe' @('run', $limitPath)
     Assert-Condition ($limit.ExitCode -ne 0) "range limit was not enforced: $($limit.Output)"
     Assert-Condition ($limit.Output -match 'range exceeded the 10,000 item limit') "range limit error was unclear: $($limit.Output)"
+    # The non-zero exit code is intentional for this negative test. Reset it so
+    # PowerShell does not propagate the expected failure as the script result.
+    $global:LASTEXITCODE = 0
 } catch {
     $failures.Add($_.Exception.Message)
 } finally {
