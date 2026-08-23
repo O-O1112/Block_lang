@@ -1,6 +1,7 @@
 name: Build and test Block Engine
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
   pull_request:
@@ -27,6 +28,10 @@ jobs:
       - name: Run CLI tests
         shell: powershell
         run: .\tests\Test-BlockCli.ps1 -EngineDirectory (Join-Path $PWD 'ci-release')
+
+      - name: Run path resolution tests
+        shell: powershell
+        run: .\tests\Test-BlockPaths.ps1 -EngineDirectory (Join-Path $PWD 'ci-release')
 
       - name: Run native language tests
         shell: powershell

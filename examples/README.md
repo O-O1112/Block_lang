@@ -5,14 +5,23 @@ These examples are intentionally small and copy-ready. They are useful for evalu
 ## Run one in three steps
 
 1. Install [Block Engine](../downloads.html) and the runtimes used by the example.
-2. Open a PowerShell prompt in the repository root.
-3. Run the matching command:
+2. Open a PowerShell prompt anywhere after installation.
+3. Run the matching command; Block can resolve files from the configured
+   workspace or the current project:
 
 ```powershell
 block .\examples\hello-polyglot.blk
 block .\examples\local-data-pipeline.blk
 block .\examples\native-control-flow.blk
 block .\examples\native-language-core.blk
+```
+
+To avoid changing directories, set the repository as a temporary workspace:
+
+```powershell
+$env:BLOCK_WORKSPACE = (Resolve-Path .).Path
+block find native-control-flow
+block run native-control-flow.blk
 ```
 
 The first two examples use Python and Node.js. `native-control-flow.blk` uses the built-in Block syntax and does not need another runtime.

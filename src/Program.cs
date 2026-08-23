@@ -39,7 +39,7 @@ namespace BlockEngine
                 return;
             }
 
-            string arg0 = args[0].ToLower().Trim();
+            string arg0 = args[0].ToLowerInvariant().Trim();
             if (arg0 == "--version" || arg0 == "-v" || arg0 == "version")
             {
 #if BLOCK_LITE
@@ -64,6 +64,18 @@ namespace BlockEngine
                 return;
             }
 
+            if (arg0 == "workspace")
+            {
+                CliCommands.RunWorkspace(args);
+                return;
+            }
+
+            if (arg0 == "find")
+            {
+                CliCommands.RunFind(args.Length > 1 ? JoinCommandLinePath(args, 1) : null);
+                return;
+            }
+
             if (arg0 == "info" || arg0 == "capabilities")
             {
                 string infoPath = args.Length > 1 ? JoinCommandLinePath(args, 1) : null;
@@ -74,6 +86,13 @@ namespace BlockEngine
             if (arg0 == "check" && args.Length > 1)
             {
                 CliCommands.RunCheck(JoinCommandLinePath(args, 1));
+                return;
+            }
+
+            if (arg0 == "check")
+            {
+                Console.Error.WriteLine("Usage: block check <file>");
+                Environment.ExitCode = 1;
                 return;
             }
 
@@ -93,10 +112,24 @@ namespace BlockEngine
                 return;
             }
 
+            if (arg0 == "project" && args.Length > 1 &&
+                (string.Equals(args[1], "root", StringComparison.OrdinalIgnoreCase) ||
+                 string.Equals(args[1], "run", StringComparison.OrdinalIgnoreCase)))
+            {
+                CliCommands.RunProjectCommand(args);
+                return;
+            }
+
 #if !BLOCK_LITE
             if (arg0 == "ecosystem" || arg0 == "eco" || arg0 == "pkg" || arg0 == "project")
             {
                 Ecosystem.RunCli(args);
+                return;
+            }
+#else
+            if (arg0 == "project")
+            {
+                CliCommands.RunProjectCommand(args);
                 return;
             }
 #endif
@@ -131,40 +164,45 @@ namespace BlockEngine
 #endif
 
 
-            if (arg0 == "run" && args.Length < 2)
-            {
-                Console.Error.WriteLine("Usage: block run <file>");
-                Environment.ExitCode = 1;
-                return;
-            }
-
             // cmd.exe splits unquoted paths at spaces. For the file-execution
             // form, reassemble the remaining arguments so filenames such as
             // "新文件 1.blkp" still resolve instead of truncating at the space.
+            EngineConfig cfg = Config.LoadConfig();
             string scriptArgument = arg0 == "run"
-                ? JoinCommandLinePath(args, 1)
+                ? (args.Length > 1 ? JoinCommandLinePath(args, 1) : null)
                 : (args.Length > 1 ? string.Join(" ", args) : args[0]);
-            string scriptPath = Path.GetFullPath(scriptArgument);
-            if (!File.Exists(scriptPath))
+            string scriptPath;
+            try
             {
-                Console.Error.WriteLine(string.Format("Error: File not found: {0}", scriptPath));
+                scriptPath = BlockPathResolver.ResolveScript(scriptArgument, cfg, arg0 == "run" ? "run" : "script");
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine("[Block] " + ex.Message);
                 Environment.ExitCode = 1;
                 return;
             }
 
-            EngineConfig cfg = Config.LoadConfig();
-            string code = ReadScriptFile(scriptPath);
-            
-#if !BLOCK_LITE
-            if (Server.ParseAndRunServer(code, cfg, scriptPath))
-            {
-                return; // Started server
-            }
-#endif
+            ExecuteScript(scriptPath, cfg);
+        }
 
-            // Normal execution with strict exit code reporting
+        private static string JoinCommandLinePath(string[] args, int startIndex)
+        {
+            if (args == null || args.Length <= startIndex) return "";
+            return string.Join(" ", args, startIndex, args.Length - startIndex);
+        }
+
+        internal static void ExecuteScript(string scriptPath, EngineConfig cfg)
+        {
             try
             {
+                string code = ReadScriptFile(scriptPath);
+#if !BLOCK_LITE
+                if (Server.ParseAndRunServer(code, cfg, scriptPath))
+                {
+                    return; // Started server
+                }
+#endif
                 Task.Run(async () =>
                 {
                     Dictionary<string, object> initialState = new Dictionary<string, object>();
@@ -176,12 +214,6 @@ namespace BlockEngine
                 Console.Error.WriteLine(string.Format("Execution Error: {0}", ex.Message));
                 Environment.ExitCode = 1;
             }
-        }
-
-        private static string JoinCommandLinePath(string[] args, int startIndex)
-        {
-            if (args == null || args.Length <= startIndex) return "";
-            return string.Join(" ", args, startIndex, args.Length - startIndex);
         }
 
         static void ShowAnimationAndUsage(bool infinite = true)
@@ -272,6 +304,9 @@ namespace BlockEngine
             Console.WriteLine("       block-lite capabilities");
             Console.WriteLine("       block-lite runtimes");
             Console.WriteLine("       block-lite doctor");
+            Console.WriteLine("       block-lite workspace show|set|clear");
+            Console.WriteLine("       block-lite find [name]");
+            Console.WriteLine("       block-lite project root|run [path]");
             Console.WriteLine("       block-lite config");
             Console.WriteLine("       block-lite config show|path");
 #elif BLOCK_PLUS
@@ -282,6 +317,9 @@ namespace BlockEngine
             Console.WriteLine("       block-plus capabilities");
             Console.WriteLine("       block-plus runtimes");
             Console.WriteLine("       block-plus doctor");
+            Console.WriteLine("       block-plus workspace show|set|clear");
+            Console.WriteLine("       block-plus find [name]");
+            Console.WriteLine("       block-plus project root|run [path]");
             Console.WriteLine("       block-plus config");
             Console.WriteLine("       block-plus config show|path");
             Console.WriteLine("       block-plus serve [port]");
@@ -297,6 +335,9 @@ namespace BlockEngine
             Console.WriteLine("       block capabilities");
             Console.WriteLine("       block runtimes");
             Console.WriteLine("       block doctor");
+            Console.WriteLine("       block workspace show|set|clear");
+            Console.WriteLine("       block find [name]");
+            Console.WriteLine("       block project root|run [path]");
             Console.WriteLine("       block config");
             Console.WriteLine("       block config show|path");
             Console.WriteLine("       block serve 8080");

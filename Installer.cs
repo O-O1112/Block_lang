@@ -693,12 +693,12 @@ namespace BlockInstaller
                     MessageBox.Show(
                         "Block Engine core installation completed. The following optional runtimes were not installed:\n\n" +
                         string.Join("\n", runtimeWarnings.ToArray()) +
-                        "\n\nYou can install them later and run the installer again.",
+                        "\n\nYou can install them later and run the installer again. Open a new terminal after setup; use 'block workspace set <folder>' to discover projects without changing directories.",
                         "Optional runtime warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
                 else
                 {
-                    lblStatus.Text = "Installation complete! Click Finish to exit.";
+                    lblStatus.Text = "Installed. Open a new terminal; project paths are resolved automatically.";
                 }
                 progress.Value = 100;
                 btnInstall.Text = "Finish";

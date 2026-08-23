@@ -285,6 +285,32 @@
             </div>
         </section>
 
+        <section id="workspace-discovery" class="section-padding workflow-section">
+            <div class="section-heading reveal">
+                <p class="eyebrow">A calmer command line</p>
+                <h2>Run from your project.<br>Not from a special folder.</h2>
+                <p>Block understands project roots and optional workspaces, so relative script names remain useful when you move through a repository.</p>
+            </div>
+            <div class="code-story reveal">
+                <div class="code-window">
+                    <div class="editor-header"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="window-title">terminal / project discovery</span></div>
+                    <div class="editor-content" aria-label="Block workspace commands">
+                        <div><span class="comment"># set once for a folder of projects</span></div>
+                        <div><span class="keyword">block</span> workspace set C:\BlockProjects</div>
+                        <div><span class="keyword">block</span> find analytics</div>
+                        <div><span class="keyword">block</span> project run</div>
+                    </div>
+                </div>
+                <div class="execution-map">
+                    <p class="map-label">SAFE SEARCH ORDER</p>
+                    <div class="map-step active"><span>01</span><div><strong>Current directory</strong><small>Fast and explicit</small></div><i></i></div>
+                    <div class="map-step"><span>02</span><div><strong>Project root</strong><small>Nearest block.project.json</small></div><i></i></div>
+                    <div class="map-step"><span>03</span><div><strong>Workspace</strong><small>No drive-wide scan</small></div><i></i></div>
+                    <div class="map-result"><span>RESULT</span><strong>ONE CLEAR PATH</strong></div>
+                </div>
+            </div>
+        </section>
+
         <section id="editions" class="edition-section">
             <div class="section-padding">
                 <div class="section-heading reveal">

@@ -13,6 +13,7 @@ enabled under GitHub Settings → General → Features → Wikis.
 ## Pages
 
 - [Installation](Installation.md) — editions, installer setup, and verification.
+- [CLI workspace](../CLI-WORKSPACE.md) — project roots, workspace search, and path diagnostics.
 - [Syntax](Syntax.md) — native Block syntax and runtime tags.
 - [Polyglot state](Polyglot-State.md) — how values cross runtime boundaries.
 - [Architecture](Architecture.md) — parser, executor, process lifecycle, and isolation.

@@ -2,6 +2,7 @@
 
 - [Home](Home)
 - [Installation](Installation)
+- [CLI workspace](CLI-WORKSPACE)
 - [Syntax](Syntax)
 - [Polyglot state](Polyglot-State)
 - [Architecture](Architecture)

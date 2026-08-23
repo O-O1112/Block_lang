@@ -68,10 +68,11 @@ namespace BlockEngine
             Console.WriteLine("  Version: 2.2.0");
             Console.WriteLine("  Config: " + Config.GetConfigPath());
             Console.WriteLine("  Sandbox: " + cfg.SandboxDir);
+            Console.WriteLine("  Workspace: " + (string.IsNullOrWhiteSpace(cfg.WorkspaceDir) ? "(not set)" : cfg.WorkspaceDir));
             Console.WriteLine("  Timeout: " + cfg.ExecutionTimeoutSeconds + "s");
             Console.WriteLine("  Network blocked: " + (cfg.NetworkBlocked ? "yes" : "no"));
             Console.WriteLine("  Custom definitions: " + (cfg.AllowCustomDefinitions ? "enabled" : "disabled"));
-            Console.WriteLine("  Commands: run, check, info/capabilities, runtimes, doctor, config");
+            Console.WriteLine("  Commands: run, check, info/capabilities, runtimes, doctor, workspace, find, project, config");
 
             if (string.IsNullOrWhiteSpace(filePath)) return;
 
@@ -161,11 +162,118 @@ namespace BlockEngine
             Console.WriteLine("  Custom definitions: " + OnOff(cfg.AllowCustomDefinitions));
             Console.WriteLine("  Timeout: " + cfg.ExecutionTimeoutSeconds + "s");
             Console.WriteLine("  Sandbox: " + cfg.SandboxDir);
+            Console.WriteLine("  Workspace: " + (string.IsNullOrWhiteSpace(cfg.WorkspaceDir) ? "(not set)" : cfg.WorkspaceDir));
         }
 
         public static void RunConfigPath()
         {
             Console.WriteLine(Config.GetConfigPath());
+        }
+
+        public static void RunWorkspace(string[] args)
+        {
+            try
+            {
+                string action = args.Length > 1 ? (args[1] ?? "").ToLowerInvariant() : "show";
+                EngineConfig cfg = Config.LoadConfig();
+
+                if (action == "show")
+                {
+                    Console.WriteLine("Block workspace");
+                    Console.WriteLine("  Configured: " + (string.IsNullOrWhiteSpace(cfg.WorkspaceDir) ? "(not set)" : cfg.WorkspaceDir));
+                    Console.WriteLine("  Environment: " + (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("BLOCK_WORKSPACE")) ? "(not set)" : Environment.GetEnvironmentVariable("BLOCK_WORKSPACE")));
+                    Console.WriteLine("  Search roots:");
+                    foreach (string root in BlockPathResolver.GetSearchRoots(cfg, null)) Console.WriteLine("    - " + root);
+                    return;
+                }
+
+                if (action == "set")
+                {
+                    if (args.Length < 3) throw new ArgumentException("Usage: block workspace set <directory>");
+                    string path = Path.GetFullPath(string.Join(" ", args, 2, args.Length - 2));
+                    if (!Directory.Exists(path)) throw new DirectoryNotFoundException("Workspace directory not found: " + path);
+                    cfg.WorkspaceDir = path;
+                    Config.SaveConfig(cfg);
+                    Console.WriteLine("[Block Workspace] Set to: " + path);
+                    return;
+                }
+
+                if (action == "clear" || action == "unset")
+                {
+                    cfg.WorkspaceDir = "";
+                    Config.SaveConfig(cfg);
+                    Console.WriteLine("[Block Workspace] Cleared.");
+                    return;
+                }
+
+                Console.WriteLine("Usage:");
+                Console.WriteLine("  block workspace show");
+                Console.WriteLine("  block workspace set <directory>");
+                Console.WriteLine("  block workspace clear");
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine("[Block Workspace] Error: " + ex.Message);
+                Environment.ExitCode = 1;
+            }
+        }
+
+        public static void RunFind(string query)
+        {
+            try
+            {
+                EngineConfig cfg = Config.LoadConfig();
+                List<string> roots = BlockPathResolver.GetSearchRoots(cfg, null);
+                List<string> matches = BlockPathResolver.FindScripts(query, cfg);
+                Console.WriteLine("Block script search");
+                Console.WriteLine("  Query: " + (string.IsNullOrWhiteSpace(query) ? "(all scripts in search roots)" : query));
+                Console.WriteLine("  Roots:");
+                foreach (string root in roots) Console.WriteLine("    - " + root);
+                Console.WriteLine("  Matches:");
+                if (matches.Count == 0) Console.WriteLine("    (none)");
+                foreach (string match in matches) Console.WriteLine("    - " + match);
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine("[Block Find] Error: " + ex.Message);
+                Environment.ExitCode = 1;
+            }
+        }
+
+        public static void RunProjectCommand(string[] args)
+        {
+            try
+            {
+                string action = args.Length > 1 ? (args[1] ?? "").ToLowerInvariant() : "root";
+                EngineConfig cfg = Config.LoadConfig();
+                string hint = args.Length > 2 ? string.Join(" ", args, 2, args.Length - 2) : null;
+
+                if (action == "root")
+                {
+                    string root = BlockPathResolver.ResolveProjectRoot(hint, cfg);
+                    BlockProjectManifest project = Ecosystem.LoadProject(root);
+                    Console.WriteLine(root);
+                    Console.WriteLine("  Name: " + project.name);
+                    Console.WriteLine("  Entry: " + project.entry);
+                    return;
+                }
+
+                if (action == "run")
+                {
+                    string path = BlockPathResolver.ResolveScript(hint, cfg, "project run");
+                    Program.ExecuteScript(path, cfg);
+                    return;
+                }
+
+                Console.WriteLine("Usage:");
+                Console.WriteLine("  block project root [path]");
+                Console.WriteLine("  block project run [file|project-directory]");
+            }
+            catch (Exception ex)
+            {
+                Console.Error.WriteLine("[Block Project] Error: " + ex.Message);
+                Environment.ExitCode = 1;
+            }
         }
 
         private static string OnOff(bool value)
@@ -224,10 +332,7 @@ namespace BlockEngine
         {
             if (string.IsNullOrWhiteSpace(filePath))
                 throw new ArgumentException("Usage: block " + command + " <file>");
-            string path = Path.GetFullPath(filePath);
-            if (!File.Exists(path))
-                throw new FileNotFoundException("File not found: " + path, path);
-            return path;
+            return BlockPathResolver.ResolveScript(filePath, Config.LoadConfig(), command);
         }
 
         private static string ReadScriptFile(string path)

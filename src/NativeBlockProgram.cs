@@ -347,8 +347,22 @@ namespace BlockEngine
                 if (Math.Abs(step) < double.Epsilon) throw Error(lineNumber, "range step cannot be zero.");
                 List<object> values = new List<object>();
                 int count = 0;
-                if (step > 0) for (double i = start; i < end && count++ < MaxLoopIterations; i += step) values.Add(NormalizeNumber(i));
-                else for (double i = start; i > end && count++ < MaxLoopIterations; i += step) values.Add(NormalizeNumber(i));
+                if (step > 0)
+                {
+                    for (double i = start; i < end; i += step)
+                    {
+                        if (count++ >= MaxLoopIterations) throw Error(lineNumber, "range exceeded the 10,000 item limit.");
+                        values.Add(NormalizeNumber(i));
+                    }
+                }
+                else
+                {
+                    for (double i = start; i > end; i += step)
+                    {
+                        if (count++ >= MaxLoopIterations) throw Error(lineNumber, "range exceeded the 10,000 item limit.");
+                        values.Add(NormalizeNumber(i));
+                    }
+                }
                 return values;
             }
 
@@ -630,35 +644,137 @@ namespace BlockEngine
         private sealed class ExpressionParser
         {
             private readonly string text; private readonly Context context; private readonly int line; private int position;
+            private bool suppressEvaluation;
             public ExpressionParser(string value, Context owner, int sourceLine) { text = value ?? ""; context = owner; line = sourceLine; }
             public bool IsAtEnd { get { Skip(); return position >= text.Length; } }
             public string Remaining { get { return position < text.Length ? text.Substring(position) : ""; } }
             public object ParseExpression() { return ParseOr(); }
-            private object ParseOr() { object left = ParseAnd(); while (Match("||")) left = ToBool(left) || ToBool(ParseAnd()); return left; }
-            private object ParseAnd() { object left = ParseEquality(); while (Match("&&")) left = ToBool(left) && ToBool(ParseEquality()); return left; }
-            private object ParseEquality() { object left = ParseComparison(); while (true) { if (Match("==")) left = Equal(left, ParseComparison()); else if (Match("!=")) left = !Equal(left, ParseComparison()); else return left; } }
+            private object ParseOr()
+            {
+                object left = ParseAnd();
+                while (Match("||"))
+                {
+                    if (suppressEvaluation)
+                    {
+                        ParseAnd();
+                        left = null;
+                    }
+                    else if (ToBool(left))
+                    {
+                        ParseWithoutEvaluation(delegate { return ParseAnd(); });
+                        left = true;
+                    }
+                    else
+                    {
+                        left = ToBool(ParseAnd());
+                    }
+                }
+                return left;
+            }
+
+            private object ParseAnd()
+            {
+                object left = ParseEquality();
+                while (Match("&&"))
+                {
+                    if (suppressEvaluation)
+                    {
+                        ParseEquality();
+                        left = null;
+                    }
+                    else if (!ToBool(left))
+                    {
+                        ParseWithoutEvaluation(delegate { return ParseEquality(); });
+                        left = false;
+                    }
+                    else
+                    {
+                        left = ToBool(ParseEquality());
+                    }
+                }
+                return left;
+            }
+
+            private object ParseEquality()
+            {
+                object left = ParseComparison();
+                while (true)
+                {
+                    if (Match("=="))
+                    {
+                        object right = ParseComparison();
+                        left = suppressEvaluation ? (object)null : (object)Equal(left, right);
+                    }
+                    else if (Match("!="))
+                    {
+                        object right = ParseComparison();
+                        left = suppressEvaluation ? (object)null : (object)!Equal(left, right);
+                    }
+                    else return left;
+                }
+            }
+
             private object ParseComparison()
             {
                 object left = ParseTerm();
-                while (true) { if (Match("<=")) left = Compare(left, ParseTerm()) <= 0; else if (Match(">=")) left = Compare(left, ParseTerm()) >= 0; else if (Match("<")) left = Compare(left, ParseTerm()) < 0; else if (Match(">")) left = Compare(left, ParseTerm()) > 0; else return left; }
+                while (true)
+                {
+                    if (Match("<=")) { object right = ParseTerm(); left = suppressEvaluation ? (object)null : (object)(Compare(left, right) <= 0); }
+                    else if (Match(">=")) { object right = ParseTerm(); left = suppressEvaluation ? (object)null : (object)(Compare(left, right) >= 0); }
+                    else if (Match("<")) { object right = ParseTerm(); left = suppressEvaluation ? (object)null : (object)(Compare(left, right) < 0); }
+                    else if (Match(">")) { object right = ParseTerm(); left = suppressEvaluation ? (object)null : (object)(Compare(left, right) > 0); }
+                    else return left;
+                }
             }
-            private object ParseTerm() { object left = ParseFactor(); while (true) { if (Match("+")) left = Add(left, ParseFactor()); else if (Match("-")) left = NormalizeNumber(Number(left) - Number(ParseFactor())); else return left; } }
+            private object ParseTerm()
+            {
+                object left = ParseFactor();
+                while (true)
+                {
+                    if (Match("+")) { object right = ParseFactor(); left = suppressEvaluation ? null : Add(left, right); }
+                    else if (Match("-")) { object right = ParseFactor(); left = suppressEvaluation ? null : NormalizeNumber(Number(left) - Number(right)); }
+                    else return left;
+                }
+            }
+
             private object ParseFactor()
             {
                 object left = ParseUnary();
-                while (true) { if (Match("*")) left = NormalizeNumber(Number(left) * Number(ParseUnary())); else if (Match("/")) { double divisor = Number(ParseUnary()); if (Math.Abs(divisor) < double.Epsilon) throw Error(line, "Division by zero."); left = Number(left) / divisor; } else if (Match("%")) left = NormalizeNumber(Number(left) % Number(ParseUnary())); else return left; }
+                while (true)
+                {
+                    if (Match("*")) { object right = ParseUnary(); left = suppressEvaluation ? null : NormalizeNumber(Number(left) * Number(right)); }
+                    else if (Match("/"))
+                    {
+                        object right = ParseUnary();
+                        if (suppressEvaluation) { left = null; continue; }
+                        double divisor = Number(right);
+                        if (Math.Abs(divisor) < double.Epsilon) throw Error(line, "Division by zero.");
+                        left = Number(left) / divisor;
+                    }
+                    else if (Match("%")) { object right = ParseUnary(); left = suppressEvaluation ? null : NormalizeNumber(Number(left) % Number(right)); }
+                    else return left;
+                }
             }
-            private object ParseUnary() { if (Match("!")) return !ToBool(ParseUnary()); if (Match("-")) return -Number(ParseUnary()); return ParsePrimary(); }
+            private object ParseUnary()
+            {
+                if (Match("!")) { object value = ParseUnary(); return suppressEvaluation ? (object)null : (object)!ToBool(value); }
+                if (Match("-")) { object value = ParseUnary(); return suppressEvaluation ? (object)null : (object)-Number(value); }
+                return ParsePrimary();
+            }
             private object ParsePrimary()
             {
                 Skip();
                 if (Match("(")) { object value = ParseExpression(); Require(")"); return ParsePostfix(value); }
-                if (position < text.Length && (text[position] == '\'' || text[position] == '"')) return ParsePostfix(ParseString());
+                if (position < text.Length && (text[position] == '\'' || text[position] == '"'))
+                {
+                    string value = ParseString();
+                    return ParsePostfix(suppressEvaluation ? null : value);
+                }
                 if (Match("["))
                 {
                     List<object> values = new List<object>();
                     if (!Match("]")) { while (true) { values.Add(ParseExpression()); if (Match("]")) break; Require(","); } }
-                    return ParsePostfix(values);
+                    return ParsePostfix(suppressEvaluation ? null : values);
                 }
                 if (Match("{"))
                 {
@@ -676,25 +792,26 @@ namespace BlockEngine
                             Require(",");
                         }
                     }
-                    return ParsePostfix(map);
+                    return ParsePostfix(suppressEvaluation ? null : map);
                 }
 
                 string token = ReadToken();
                 double number;
-                if (double.TryParse(token, NumberStyles.Float, CultureInfo.InvariantCulture, out number)) return NormalizeNumber(number);
-                if (token.Equals("true", StringComparison.OrdinalIgnoreCase)) return true;
-                if (token.Equals("false", StringComparison.OrdinalIgnoreCase)) return false;
+                if (double.TryParse(token, NumberStyles.Float, CultureInfo.InvariantCulture, out number)) return suppressEvaluation ? null : NormalizeNumber(number);
+                if (token.Equals("true", StringComparison.OrdinalIgnoreCase)) return suppressEvaluation ? null : (object)true;
+                if (token.Equals("false", StringComparison.OrdinalIgnoreCase)) return suppressEvaluation ? null : (object)false;
                 if (token.Equals("null", StringComparison.OrdinalIgnoreCase)) return null;
                 object resolvedValue;
                 if (Match("("))
                 {
                     List<object> arguments = new List<object>();
                     if (!Match(")")) { while (true) { arguments.Add(ParseExpression()); if (Match(")")) break; Require(","); } }
-                    resolvedValue = InvokeFunction(token, arguments, context, line);
+                    resolvedValue = suppressEvaluation ? null : InvokeFunction(token, arguments, context, line);
                 }
                 else
                 {
-                    if (!context.TryGetValue(token, out resolvedValue)) throw Error(line, "Unknown variable: " + token);
+                    if (suppressEvaluation) resolvedValue = null;
+                    else if (!context.TryGetValue(token, out resolvedValue)) throw Error(line, "Unknown variable: " + token);
                 }
                 return ParsePostfix(resolvedValue);
             }
@@ -707,17 +824,26 @@ namespace BlockEngine
                     {
                         object index = ParseExpression();
                         Require("]");
-                        value = GetIndex(value, index, line);
+                        value = suppressEvaluation ? null : GetIndex(value, index, line);
                     }
                     else if (Match("."))
                     {
-                        value = GetMember(value, ReadIdentifier(), line);
+                        string member = ReadIdentifier();
+                        value = suppressEvaluation ? null : GetMember(value, member, line);
                     }
                     else
                     {
                         return value;
                     }
                 }
+            }
+
+            private object ParseWithoutEvaluation(Func<object> parser)
+            {
+                bool previous = suppressEvaluation;
+                suppressEvaluation = true;
+                try { return parser(); }
+                finally { suppressEvaluation = previous; }
             }
 
             private string ReadToken()

@@ -11,8 +11,14 @@ New-Item -ItemType Directory -Force -Path $tempRoot | Out-Null
 function Invoke-Block([string]$Executable, [string[]]$Arguments) {
     $path = Join-Path $EngineDirectory $Executable
     if (-not (Test-Path -LiteralPath $path)) { throw "Missing test executable: $path" }
-    $output = (& $path @Arguments 2>&1 | Out-String).Trim()
-    [pscustomobject]@{ ExitCode = $LASTEXITCODE; Output = $output }
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $output = (& $path @Arguments 2>&1 | Out-String).Trim()
+        [pscustomobject]@{ ExitCode = $LASTEXITCODE; Output = $output }
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
 }
 
 function Assert-Condition([bool]$Condition, [string]$Message) {
@@ -62,6 +68,10 @@ block
 
 printer = "not-a-print-call"
 
+short_or = true || missing_variable
+short_and = false && missing_variable
+logic_precedence = false || true && true
+
 print(status)
 print(profile["name"])
 print(profile.total)
@@ -70,6 +80,7 @@ print(sum(items), str(total), type(profile), contains(items, 3))
 print(greet("Block"))
 print(local_scope("local"), outside)
 print(printer)
+print(short_or, short_and, logic_precedence)
 '@ | Set-Content -LiteralPath $scriptPath -Encoding UTF8
 
     $result = Invoke-Block 'block.exe' @('run', $scriptPath)
@@ -82,6 +93,17 @@ print(printer)
     Assert-Condition ($result.Output -match 'Hello Block') "function return failed: $($result.Output)"
     Assert-Condition ($result.Output -match 'local global') "function scope/global lookup failed: $($result.Output)"
     Assert-Condition ($result.Output -match 'not-a-print-call') "identifier beginning with print was misparsed: $($result.Output)"
+    Assert-Condition ($result.Output -match 'true false true') "logical short-circuit or precedence failed: $($result.Output)"
+
+    $limitPath = Join-Path $tempRoot 'range-limit.blk'
+    @'
+for item in range(0, 10001):
+    pass
+block
+'@ | Set-Content -LiteralPath $limitPath -Encoding UTF8
+    $limit = Invoke-Block 'block.exe' @('run', $limitPath)
+    Assert-Condition ($limit.ExitCode -ne 0) "range limit was not enforced: $($limit.Output)"
+    Assert-Condition ($limit.Output -match 'range exceeded the 10,000 item limit') "range limit error was unclear: $($limit.Output)"
 } catch {
     $failures.Add($_.Exception.Message)
 } finally {
