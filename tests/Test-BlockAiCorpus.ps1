@@ -11,7 +11,8 @@ $requiredFiles = @(
     'SYSTEM-PROMPT.md',
     'block-knowledge.md',
     'training.jsonl',
-    'eval-cases.jsonl'
+    'eval-cases.jsonl',
+    'PLATFORM-GUIDE.md'
 )
 
 foreach ($relativePath in $requiredFiles) {
