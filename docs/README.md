@@ -10,7 +10,8 @@ This directory is the maintained documentation index for Block Language.
   state, and troubleshooting.
 - [Book source](book/README.md) — *Block Language in Practice*.
 - [AI knowledge pack](ai/README.md) — assistant policy, canonical facts,
-  training examples, and evaluation prompts.
+  training examples, evaluation prompts, and [platform integration
+  guidance](ai/PLATFORM-GUIDE.md).
 
 ## Maintainer and release documents
 

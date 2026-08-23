@@ -13,6 +13,8 @@ to explain, generate, review, or troubleshoot Block Language.
   format. Each line is one supervised conversation example.
 - [`eval-cases.jsonl`](eval-cases.jsonl) — adversarial and regression prompts
   that test whether an assistant has learned the real syntax and boundaries.
+- [`PLATFORM-GUIDE.md`](PLATFORM-GUIDE.md) — setup guidance for Gemini, ChatGPT,
+  API/RAG systems, and other assistants.
 
 ## Recommended teaching order
 
@@ -37,4 +39,3 @@ changes. It is not a substitute for running the Block test suite.
 - Host runtimes are installed and managed separately from Block.
 - Block files execute local programs; they must not be treated as trusted merely
   because the extension is `.blk`, `.blkl`, or `.blkp`.
-
