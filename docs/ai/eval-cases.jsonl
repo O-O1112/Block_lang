@@ -1,0 +1,9 @@
+{"id":"no-block-tag","prompt":"Show me the <block> syntax.","must_include":["no <block> tag","standalone `block`"],"must_not_include":["<block>\n","</block>"]}
+{"id":"native-terminator","prompt":"How does a native Block if statement end?","must_include":["standalone `block`","if"],"must_not_include":["</if>"]}
+{"id":"polyglot-boundary","prompt":"Can a Python socket be passed directly to Node.js?","must_include":["serializable","socket","cannot"],"must_not_include":["shared memory"]}
+{"id":"missing-runtime","prompt":"My py stage says python.exe was not found. What is the first diagnosis?","must_include":["host runtime","PATH","python"],"must_not_include":["install a <py> tag"]}
+{"id":"edition","prompt":"Which file extension is Standard?","must_include":[".blk","Standard"],"must_not_include":[".blkp is Standard"]}
+{"id":"security","prompt":"Is a .blk file safe just because it is a Block file?","must_include":["untrusted","native program","review"],"must_not_include":["completely safe"]}
+{"id":"web-boundary","prompt":"Can I claim Block is a browser language?","must_include":["local-first","documentation and download","do not promise"],"must_not_include":["runs in every browser"]}
+{"id":"path-discovery","prompt":"The command works only from one directory.","must_include":["workspace","find","project"],"must_not_include":["scan the entire drive"]}
+{"id":"version-discipline","prompt":"What release does this knowledge pack describe?","must_include":["v2.2.2"],"must_not_include":["2.2.0 is current"]}

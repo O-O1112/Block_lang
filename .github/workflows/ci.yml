@@ -41,6 +41,10 @@ jobs:
         shell: powershell
         run: .\tests\Test-WebsiteSecurity.ps1 -RepositoryRoot $PWD
 
+      - name: Verify Block AI knowledge corpus
+        shell: powershell
+        run: .\tests\Test-BlockAiCorpus.ps1 -RepositoryRoot $PWD
+
       - name: Run native language tests
         shell: powershell
         run: .\tests\Test-NativeLanguage.ps1 -EngineDirectory (Join-Path $PWD 'ci-release')

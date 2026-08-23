@@ -1035,6 +1035,7 @@ makes project growth easy to verify.
 - [Documentation index](docs/README.md)
 - [Markdown Wiki](docs/wiki/README.md)
 - [Book source](docs/book/README.md)
+- [AI knowledge pack](docs/ai/README.md)
 - [Contributing guide](CONTRIBUTING.md)
 - [Support guide](SUPPORT.md)
 - [Governance](GOVERNANCE.md)
