@@ -16,9 +16,6 @@ $requiredLinks = @{
     )
     'downloads.html' = @(
         "$releaseBase" + "BlockSetup-v$version.exe"
-        "$releaseBase" + 'block-lite.zip'
-        "$releaseBase" + 'block.zip'
-        "$releaseBase" + 'block-plus.zip'
         "$releaseBase" + "block-language-$version.vsix"
         "$releaseBase" + "acode-plugin-block-$version.zip"
     )
@@ -39,10 +36,7 @@ foreach ($relativePath in $requiredLinks.Keys) {
 }
 
 $legacyRelativeLinks = @(
-    'href="BlockSetup.exe"',
-    'href="block-lite.zip"',
-    'href="block.zip"',
-    'href="block-plus.zip"'
+    'href="BlockSetup.exe"'
 )
 foreach ($relativePath in @('index.html', 'downloads.html')) {
     $content = Get-Content -LiteralPath (Join-Path $RepositoryRoot $relativePath) -Raw
@@ -50,6 +44,18 @@ foreach ($relativePath in @('index.html', 'downloads.html')) {
         if ($content.Contains($legacyLink)) {
             throw "Legacy root download link remains in ${relativePath}: $legacyLink"
         }
+    }
+}
+
+$downloadAssets = @('block-lite.zip', 'block.zip', 'block-plus.zip')
+$downloadsPage = Get-Content -LiteralPath (Join-Path $RepositoryRoot 'downloads.html') -Raw
+foreach ($asset in $downloadAssets) {
+    if (-not $downloadsPage.Contains(('href="' + $asset + '"'))) {
+        throw "Missing same-origin engine download link in downloads.html: $asset"
+    }
+
+    if (-not (Test-Path -LiteralPath (Join-Path $RepositoryRoot $asset))) {
+        throw "Engine download asset is missing from repository root: $asset"
     }
 }
 
