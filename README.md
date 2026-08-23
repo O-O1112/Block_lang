@@ -8,7 +8,7 @@
 
 If you are looking for a polyglot programming language, a multi-language scripting workflow, a Python-to-JavaScript bridge, or a local-first automation engine built around readable `.blk` files, Block is designed for that use case.
 
-**Start here:** [download the engine](downloads.html) · [read the documentation](wiki.html) · [run the examples](examples/) · [read the book source](docs/book/) · [report an external result](docs/THIRD-PARTY-VALIDATION.md) · [browse the source on GitHub](https://github.com/O-O1112/Block_lang)
+**Start here:** [download the engine](downloads.html) · [read the documentation](wiki.html) · [run the examples](examples/) · [join the Community Lab](docs/COMMUNITY-LAB.md) · [read the book source](docs/book/) · [report an external result](docs/THIRD-PARTY-VALIDATION.md) · [browse the source on GitHub](https://github.com/O-O1112/Block_lang)
 
 Maintainers can use the [organic growth playbook](docs/GROWTH.md) to turn demos, releases, and user feedback into a repeatable discovery-to-install funnel.
 

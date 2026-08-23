@@ -3,6 +3,11 @@
 Thank you for helping improve Block Language. Bug fixes, documentation
 improvements, tests, runtime integrations, and editor tooling are welcome.
 
+For the complete public collaboration flow, start with the
+[Community Lab](docs/COMMUNITY-LAB.md). It separates release-based testing
+from source contributions and explains how to produce a reproducible report
+without sharing private data.
+
 ## Before opening a change
 
 1. Search existing issues and pull requests.
@@ -23,7 +28,12 @@ powershell -ExecutionPolicy Bypass -File .\verify-release.ps1
 ```
 
 For a complete clean release build, use `build-release.ps1`. The smoke tests
-can be run against its output with `tests\Test-BlockEngine.ps1`.
+can be run against its output with `tests\Test-BlockEngine.ps1`. The shorter
+community harness is available for both testers and contributors:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tests\Test-CommunityLab.ps1 -EngineDirectory .\bin
+```
 
 Changes to the engine belong in `src/`. Changes to the editor integrations
 belong in `block-vscode-extension/` or `acode-plugin-block/`. Keep generated
