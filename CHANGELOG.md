@@ -2,7 +2,7 @@
 
 All notable changes to the Block execution engine will be documented in this file.
 
-## [Unreleased] - v2.2.2
+## [2.2.2] - 2026-08-23
 
 ### CLI workspace and project discovery
 - Added safe relative script resolution from the current directory, nearest
@@ -12,8 +12,18 @@ All notable changes to the Block execution engine will be documented in this fil
 - Added cross-directory path regression coverage and synchronized CLI/site/wiki
   documentation.
 
-Core language and process-stability fixes remain part of the v2.2.2 gate and
-must pass before a release tag is created.
+### Core stability
+- Fixed native logical short-circuit parsing while still consuming skipped
+  expressions safely.
+- Replaced silent `range()` truncation with an explicit 10,000-item limit error.
+- Added a Windows CI path-resolution gate and expected-negative-test handling.
+
+The v2.2.2 release is built and verified by the GitHub Windows runner before
+the release tag is published.
+
+## [Unreleased]
+
+Future changes will be recorded here.
 
 ## [2.2.0] - 2026-08-18
 

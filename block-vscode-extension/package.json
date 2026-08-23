@@ -1,8 +1,8 @@
 {
     "name": "block-language",
     "displayName": "Block Language (Polyglot Orchestrator)",
-    "description": "Official VS Code Extension for Block Engine v2.2.0 (Ecosystem Edition)",
-    "version": "2.2.0",
+    "description": "Official VS Code Extension for Block Engine v2.2.2 (Ecosystem Edition)",
+    "version": "2.2.2",
     "license": "MIT",
     "repository": {
         "type": "git",

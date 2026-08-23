@@ -211,7 +211,7 @@ namespace BlockEngine
                             res.ContentType = "application/json; charset=utf-8";
                             var statusObj = new Dictionary<string, object>();
                             statusObj["status"] = "online";
-                            statusObj["version"] = "v2.2.0";
+                            statusObj["version"] = "v" + BlockVersion.Value;
                             byte[] buf = Encoding.UTF8.GetBytes(_serializer.Serialize(statusObj));
                             await res.OutputStream.WriteAsync(buf, 0, buf.Length).ConfigureAwait(false);
                             res.Close();

@@ -4,6 +4,8 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$version = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'VERSION') -Raw).Trim()
+if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid VERSION file: $version" }
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 if (-not (Test-Path -LiteralPath $compiler)) { throw "C# compiler not found: $compiler" }
 
@@ -47,4 +49,4 @@ if (-not $SkipHash) {
         } | Set-Content -LiteralPath $hashPath -Encoding ascii
 }
 
-Write-Host 'Block Engine v2.2.0 build completed.'
+Write-Host "Block Engine v$version build completed."

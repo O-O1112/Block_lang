@@ -1,10 +1,13 @@
 param(
     [string]$ReleaseDirectory = $PSScriptRoot,
-    [switch]$SkipExecutableExecution
+    [switch]$SkipExecutableExecution,
+    [string]$Version = ""
 )
 
 $ErrorActionPreference = 'Stop'
 $ReleaseDirectory = [IO.Path]::GetFullPath($ReleaseDirectory)
+if ([string]::IsNullOrWhiteSpace($Version)) { $Version = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'VERSION') -Raw).Trim() }
+if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid release version: $Version" }
 $bin = Join-Path $ReleaseDirectory 'bin'
 if (Test-Path -LiteralPath (Join-Path $ReleaseDirectory 'block.exe')) {
     $bin = $ReleaseDirectory
@@ -14,13 +17,13 @@ $coreNames = @('block.exe', 'block-lite.exe', 'block-plus.exe')
 $requiredArtifacts = @(
     'block.exe', 'block-lite.exe', 'block-plus.exe',
     'block.zip', 'block-lite.zip', 'block-plus.zip',
-    'BlockSetup-v2.2.0.exe', 'BlockSetup.exe',
-    'block-language-2.2.0.vsix', 'acode-plugin-block-2.2.0.zip'
+    "BlockSetup-v$Version.exe", 'BlockSetup.exe',
+    "block-language-$Version.vsix", "acode-plugin-block-$Version.zip"
 )
 $expectedVersions = @{
-    'block.exe' = 'Block Language Engine v2.2.0 (Standard Edition)'
-    'block-lite.exe' = 'Block Lite Engine v2.2.0 (Lite Edition)'
-    'block-plus.exe' = 'Block+ Engine v2.2.0 (Flagship Edition)'
+    'block.exe' = "Block Language Engine v$Version (Standard Edition)"
+    'block-lite.exe' = "Block Lite Engine v$Version (Lite Edition)"
+    'block-plus.exe' = "Block+ Engine v$Version (Flagship Edition)"
 }
 
 foreach ($name in $coreNames) {
@@ -99,8 +102,8 @@ try {
     }
 
     $pluginPackages = @(
-        @{ Archive = 'block-language-2.2.0.vsix'; Manifest = 'extension/package.json'; License = 'extension/LICENSE' },
-        @{ Archive = 'acode-plugin-block-2.2.0.zip'; Manifest = 'plugin.json'; License = 'LICENSE' }
+        @{ Archive = "block-language-$Version.vsix"; Manifest = 'extension/package.json'; License = 'extension/LICENSE' },
+        @{ Archive = "acode-plugin-block-$Version.zip"; Manifest = 'plugin.json'; License = 'LICENSE' }
     )
     foreach ($package in $pluginPackages) {
         $archive = Join-Path $ReleaseDirectory $package.Archive
@@ -113,7 +116,7 @@ try {
             if (-not (Test-Path -LiteralPath $manifestPath)) { $failures.Add("missing manifest in $($package.Archive)"); continue }
             if (-not (Test-Path -LiteralPath $licensePath)) { $failures.Add("missing LICENSE in $($package.Archive)") }
             $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
-            if ($manifest.version -ne '2.2.0') { $failures.Add("wrong package version in $($package.Archive): $($manifest.version)") }
+            if ($manifest.version -ne $Version) { $failures.Add("wrong package version in $($package.Archive): $($manifest.version)") }
             if ($manifest.license -ne 'MIT') { $failures.Add("missing MIT metadata in $($package.Archive)") }
         } catch {
             $failures.Add("cannot inspect plugin package $($package.Archive): $($_.Exception.Message)")
@@ -123,11 +126,11 @@ try {
     if (Test-Path -LiteralPath $tempRoot) { Remove-Item -LiteralPath $tempRoot -Recurse -Force }
 }
 
-$setupHash = Join-Path $ReleaseDirectory 'BlockSetup-v2.2.0.exe'
+$setupHash = Join-Path $ReleaseDirectory "BlockSetup-v$Version.exe"
 $stableHash = Join-Path $ReleaseDirectory 'BlockSetup.exe'
 if ((Test-Path -LiteralPath $setupHash) -and (Test-Path -LiteralPath $stableHash)) {
     if ((Get-FileHash -LiteralPath $setupHash -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $stableHash -Algorithm SHA256).Hash) {
-        $failures.Add('BlockSetup.exe is not identical to BlockSetup-v2.2.0.exe')
+        $failures.Add("BlockSetup.exe is not identical to BlockSetup-v$Version.exe")
     }
 }
 
@@ -136,4 +139,4 @@ if ($failures.Count -gt 0) {
     exit 1
 }
 
-Write-Host 'Block Engine v2.2.0 release verification passed.'
+Write-Host "Block Engine v$Version release verification passed."

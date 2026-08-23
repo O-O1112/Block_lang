@@ -15,6 +15,7 @@ namespace BlockInstaller
 {
     public class InstallerForm : Form
     {
+        private const string InstallerVersion = "2.2.2";
         private Button btnInstall;
         private Label lblTitle;
         private Label lblStatus;
@@ -154,7 +155,7 @@ namespace BlockInstaller
 
             lblTitle = new Label
             {
-                Text = "Block Engine 2.2.0",
+                Text = "Block Engine " + InstallerVersion,
                 Font = new Font("Segoe UI", 16, FontStyle.Bold),
                 ForeColor = fgColor,
                 AutoSize = true,
@@ -868,7 +869,7 @@ namespace BlockInstaller
                 using (RegistryKey unkey = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\BlockEngine"))
                 {
                     unkey.SetValue("DisplayName", "Block Engine (" + selectedVersion.ToUpper() + ")");
-                    unkey.SetValue("DisplayVersion", "2.2.0");
+                    unkey.SetValue("DisplayVersion", InstallerVersion);
                     unkey.SetValue("Publisher", "Block Language Team");
                     unkey.SetValue("InstallLocation", installDir);
                     unkey.SetValue("DisplayIcon", iconPath);

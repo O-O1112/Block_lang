@@ -4,7 +4,7 @@ This roadmap is a public planning document, not a promise that an item is alread
 implemented. Shipped behavior belongs in the [README](README.md),
 [changelog](CHANGELOG.md), and release notes.
 
-## Current: v2.2.0 foundation
+## Current: v2.2.2 foundation
 
 The current release line focuses on making the core workflow usable and reviewable:
 
@@ -17,8 +17,9 @@ The current release line focuses on making the core workflow usable and reviewab
 - VS Code and Acode integrations;
 - smoke tests, release verification, checksums, security guidance, and versioned
   documentation.
+- workspace-aware project discovery and deterministic native expression limits.
 
-## Next: v2.2.2 core stability and first-run friction
+## Next: v2.3.0 ecosystem and first-run friction
 
 These are the highest-value improvements for the next patch release:
 

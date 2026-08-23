@@ -2,7 +2,7 @@
   "id": "com.blocklang.acode",
   "name": "Block Engine",
   "main": "main.js",
-  "version": "2.2.0",
+  "version": "2.2.2",
   "license": "MIT",
   "repository": "https://github.com/O-O1112/Block_lang.git",
   "readme": "readme.md",

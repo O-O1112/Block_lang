@@ -28,10 +28,11 @@ function Assert-Condition([bool]$Condition, [string]$Message) {
 }
 
 try {
+    $version = (Get-Content -LiteralPath (Join-Path $PSScriptRoot '..\VERSION') -Raw).Trim()
     $versions = @{
-        'block.exe' = 'Block Language Engine v2.2.0 (Standard Edition)'
-        'block-lite.exe' = 'Block Lite Engine v2.2.0 (Lite Edition)'
-        'block-plus.exe' = 'Block+ Engine v2.2.0 (Flagship Edition)'
+        'block.exe' = "Block Language Engine v$version (Standard Edition)"
+        'block-lite.exe' = "Block Lite Engine v$version (Lite Edition)"
+        'block-plus.exe' = "Block+ Engine v$version (Flagship Edition)"
     }
     foreach ($item in $versions.GetEnumerator()) {
         $result = Invoke-Block $item.Key @('--version')
