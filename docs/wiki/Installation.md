@@ -6,9 +6,9 @@
 - **Block Standard (`.blk`)** — the recommended general-purpose edition.
 - **Block+ (`.blkp`)** — expanded runtime and tooling support.
 
-The Windows installer is published as `BlockSetup-v2.2.0.exe` in the repository
-root and on the [download page](../../downloads.html). Existing runtimes are
-detected before optional runtime installation is attempted.
+The Windows installer is published as [`BlockSetup-v2.2.2.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.2/BlockSetup-v2.2.2.exe)
+on the [download page](../../downloads.html). Existing runtimes are detected
+before optional runtime installation is attempted.
 
 ## Install and verify
 

@@ -34,8 +34,10 @@ jobs:
         run: |
           .\tests\Test-BlockEngine.ps1 -EngineDirectory (Join-Path $PWD 'release')
           .\tests\Test-BlockCli.ps1 -EngineDirectory (Join-Path $PWD 'release')
+          .\tests\Test-BlockPaths.ps1 -EngineDirectory (Join-Path $PWD 'release')
           .\tests\Test-NativeLanguage.ps1 -EngineDirectory (Join-Path $PWD 'release')
           .\tests\Test-NativeInterpreter.ps1 -SourcePath (Join-Path $PWD 'src\NativeBlockProgram.cs')
+          .\tests\Test-WebsiteLinks.ps1 -RepositoryRoot $PWD
 
       - name: Publish GitHub release
         shell: powershell

@@ -1,8 +1,8 @@
-# Block Engine Acode Extension (v2.2.0)
+# Block Engine Acode Extension (v2.2.2)
 
 Official Android Acode mobile editor extension for **Block Engine (Polyglot Orchestrator)**.
 
-## Features (v2.2.0 Update)
+## Features (v2.2.2 Update)
 - **Syntax Highlighting & Icon Support**: Auto-detects `.blk`, `.block`, `.blkl`, `.blkp` files with custom Block icon.
 - **Polyglot Code Snippets**: Pre-loaded snippets for `<py>`, `<js>`, `<php>`, `<lua>`, `<ruby>`, `<sql>`, `<html>`, plus Block+ runtimes (`<rust>`, `<go>`, `<cpp>`, `<c>`, `<ts>`, `<cs>`, `<zig>`, `<dart>`, `<perl>`, `<r>`).
 - **Remote Execution**: One-click run code on PC Block Engine (`block serve` or API Server).

@@ -25,6 +25,38 @@ document.addEventListener('DOMContentLoaded', () => {
         navToggle?.setAttribute('aria-expanded', 'false');
     }));
 
+    // Use a same-origin Blob download as a compatibility fallback. Some
+    // browsers ignore the HTML download attribute when the response is served
+    // through a static edge asset, even when Content-Disposition is present.
+    document.querySelectorAll('a.package-download').forEach(link => {
+        link.addEventListener('click', async event => {
+            if (!window.fetch || !window.URL?.createObjectURL) return;
+            event.preventDefault();
+            const originalLabel = link.textContent;
+            link.setAttribute('aria-busy', 'true');
+            link.style.pointerEvents = 'none';
+            try {
+                const response = await fetch(link.href, { credentials: 'same-origin' });
+                if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+                const blobUrl = URL.createObjectURL(await response.blob());
+                const fileLink = document.createElement('a');
+                fileLink.href = blobUrl;
+                fileLink.download = link.getAttribute('download') || link.pathname.split('/').pop() || 'block.zip';
+                document.body.appendChild(fileLink);
+                fileLink.click();
+                fileLink.remove();
+                window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1500);
+            } catch (error) {
+                console.error(error);
+                window.location.assign(link.href);
+            } finally {
+                link.textContent = originalLabel;
+                link.removeAttribute('aria-busy');
+                link.style.pointerEvents = '';
+            }
+        });
+    });
+
     const reveals = document.querySelectorAll('.reveal');
     if (reducedMotion || !('IntersectionObserver' in window)) {
         reveals.forEach(element => element.classList.add('visible'));
