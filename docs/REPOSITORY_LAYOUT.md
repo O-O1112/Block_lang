@@ -29,9 +29,8 @@ continue to work.
 | `verify-release.ps1` | Verifies versions, hashes, and required release files. |
 | `index.html`, `downloads.html`, `wiki*.html`, `styles.css`, `script.js` | GitHub Pages site. |
 | `block.exe`, `block-lite.exe`, `block-plus.exe` | Published engine binaries. |
-| `BlockSetup-v2.2.0.exe` | Published Windows installer. |
-| `block-language-2.2.0.vsix` | Published VS Code extension package. |
-| `acode-plugin-block-2.2.0.zip` | Published Acode plugin package. |
+| `BlockSetup-v2.2.2.exe`, `block-language-2.2.2.vsix`, `acode-plugin-block-2.2.2.zip` | Current v2.2.2 compatibility copies; the canonical download links use the versioned GitHub Release. |
+| `BlockSetup-v2.2.0.exe`, `block-language-2.2.0.vsix`, `acode-plugin-block-2.2.0.zip` | Historical compatibility artifacts. |
 | `SHA256SUMS.txt` | SHA-256 checksums for the published engine binaries. |
 | `SUPPORT.md` | Where to ask for help and what evidence to include. |
 | `GOVERNANCE.md` | Current maintainer and decision process. |
@@ -59,9 +58,10 @@ continue to work.
 | `.github/CODEOWNERS` | Default review ownership. |
 | `.github/dependabot.yml` | Monthly GitHub Actions dependency checks. |
 
-Historical packages remain at the root for backwards compatibility. Before
-moving or removing any release artifact, search the site files for references
-and verify the resulting GitHub Pages URLs.
+Historical packages remain at the root for backwards compatibility. The public
+site must link current downloads to the versioned GitHub Release, never to these
+legacy root binaries. Before moving or removing any release artifact, search the
+site files for references and verify the resulting GitHub Pages URLs.
 
 ## Maintainer workflow
 

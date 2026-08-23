@@ -33,6 +33,10 @@ jobs:
         shell: powershell
         run: .\tests\Test-BlockPaths.ps1 -EngineDirectory (Join-Path $PWD 'ci-release')
 
+      - name: Verify website release links
+        shell: powershell
+        run: .\tests\Test-WebsiteLinks.ps1 -RepositoryRoot $PWD
+
       - name: Run native language tests
         shell: powershell
         run: .\tests\Test-NativeLanguage.ps1 -EngineDirectory (Join-Path $PWD 'ci-release')
