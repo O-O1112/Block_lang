@@ -12,6 +12,10 @@
 !wiki-install.html
 !wiki-polyglot.html
 !wiki-syntax.html
+!privacy.html
+!terms.html
+!contact.html
+!security.html
 !styles.css
 !script.js
 !logo.svg
@@ -19,9 +23,12 @@
 !robots.txt
 !sitemap.xml
 !google1c3a42d3b7bb390f.html
+!.well-known/security.txt
+!.nojekyll
 
 # Public release downloads linked by downloads.html.
 !BlockSetup.exe
+!BlockSetup-v2.2.2.exe
 !BlockSetup-v2.2.0.exe
 !block.exe
 !block-lite.exe
@@ -33,6 +40,8 @@
 !block-language-1.0.0.vsix
 !block-language-2.1.0.vsix
 !block-language-2.2.0.vsix
+!block-language-2.2.2.vsix
 !acode-plugin-block.zip
 !acode-plugin-block-2.2.0.zip
+!acode-plugin-block-2.2.2.zip
 !SHA256SUMS.txt
