@@ -1,10 +1,12 @@
-# Block Language
+# Block Language — Block Engine
 
 [![Build and test](https://github.com/O-O1112/Block_lang/actions/workflows/ci.yml/badge.svg)](https://github.com/O-O1112/Block_lang/actions/workflows/ci.yml)
 [![Latest tag](https://img.shields.io/github/v/tag/O-O1112/Block_lang?sort=semver&label=latest%20tag)](https://github.com/O-O1112/Block_lang/tags)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-**One file. Every runtime.** Block is a local-first polyglot programming engine for composing Python, JavaScript, Lua, PHP, SQLite, and more in one readable program with a shared state pipeline.
+**One file. Every runtime.** Block is a local-first polyglot programming language and execution engine for composing Python, JavaScript, Lua, PHP, SQLite, and more in one readable program with a shared state pipeline.
+
+If you are looking for a polyglot programming language, a multi-language scripting workflow, a Python-to-JavaScript bridge, or a local-first automation engine built around readable `.blk` files, Block is designed for that use case.
 
 **Start here:** [download the engine](downloads.html) · [read the documentation](wiki.html) · [run the examples](examples/) · [read the book source](docs/book/) · [report an external result](docs/THIRD-PARTY-VALIDATION.md) · [browse the source on GitHub](https://github.com/O-O1112/Block_lang)
 
@@ -40,6 +42,7 @@ Maintainers can use the [organic growth playbook](docs/GROWTH.md) to turn demos,
 - [Troubleshooting](#troubleshooting)
 - [Build, test, and release](#repository-layout-and-release-verification)
 - [Roadmap](#roadmap)
+- [Community and discovery](#community-and-discovery)
 - [Documentation and contribution](#documentation-contribution-and-license)
 
 ## What Block is — and is not
@@ -1007,6 +1010,23 @@ issue with the version and runtime details. Those signals help prioritize work
 without pretending that every use case is already supported.
 
 If you want to help validate the current release, start with the [external tester packet](docs/TESTER-PACKET.md). Maintainers should keep external validation separate from their own smoke tests; the [validation guide](docs/THIRD-PARTY-VALIDATION.md) explains how to record independent evidence.
+
+---
+
+## Community and discovery
+
+Block grows through reproducible examples and honest technical feedback. If you
+are evaluating the project, the best first steps are:
+
+- [Run a copy-ready example](examples/README.md) and share what worked.
+- Ask a usage question in [GitHub Discussions](https://github.com/O-O1112/Block_lang/discussions).
+- Report a focused bug through the [issue templates](https://github.com/O-O1112/Block_lang/issues/new/choose).
+- Submit an independent workflow, tutorial, or compatibility result using the
+  [validation guide](docs/THIRD-PARTY-VALIDATION.md).
+
+When sharing Block, link to the specific example, release, or documentation
+page that supports the claim. This keeps discovery useful for new users and
+makes project growth easy to verify.
 
 ---
 
