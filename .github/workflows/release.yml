@@ -23,8 +23,10 @@ jobs:
 
       - name: Build and verify release artifacts
         shell: powershell
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
         run: |
-          $version = "${{ github.ref_name }}" -replace '^v', ''
+          $version = $env:RELEASE_TAG -replace '^v', ''
           .\build-release.ps1 -Version $version -ReleaseDirectory (Join-Path $PWD 'release')
 
       - name: Run complete release test suite
