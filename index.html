@@ -7,7 +7,8 @@
     <meta name="description" content="Block Language (Block-Lang / Block Engine) is the official single-file polyglot programming engine. Write Python, JavaScript, Lua, and PHP in one file with an automatic state pipeline and zero glue code.">
     <meta name="keywords" content="block lang, block language, block-lang, block engine, block 程式語言, polyglot programming, python javascript lua in one file">
     <meta name="author" content="O-O1112">
-    <meta name="theme-color" content="#000000">
+    <meta name="theme-color" content="#050505">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; media-src 'none'; worker-src 'self'; manifest-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://cloudflareinsights.com https://static.cloudflareinsights.com; form-action 'self'; upgrade-insecure-requests">
     <link rel="canonical" href="https://o-o1112.github.io/Block_lang/">
 
     <!-- Open Graph / Facebook / Discord SEO -->
@@ -63,6 +64,7 @@
 </head>
 <body data-page="home">
     <canvas id="bg-canvas" aria-hidden="true"></canvas>
+    <div class="modular-field" aria-hidden="true"></div>
     <div class="noise" aria-hidden="true"></div>
     <div id="cursor-aura" aria-hidden="true"></div>
     <div id="scroll-progress" aria-hidden="true"></div>
@@ -72,6 +74,10 @@
             <img src="logo.svg" alt="" class="logo-img-small">
             <span class="logo-text">BLOCK</span>
         </a>
+        <span class="nav-brand-meta" aria-label="Block Engine version and status">
+            <span>ENGINE / 2.2.2</span>
+            <span class="nav-live"><i></i> READY</span>
+        </span>
         <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false">
             <span></span><span></span>
         </button>
@@ -104,8 +110,8 @@
                 </div>
             </div>
 
-            <div class="hero-visual reveal" aria-label="An animated diagram showing multiple language runtimes orbiting the Block engine">
-                <div class="system-caption caption-top"><span></span> ORCHESTRATOR / ONLINE</div>
+            <div class="hero-visual reveal" aria-label="An animated diagram showing Block language runtimes connected to the engine">
+                <div class="system-caption caption-top"><span></span> EXECUTION MAP / READY</div>
                 <div class="orbit-stage">
                     <div class="orbit orbit-one"><i></i></div>
                     <div class="orbit orbit-two"><i></i></div>

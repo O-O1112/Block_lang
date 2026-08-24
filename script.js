@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    const homePage = document.body?.dataset.page === 'home';
     const navbar = document.querySelector('.navbar');
     const navToggle = document.querySelector('.nav-toggle');
     const progress = document.getElementById('scroll-progress');
@@ -93,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     document.querySelectorAll('.tilt-card').forEach(card => {
-        if (!finePointer || reducedMotion) return;
+        if (!finePointer || reducedMotion || homePage) return;
         card.addEventListener('pointermove', event => {
             const rect = card.getBoundingClientRect();
             const x = event.clientX - rect.left;
@@ -119,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const aura = document.getElementById('cursor-aura');
-    if (aura && finePointer) {
+    if (aura && finePointer && !homePage) {
         window.addEventListener('pointermove', event => {
             aura.style.left = `${event.clientX}px`;
             aura.style.top = `${event.clientY}px`;
@@ -128,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.addEventListener('mouseleave', () => { aura.style.opacity = '0'; });
     }
 
-    if (finePointer) {
+    if (finePointer && !homePage) {
         const customCursor = document.createElement('div');
         customCursor.id = 'custom-cursor';
         customCursor.setAttribute('aria-hidden', 'true');
@@ -287,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const canvas = document.getElementById('bg-canvas');
     const context = canvas?.getContext('2d');
-    if (canvas && context) {
+    if (canvas && context && !homePage) {
         let width = 0;
         let height = 0;
         let ratio = 1;
