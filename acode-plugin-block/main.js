@@ -2,6 +2,7 @@ const pluginId = "com.blocklang.acode";
 
 const MAX_CODE_CHARS = 2 * 1024 * 1024;
 const MAX_RESPONSE_BYTES = 4 * 1024 * 1024;
+const BLOCK_PLUGIN_VERSION = '2.2.2';
 
 const svgIconUrl = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%232a2a2a'/%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='5' stroke-linejoin='round'%3E%3Crect x='25' y='20' width='15' height='60'/%3E%3Cpolygon points='45,20 70,20 75,32.5 70,45 45,45'/%3E%3Cpolygon points='45,55 75,55 80,67.5 75,80 45,80'/%3E%3C/g%3E%3C/svg%3E";
 
@@ -36,9 +37,7 @@ const BLOCK_DEFAULT_RUNTIME_CONFIG = {
     engine: 'standard',
     targetProfileIndex: 0,
     timeoutMs: 10000,
-    maxParallel: 4,
-    networkBlocked: true,
-    cacheEnabled: true
+    networkBlocked: true
 };
 
 async function readResponseTextLimited(response) {
@@ -89,6 +88,7 @@ class BlockPlugin {
         this.lastOutput = null;
         this.lastHtmlOutput = null;
         this.lastExecutionStats = null;
+        this.sessionTokens = new Map();
         this.activeTheme = window.localStorage.getItem('block_ui_theme') || 'cyber';
         this.runtimeConfig = this.loadRuntimeConfig();
         try {
@@ -98,14 +98,29 @@ class BlockPlugin {
         }
         if (!Array.isArray(this.serverProfiles) || this.serverProfiles.length === 0) {
             this.serverProfiles = [
-                { name: 'Localhost Engine', url: 'http://127.0.0.1:8080/api/run', token: '' }
+                { name: 'Localhost Engine', url: 'http://127.0.0.1:8080/api/run' }
             ];
+            this.saveProfiles();
+        } else {
+            // Migrate legacy plaintext tokens out of persistent localStorage.
+            this.serverProfiles = this.serverProfiles.map(profile => {
+                const clean = { name: String(profile.name || 'Block Engine'), url: String(profile.url || '') };
+                if (typeof profile.token === 'string' && profile.token) {
+                    this.sessionTokens.set(this.profileKey(clean), profile.token);
+                }
+                return clean;
+            });
             this.saveProfiles();
         }
     }
 
+    profileKey(profile) {
+        return `${profile.name}\n${profile.url}`;
+    }
+
     saveProfiles() {
-        window.localStorage.setItem('block_server_profiles', JSON.stringify(this.serverProfiles));
+        const safeProfiles = this.serverProfiles.map(profile => ({ name: profile.name, url: profile.url }));
+        window.localStorage.setItem('block_server_profiles', JSON.stringify(safeProfiles));
     }
 
     isAllowedServerUrl(value) {
@@ -123,7 +138,9 @@ class BlockPlugin {
         const idx = Number.isInteger(this.runtimeConfig.targetProfileIndex)
             ? this.runtimeConfig.targetProfileIndex
             : parseInt(window.localStorage.getItem('block_active_profile_idx') || '0', 10);
-        return this.serverProfiles[idx] || this.serverProfiles[0];
+        const profile = this.serverProfiles[idx] || this.serverProfiles[0];
+        if (!profile) return null;
+        return { ...profile, token: this.sessionTokens.get(this.profileKey(profile)) || '' };
     }
 
     loadRuntimeConfig() {
@@ -137,9 +154,9 @@ class BlockPlugin {
         if (!BLOCK_ENGINE_OPTIONS.some(item => item.id === config.engine)) config.engine = BLOCK_DEFAULT_RUNTIME_CONFIG.engine;
         config.targetProfileIndex = Number.isInteger(config.targetProfileIndex) ? Math.max(0, config.targetProfileIndex) : 0;
         config.timeoutMs = Number.isFinite(config.timeoutMs) ? Math.min(120000, Math.max(1000, Math.round(config.timeoutMs))) : BLOCK_DEFAULT_RUNTIME_CONFIG.timeoutMs;
-        config.maxParallel = Number.isFinite(config.maxParallel) ? Math.min(16, Math.max(1, Math.round(config.maxParallel))) : BLOCK_DEFAULT_RUNTIME_CONFIG.maxParallel;
         config.networkBlocked = config.networkBlocked !== false;
-        config.cacheEnabled = config.cacheEnabled !== false;
+        delete config.maxParallel;
+        delete config.cacheEnabled;
         return config;
     }
 
@@ -542,9 +559,8 @@ class BlockPlugin {
             `🧩 Language · ${this.getLanguageConfig().label} <${this.runtimeConfig.language}>`,
             `⚡ Engine · ${this.getEngineConfig().label} (${this.getEngineConfig().extension})`,
             `🎯 Target · ${profile ? profile.name : 'No target'}`,
-            `⏱ Performance · ${this.runtimeConfig.timeoutMs}ms / ${this.runtimeConfig.maxParallel} parallel`,
-            `🛡 Security · Network guard ${this.runtimeConfig.networkBlocked ? 'ON' : 'OFF'}`,
-            `💾 Cache · ${this.runtimeConfig.cacheEnabled ? 'ON' : 'OFF'}`,
+            `⏱ Timeout · ${this.runtimeConfig.timeoutMs}ms`,
+            `🛡 Security · Advisory network guard ${this.runtimeConfig.networkBlocked ? 'ON' : 'OFF'}`,
             '↺ Reset runtime defaults',
             '✓ Done'
         ];
@@ -554,9 +570,8 @@ class BlockPlugin {
         if (selected.includes('Language')) await this.configureLanguage();
         else if (selected.includes('Engine')) await this.configureEngine();
         else if (selected.includes('Target')) await this.configureTarget();
-        else if (selected.includes('Performance')) await this.configurePerformance();
+        else if (selected.includes('Timeout')) await this.configurePerformance();
         else if (selected.includes('Security')) await this.configureSecurity();
-        else if (selected.includes('Cache')) this.runtimeConfig.cacheEnabled = !this.runtimeConfig.cacheEnabled;
         else if (selected.includes('Reset')) this.runtimeConfig = { ...BLOCK_DEFAULT_RUNTIME_CONFIG };
 
         this.saveRuntimeConfig();
@@ -607,25 +622,16 @@ class BlockPlugin {
             return;
         }
 
-        const parallelInput = await window.acode.prompt('Maximum parallel blocks', String(this.runtimeConfig.maxParallel));
-        if (parallelInput === null || parallelInput === undefined) return;
-        const maxParallel = Number(parallelInput);
-        if (!Number.isFinite(maxParallel) || maxParallel < 1 || maxParallel > 16) {
-            window.acode.alert('Invalid parallel limit', 'Use a value between 1 and 16.');
-            return;
-        }
-
         this.runtimeConfig.timeoutMs = Math.round(timeoutMs);
-        this.runtimeConfig.maxParallel = Math.round(maxParallel);
     }
 
     async configureSecurity() {
-        const selected = await window.acode.select('Network Guard', [
-            `${this.runtimeConfig.networkBlocked ? '✔ ' : ''}Strict offline guard · Block network access`,
+        const selected = await window.acode.select('Advisory Network Guard', [
+            `${this.runtimeConfig.networkBlocked ? '✔ ' : ''}Best-effort guard · Block common networking APIs`,
             `${!this.runtimeConfig.networkBlocked ? '✔ ' : ''}Allow runtime network access`
         ]);
         if (!selected) return;
-        this.runtimeConfig.networkBlocked = selected.includes('Strict offline');
+        this.runtimeConfig.networkBlocked = selected.includes('Best-effort');
     }
 
     insertTemplate() {
@@ -646,7 +652,7 @@ class BlockPlugin {
             '🖥️ Server Profile Manager',
             '📦 Project Ecosystem Package Tag',
             '📥 Export Execution Output Log',
-            'ℹ️ About Block Engine Ultimate v2.2.0'
+            `ℹ️ About Block Engine v${BLOCK_PLUGIN_VERSION}`
         ];
         const res = await window.acode.select(`⚡ Block Engine (${activeProf.name})`, opts);
         if (!res) return;
@@ -688,7 +694,9 @@ class BlockPlugin {
                 return;
             }
             const token = await window.acode.prompt('X-Api-Token (required; copy it from block serve output)', '');
-            this.serverProfiles.push({ name, url, token: token || '' });
+            const profile = { name, url };
+            this.serverProfiles.push(profile);
+            if (token) this.sessionTokens.set(this.profileKey(profile), token);
             this.saveProfiles();
             if (window.toast) window.toast('Profile added!', 1500);
         } else {
@@ -805,8 +813,8 @@ class BlockPlugin {
         const html = `
             <div style="text-align: center;">
                 <img src="${svgIconUrl}" style="width: 80px; height: 80px; border-radius: 16px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
-                <h3 style="margin: 0; color: #fff; font-family: sans-serif;">Block Engine Ultimate</h3>
-                <p style="margin: 6px 0 12px 0; color: #10b981; font-size: 14px; font-weight: bold;">v2.2.0 (Ecosystem Suite)</p>
+                <h3 style="margin: 0; color: #fff; font-family: sans-serif;">Block Engine</h3>
+                <p style="margin: 6px 0 12px 0; color: #10b981; font-size: 14px; font-weight: bold;">v${BLOCK_PLUGIN_VERSION}</p>
                 <div style="color: #aaa; font-size: 12px; text-align: left; background: #18181b; padding: 12px; border-radius: 8px; border: 1px solid #27272a; line-height: 1.6;">
                     • <strong>Multi-Profile Manager</strong>: Switch between Dev / Cloud PCs<br>
                     • <strong>Interactive REPL Playground</strong>: Test code snippets on mobile<br>
@@ -836,7 +844,6 @@ class BlockPlugin {
             engine: engine.label,
             target: prof ? prof.name : 'No target',
             timeoutMs: this.runtimeConfig.timeoutMs,
-            maxParallel: this.runtimeConfig.maxParallel,
             networkBlocked: this.runtimeConfig.networkBlocked,
             elapsed: 0
         };
@@ -853,16 +860,22 @@ class BlockPlugin {
 
         let timeout = null;
         try {
+            let sessionToken = prof.token;
+            if (!sessionToken) {
+                sessionToken = await window.acode.prompt('X-Api-Token (kept for this session only)', '');
+                if (!sessionToken) {
+                    this.showPanelOutput('❌ Authentication required: enter the token printed by "block serve".', 'error', 0);
+                    return;
+                }
+                this.sessionTokens.set(this.profileKey(prof), sessionToken);
+            }
             const headers = {
                 'Content-Type': 'text/plain',
-                'X-Block-Language': language.tag,
                 'X-Block-Engine': engine.id,
                 'X-Block-Timeout-Ms': String(this.runtimeConfig.timeoutMs),
-                'X-Block-Max-Parallel': String(this.runtimeConfig.maxParallel),
-                'X-Block-Network-Blocked': this.runtimeConfig.networkBlocked ? '1' : '0',
-                'X-Block-Cache': this.runtimeConfig.cacheEnabled ? '1' : '0'
+                'X-Block-Network-Blocked': this.runtimeConfig.networkBlocked ? '1' : '0'
             };
-            if (prof.token) headers['X-Api-Token'] = prof.token;
+            headers['X-Api-Token'] = sessionToken;
 
             const controller = new AbortController();
             timeout = setTimeout(() => controller.abort(), this.runtimeConfig.timeoutMs);
@@ -880,7 +893,6 @@ class BlockPlugin {
                 engine: engine.label,
                 target: prof.name,
                 timeoutMs: this.runtimeConfig.timeoutMs,
-                maxParallel: this.runtimeConfig.maxParallel,
                 networkBlocked: this.runtimeConfig.networkBlocked,
                 elapsed
             };
@@ -891,8 +903,8 @@ class BlockPlugin {
                     const errResult = await readJsonResponseLimited(response);
                     if (errResult && errResult.error) errorMsg = errResult.error;
                 } catch (_) {}
-                if (response.status === 403 && (typeof prof.token !== 'string' || !prof.token.trim())) {
-                    errorMsg += '\nSet the X-Api-Token in this profile using the token printed by "block serve".';
+                if (response.status === 403) {
+                    errorMsg += '\nThe session token was rejected. Copy the current token printed by "block serve".';
                 }
                 this.showPanelOutput(`❌ Execution Error (${response.status}):\n${errorMsg}`, 'error', elapsed);
                 return;
@@ -962,7 +974,6 @@ class BlockPlugin {
             engine: this.getEngineConfig().label,
             target: this.getActiveProfile() ? this.getActiveProfile().name : 'No target',
             timeoutMs: this.runtimeConfig.timeoutMs,
-            maxParallel: this.runtimeConfig.maxParallel,
             networkBlocked: this.runtimeConfig.networkBlocked
         };
         const networkShare = Math.min(70, Math.max(18, Math.round((elapsed || 0) / Math.max(stats.timeoutMs, elapsed || 1) * 100)));
@@ -979,9 +990,8 @@ class BlockPlugin {
                 ['Language', `${stats.language} <${stats.tag}>`],
                 ['Engine', stats.engine],
                 ['Target', stats.target],
-                ['Budget', `${stats.timeoutMs}ms · ${stats.maxParallel} parallel`],
-                ['Network', stats.networkBlocked ? 'Guarded' : 'Allowed'],
-                ['Cache', this.runtimeConfig.cacheEnabled ? 'Enabled' : 'Disabled']
+                ['Budget', `${stats.timeoutMs}ms`],
+                ['Network', stats.networkBlocked ? 'Advisory guard' : 'Allowed']
             ];
             rows.forEach(([label, value]) => {
                 const cell = document.createElement('span');

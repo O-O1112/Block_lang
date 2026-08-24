@@ -29,6 +29,14 @@ if (-not (Test-Path -LiteralPath $icon)) { throw "Installer icon not found: $ico
 
 New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 $primary = Join-Path $OutputDirectory "BlockSetup-v$Version.exe"
+$generatedDirectory = Join-Path ([IO.Path]::GetTempPath()) ('block-installer-version-' + [Guid]::NewGuid().ToString('N'))
+$generatedVersionSource = Join-Path $generatedDirectory 'InstallerBuildVersion.g.cs'
+New-Item -ItemType Directory -Force -Path $generatedDirectory | Out-Null
+[IO.File]::WriteAllText(
+    $generatedVersionSource,
+    "namespace BlockInstaller { internal static class InstallerBuildVersion { public const string Value = `"$Version`"; } }",
+    (New-Object Text.UTF8Encoding($false))
+)
 $arguments = @(
     '/nologo',
     '/target:winexe',
@@ -45,11 +53,17 @@ $arguments = @(
     '/reference:System.Windows.Forms.dll',
     '/reference:System.IO.Compression.dll',
     '/reference:System.IO.Compression.FileSystem.dll',
-    $source
+    $source,
+    $generatedVersionSource
 )
 
-& $compiler @arguments
-if ($LASTEXITCODE -ne 0) { throw 'Installer build failed.' }
+try {
+    & $compiler @arguments
+    if ($LASTEXITCODE -ne 0) { throw 'Installer build failed.' }
+}
+finally {
+    if (Test-Path -LiteralPath $generatedDirectory) { Remove-Item -LiteralPath $generatedDirectory -Recurse -Force }
+}
 
 $stableAlias = Join-Path $OutputDirectory 'BlockSetup.exe'
 Copy-Item -LiteralPath $primary -Destination $stableAlias -Force

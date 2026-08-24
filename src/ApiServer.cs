@@ -15,6 +15,26 @@ namespace BlockEngine
         private static readonly JavaScriptSerializer _serializer = new JavaScriptSerializer { MaxJsonLength = (int)SecurityLimits.MaxJsonBytes };
         private static readonly SemaphoreSlim _requestSlots = new SemaphoreSlim(SecurityLimits.MaxConcurrentRequests, SecurityLimits.MaxConcurrentRequests);
 
+        private static string EngineEdition
+        {
+            get
+            {
+#if BLOCK_PLUS
+                return "plus";
+#else
+                return "standard";
+#endif
+            }
+        }
+
+        private static void WriteJsonError(HttpListenerResponse response, int statusCode, string message)
+        {
+            response.StatusCode = statusCode;
+            response.ContentType = "application/json; charset=utf-8";
+            byte[] payload = Encoding.UTF8.GetBytes(_serializer.Serialize(new Dictionary<string, object> { { "error", message } }));
+            response.OutputStream.Write(payload, 0, payload.Length);
+        }
+
         private static bool ContainsReparsePoint(string path)
         {
             string current = Path.GetFullPath(path);
@@ -110,12 +130,6 @@ namespace BlockEngine
                 cfg.ApiToken = Guid.NewGuid().ToString("N");
             }
             
-            Console.WriteLine(string.Format("\n[ BLOCK API SERVER IS RUNNING ON HTTP://LOCALHOST:{0} ]\n", port));
-            Console.WriteLine(string.Format("=> Security Token: {0}", cfg.ApiToken));
-            Console.WriteLine("=> Sandbox Directory: " + cfg.SandboxDir);
-            Console.WriteLine("=> Max Request Body: " + (cfg.MaxRequestBodyBytes / 1024) + " KB");
-            Console.WriteLine("Awaiting remote code execution requests...\n");
-            
             HttpListener listener;
             try
             {
@@ -126,22 +140,33 @@ namespace BlockEngine
             }
             catch (PlatformNotSupportedException)
             {
-                Console.WriteLine("[ERROR] The local HTTP listener is not supported by this runtime/platform.");
+                Console.Error.WriteLine("[ERROR] The local HTTP listener is not supported by this runtime/platform.");
+                Environment.ExitCode = 1;
                 return;
             }
             catch (HttpListenerException ex)
             {
                 if (ex.ErrorCode == 5)
                 {
-                    Console.WriteLine("[ERROR] Access Denied! Please run your terminal as Administrator to start the API server.");
-                    Console.WriteLine(string.Format("Alternatively, run once as admin: netsh http add urlacl url=http://localhost:{0}/ user=\"{1}\"", port, Environment.UserName));
+                    Console.Error.WriteLine("[ERROR] Access Denied! Please run your terminal as Administrator to start the API server.");
+                    Console.Error.WriteLine(string.Format("Alternatively, run once as admin: netsh http add urlacl url=http://localhost:{0}/ user=\"{1}\"", port, Environment.UserName));
                 }
                 else
                 {
-                    Console.WriteLine("[ERROR] Failed to start API Server: " + ex.Message);
+                    Console.Error.WriteLine("[ERROR] Failed to start API Server: " + ex.Message);
                 }
+                Environment.ExitCode = 1;
                 return;
             }
+
+            Console.WriteLine(string.Format("\n[ BLOCK API SERVER IS RUNNING ON HTTP://LOCALHOST:{0} ]\n", port));
+            Console.WriteLine(string.Format("=> Security Token: {0}", cfg.ApiToken));
+            Console.WriteLine("=> Engine Edition: " + EngineEdition);
+            Console.WriteLine("=> Sandbox Directory: " + cfg.SandboxDir);
+            Console.WriteLine("=> Max Request Body: " + (cfg.MaxRequestBodyBytes / 1024) + " KB");
+            if (cfg.NetworkBlocked)
+                Console.WriteLine("=> Advisory Network Guard: ON (best effort; not an OS sandbox)");
+            Console.WriteLine("Awaiting remote code execution requests...\n");
 
             while (true)
             {
@@ -176,7 +201,7 @@ namespace BlockEngine
                             res.Headers.Add("Access-Control-Allow-Origin", origin);
                         }
                         res.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-                        res.Headers.Add("Access-Control-Allow-Headers", "Content-Type, X-Api-Token, X-Block-Language, X-Block-Engine, X-Block-Timeout-Ms, X-Block-Max-Parallel, X-Block-Network-Blocked, X-Block-Cache");
+                        res.Headers.Add("Access-Control-Allow-Headers", "Content-Type, X-Api-Token, X-Block-Engine, X-Block-Timeout-Ms, X-Block-Network-Blocked");
                         
                         if (req.HttpMethod == "OPTIONS")
                         {
@@ -189,9 +214,15 @@ namespace BlockEngine
                         string token = req.Headers["X-Api-Token"];
                         if (string.IsNullOrEmpty(token) || token != cfg.ApiToken)
                         {
-                            res.StatusCode = 403;
-                            byte[] errBuf = Encoding.UTF8.GetBytes("{\"error\":\"Forbidden: Invalid or missing API token. Use X-Api-Token header.\"}");
-                            res.OutputStream.Write(errBuf, 0, errBuf.Length);
+                            WriteJsonError(res, 403, "Forbidden: Invalid or missing API token. Use X-Api-Token header.");
+                            res.Close();
+                            return;
+                        }
+
+                        string requestedEngine = (req.Headers["X-Block-Engine"] ?? "").Trim().ToLowerInvariant();
+                        if (requestedEngine.Length > 0 && requestedEngine != "auto" && requestedEngine != EngineEdition)
+                        {
+                            WriteJsonError(res, 409, string.Format("Requested engine edition '{0}' does not match this '{1}' server.", requestedEngine, EngineEdition));
                             res.Close();
                             return;
                         }
@@ -212,6 +243,8 @@ namespace BlockEngine
                             var statusObj = new Dictionary<string, object>();
                             statusObj["status"] = "online";
                             statusObj["version"] = "v" + BlockVersion.Value;
+                            statusObj["edition"] = EngineEdition;
+                            statusObj["networkGuard"] = cfg.NetworkBlocked ? "advisory" : "off";
                             byte[] buf = Encoding.UTF8.GetBytes(_serializer.Serialize(statusObj));
                             await res.OutputStream.WriteAsync(buf, 0, buf.Length).ConfigureAwait(false);
                             res.Close();
@@ -295,6 +328,7 @@ namespace BlockEngine
                                 var result = new Dictionary<string, object>();
                                 result["status"] = "success";
                                 result["output"] = outputBuffer.ToString();
+                                result["edition"] = EngineEdition;
                                 byte[] buf = Encoding.UTF8.GetBytes(_serializer.Serialize(result));
                                 await res.OutputStream.WriteAsync(buf, 0, buf.Length).ConfigureAwait(false);
                             }

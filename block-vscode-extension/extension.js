@@ -4,6 +4,7 @@ const { spawn } = require('child_process');
 let statusBarItem;
 let currentPanel = undefined;
 let outputChannel;
+let extensionVersion = 'unknown';
 const MAX_PROCESS_OUTPUT_CHARS = 1024 * 1024;
 const PROCESS_TIMEOUT_MS = 120000;
 
@@ -75,6 +76,9 @@ function runChildProcess(command, args, cwd, label) {
 }
 
 function activate(context) {
+    extensionVersion = context.extension && context.extension.packageJSON
+        ? context.extension.packageJSON.version
+        : 'unknown';
     // 1. Create Status Bar Item
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
     outputChannel = vscode.window.createOutputChannel('Block Engine');
@@ -117,7 +121,7 @@ function updateStatusBar() {
         if (fileName.endsWith('.blkl')) edition = 'Lite';
         if (fileName.endsWith('.blkp')) edition = 'Plus (Flagship)';
         
-        statusBarItem.text = `$(rocket) Block v2.2.0 [${edition}]`;
+        statusBarItem.text = `$(rocket) Block v${extensionVersion} [${edition}]`;
         statusBarItem.tooltip = 'Click to run current Block script';
         statusBarItem.show();
     } else {

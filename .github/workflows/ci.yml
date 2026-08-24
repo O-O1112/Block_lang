@@ -53,6 +53,22 @@ jobs:
         shell: powershell
         run: .\tests\Test-NativeInterpreter.ps1 -SourcePath (Join-Path $PWD 'src\NativeBlockProgram.cs')
 
+      - name: Run health-hardening regression tests
+        shell: powershell
+        run: .\tests\Test-HealthHardening.ps1 -EngineDirectory (Join-Path $PWD 'ci-release') -RepositoryRoot $PWD
+
+      - name: Run API server integration tests
+        shell: powershell
+        run: .\tests\Test-ApiServer.ps1 -EngineDirectory (Join-Path $PWD 'ci-release')
+
+      - name: Run Community Lab harness
+        shell: powershell
+        run: .\tests\Test-CommunityLab.ps1 -EngineDirectory (Join-Path $PWD 'ci-release') -SkipPolyglot
+
+      - name: Verify release version injection
+        shell: powershell
+        run: .\tests\Test-ReleaseVersioning.ps1 -RepositoryRoot $PWD
+
       - name: Upload release verification bundle
         uses: actions/upload-artifact@v4
         with:

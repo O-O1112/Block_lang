@@ -96,6 +96,33 @@ namespace BlockEngine
                 return;
             }
 
+            if (arg0 == "ast")
+            {
+                if (args.Length < 2)
+                {
+                    Console.Error.WriteLine("Usage: block ast <file>");
+                    Environment.ExitCode = 1;
+                    return;
+                }
+
+                EngineConfig astCfg = Config.LoadConfig();
+                string astPath;
+                try
+                {
+                    astPath = BlockPathResolver.ResolveScript(JoinCommandLinePath(args, 1), astCfg, "ast");
+                    BlockSyntaxTree syntaxTree = BlockSyntax.Parse(ReadScriptFile(astPath));
+                    Console.WriteLine(BlockSyntax.ToJson(syntaxTree));
+                    if (syntaxTree.Diagnostics.Exists(d => string.Equals(d.Severity, "error", StringComparison.OrdinalIgnoreCase)))
+                        Environment.ExitCode = 1;
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine("[Block] " + ex.Message);
+                    Environment.ExitCode = 1;
+                }
+                return;
+            }
+
             if (arg0 == "config")
             {
                 if (args.Length > 1 && string.Equals(args[1], "path", StringComparison.OrdinalIgnoreCase))
@@ -300,6 +327,7 @@ namespace BlockEngine
             Console.WriteLine("Usage: block-lite <file.blkl>");
             Console.WriteLine("       block-lite run <file.blkl>");
             Console.WriteLine("       block-lite check <file.blkl>");
+            Console.WriteLine("       block-lite ast <file.blkl>");
             Console.WriteLine("       block-lite info [file.blkl]");
             Console.WriteLine("       block-lite capabilities");
             Console.WriteLine("       block-lite runtimes");
@@ -313,6 +341,7 @@ namespace BlockEngine
             Console.WriteLine("Usage: block-plus <file.blkp>");
             Console.WriteLine("       block-plus run <file.blkp>");
             Console.WriteLine("       block-plus check <file.blkp>");
+            Console.WriteLine("       block-plus ast <file.blkp>");
             Console.WriteLine("       block-plus info [file.blkp]");
             Console.WriteLine("       block-plus capabilities");
             Console.WriteLine("       block-plus runtimes");
@@ -331,6 +360,7 @@ namespace BlockEngine
             Console.WriteLine("Usage: block <file.blk>");
             Console.WriteLine("       block run <file.blk>");
             Console.WriteLine("       block check <file.blk>");
+            Console.WriteLine("       block ast <file.blk>");
             Console.WriteLine("       block info [file.blk]");
             Console.WriteLine("       block capabilities");
             Console.WriteLine("       block runtimes");

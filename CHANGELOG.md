@@ -2,6 +2,27 @@
 
 All notable changes to the Block execution engine will be documented in this file.
 
+## Unreleased
+
+- Added context-aware HTML template escaping and rejection of executable
+  attribute, script/style, and unsafe URL substitutions.
+- Corrected JSON rendering for booleans, numbers, lists, maps, and null values.
+- Preserved nested JavaScript mutations when returning shared state to later
+  Block stages.
+- Hardened the advisory Python/Node.js network guard and documented that it is
+  not an operating-system sandbox.
+- Added the stable `ast` JSON tooling API with source spans and structured
+  diagnostics.
+- Made API startup failures return a non-zero exit code and made requested
+  engine-edition mismatches explicit.
+- Removed unsupported Acode runtime controls and stopped persisting API tokens
+  in localStorage.
+- Made release versions flow into engines, installer, VSIX, and Acode packages
+  from one build parameter; strengthened archive verification and added GitHub
+  build-provenance attestations.
+- Added security, API, Community Lab, and arbitrary-version release regression
+  tests to CI.
+
 ## [2.2.2] - 2026-08-23
 
 ### CLI workspace and project discovery

@@ -15,7 +15,7 @@ namespace BlockInstaller
 {
     public class InstallerForm : Form
     {
-        private const string InstallerVersion = "2.2.2";
+        private const string InstallerVersion = InstallerBuildVersion.Value;
         private Button btnInstall;
         private Label lblTitle;
         private Label lblStatus;

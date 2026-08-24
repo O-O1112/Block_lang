@@ -71,24 +71,9 @@ namespace BlockEngine
         {
             string codeToRender = block.Code;
 #if BLOCK_PLUS
-            codeToRender = RenderBlockPlusTemplate(codeToRender, state);
+            codeToRender = RenderBlockPlusTemplate(codeToRender, state, block.Language);
 #endif
-            string output = System.Text.RegularExpressions.Regex.Replace(codeToRender, @"\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}", match =>
-            {
-                string varName = match.Groups[1].Value;
-                if (state.ContainsKey(varName))
-                {
-                    object val = state[varName];
-                    if (block.Language == "json" && val is string) return _serializer.Serialize(val);
-                    if (val is Dictionary<string, object> || val is object[]) return _serializer.Serialize(val);
-                    if (val == null) return "null";
-                    // M1: Fix: HTML-encode variable values to prevent XSS when injecting into HTML templates
-                    string rawVal = val.ToString();
-                    if (block.Language == "html") return WebUtility.HtmlEncode(rawVal);
-                    return rawVal;
-                }
-                return match.Value;
-            });
+            string output = RenderTemplateVariables(codeToRender, state, block.Language);
 
             if (output.Length > SecurityLimits.MaxCapturedOutputChars)
                 throw new InvalidOperationException("Rendered output exceeds the configured output limit.");
@@ -116,8 +101,145 @@ namespace BlockEngine
             }
         }
 
+        private static string RenderTemplateVariables(string template, Dictionary<string, object> state, string language)
+        {
+            return System.Text.RegularExpressions.Regex.Replace(template, @"\{\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*\}\}", match =>
+            {
+                string varName = match.Groups[1].Value;
+                if (state.ContainsKey(varName))
+                {
+                    object val = state[varName];
+                    // JSON substitution must serialize every value, not only strings and arrays.
+                    // This preserves lowercase booleans, invariant numbers, lists, maps, and null.
+                    if (string.Equals(language, "json", StringComparison.OrdinalIgnoreCase))
+                        return _serializer.Serialize(val);
+
+                    string rawVal = val == null ? "" : val.ToString();
+                    if (string.Equals(language, "html", StringComparison.OrdinalIgnoreCase))
+                        return EncodeHtmlTemplateValue(template, match.Index, rawVal);
+                    return rawVal;
+                }
+                return match.Value;
+            });
+        }
+
+        private static string EncodeHtmlTemplateValue(string template, int placeholderIndex, string value)
+        {
+            string before = template.Substring(0, placeholderIndex);
+            string lowerBefore = before.ToLowerInvariant();
+
+            if (IsInsideRawTextElement(lowerBefore, "script") || IsInsideRawTextElement(lowerBefore, "style"))
+                throw new InvalidOperationException("HTML template values cannot be inserted into <script> or <style> content.");
+
+            int lastOpen = before.LastIndexOf('<');
+            int lastClose = before.LastIndexOf('>');
+            if (lastOpen <= lastClose)
+                return WebUtility.HtmlEncode(value);
+
+            string tagPrefix = before.Substring(lastOpen);
+            string attributeName;
+            bool quoted;
+            if (!TryGetAttributeContext(tagPrefix, out attributeName, out quoted))
+                throw new InvalidOperationException("HTML template values cannot be used as tag or attribute names.");
+
+            string normalizedAttribute = attributeName.ToLowerInvariant();
+            if (normalizedAttribute.StartsWith("on", StringComparison.Ordinal) ||
+                normalizedAttribute == "style" || normalizedAttribute == "srcdoc")
+                throw new InvalidOperationException("HTML template values are not allowed in executable HTML attributes: " + attributeName + ".");
+
+            if (IsUrlAttribute(normalizedAttribute) && !IsSafeTemplateUrl(value))
+                throw new InvalidOperationException("Unsafe URL scheme in HTML template attribute: " + attributeName + ".");
+
+            return quoted ? WebUtility.HtmlEncode(value) : EncodeUnquotedAttribute(value);
+        }
+
+        private static bool IsInsideRawTextElement(string lowerBefore, string element)
+        {
+            int open = lowerBefore.LastIndexOf("<" + element, StringComparison.Ordinal);
+            int close = lowerBefore.LastIndexOf("</" + element, StringComparison.Ordinal);
+            if (open <= close) return false;
+            int openEnd = lowerBefore.IndexOf('>', open);
+            return openEnd >= 0;
+        }
+
+        private static bool TryGetAttributeContext(string tagPrefix, out string attributeName, out bool quoted)
+        {
+            attributeName = null;
+            quoted = false;
+            char activeQuote = '\0';
+            int quoteStart = -1;
+            for (int i = 0; i < tagPrefix.Length; i++)
+            {
+                char c = tagPrefix[i];
+                if (activeQuote == '\0' && (c == '\'' || c == '"'))
+                {
+                    activeQuote = c;
+                    quoteStart = i;
+                }
+                else if (activeQuote == c)
+                {
+                    activeQuote = '\0';
+                    quoteStart = -1;
+                }
+            }
+
+            string beforeValue;
+            if (activeQuote != '\0')
+            {
+                quoted = true;
+                beforeValue = tagPrefix.Substring(0, quoteStart);
+            }
+            else
+            {
+                int equals = tagPrefix.LastIndexOf('=');
+                if (equals < 0) return false;
+                string valuePrefix = tagPrefix.Substring(equals + 1);
+                if (valuePrefix.IndexOfAny(new[] { ' ', '\t', '\r', '\n' }) >= 0) return false;
+                beforeValue = tagPrefix.Substring(0, equals + 1);
+            }
+
+            var nameMatch = System.Text.RegularExpressions.Regex.Match(beforeValue,
+                @"([A-Za-z_:][-A-Za-z0-9_:.]*)\s*=\s*$");
+            if (!nameMatch.Success) return false;
+            attributeName = nameMatch.Groups[1].Value;
+            return true;
+        }
+
+        private static bool IsUrlAttribute(string name)
+        {
+            return name == "href" || name == "src" || name == "action" || name == "formaction" ||
+                   name == "poster" || name == "cite" || name == "background" || name == "xlink:href";
+        }
+
+        private static bool IsSafeTemplateUrl(string value)
+        {
+            string candidate = (value ?? "").Trim();
+            if (candidate.Length == 0 || candidate[0] == '#' || candidate[0] == '/' ||
+                candidate.StartsWith("./", StringComparison.Ordinal) || candidate.StartsWith("../", StringComparison.Ordinal) ||
+                candidate[0] == '?') return true;
+
+            Uri uri;
+            if (!Uri.TryCreate(candidate, UriKind.RelativeOrAbsolute, out uri)) return false;
+            if (!uri.IsAbsoluteUri) return true;
+            return uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps ||
+                   uri.Scheme == Uri.UriSchemeMailto || uri.Scheme == "tel";
+        }
+
+        private static string EncodeUnquotedAttribute(string value)
+        {
+            StringBuilder encoded = new StringBuilder();
+            foreach (char c in value ?? "")
+            {
+                if (char.IsLetterOrDigit(c) || c == '-' || c == '_' || c == '.' || c == ':')
+                    encoded.Append(c);
+                else
+                    encoded.Append("&#x").Append(((int)c).ToString("X")).Append(';');
+            }
+            return encoded.ToString();
+        }
+
 #if BLOCK_PLUS
-        private static string RenderBlockPlusTemplate(string template, Dictionary<string, object> state)
+        private static string RenderBlockPlusTemplate(string template, Dictionary<string, object> state, string language)
         {
             // 1. Process {{#if key}} ... {{else}} ... {{/if}}
             template = System.Text.RegularExpressions.Regex.Replace(template,
@@ -158,19 +280,19 @@ namespace BlockEngine
                 {
                     string itemResult = inner.Replace("{{@index}}", idx.ToString());
                     Dictionary<string, object> dict = item as Dictionary<string, object>;
+                    Dictionary<string, object> itemState = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
                     if (dict != null)
                     {
                         foreach (var kvp in dict)
                         {
-                            // M1: HTML-encode loop variables
-                            string safeVal = kvp.Value != null ? WebUtility.HtmlEncode(kvp.Value.ToString()) : "";
-                            itemResult = itemResult.Replace("{{" + kvp.Key + "}}", safeVal);
+                            itemState[kvp.Key] = kvp.Value;
                         }
                     }
                     else
                     {
-                        itemResult = itemResult.Replace("{{this}}", item != null ? WebUtility.HtmlEncode(item.ToString()) : "");
+                        itemState["this"] = item;
                     }
+                    itemResult = RenderTemplateVariables(itemResult, itemState, language);
                     sb.Append(itemResult);
                     idx++;
                 }
