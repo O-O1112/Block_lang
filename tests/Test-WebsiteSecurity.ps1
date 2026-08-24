@@ -51,6 +51,16 @@ $htmlFiles = Get-ChildItem -LiteralPath $RepositoryRoot -Filter '*.html' -File
 foreach ($file in $htmlFiles) {
     $html = Get-Content -LiteralPath $file.FullName -Raw
 
+    if ($html -match '(?i)<script\b' -and $html -notmatch '(?i)<meta\b[^>]+http-equiv\s*=\s*["'']Content-Security-Policy["'']') {
+        throw "HTML page with scripts is missing a CSP meta policy: $($file.Name)."
+    }
+
+    foreach ($meta in [regex]::Matches($html, '<meta\b[^>]+http-equiv\s*=\s*["'']Content-Security-Policy["''][^>]*>', [Text.RegularExpressions.RegexOptions]::IgnoreCase)) {
+        if ($meta.Value -match '(?i)unsafe-inline|unsafe-eval') {
+            throw "CSP meta policy must not allow unsafe inline code or eval in $($file.Name)."
+        }
+    }
+
     foreach ($tag in [regex]::Matches($html, '<script\b[^>]*>([\s\S]*?)</script>', [Text.RegularExpressions.RegexOptions]::IgnoreCase)) {
         $isInline = $tag.Value -notmatch '\bsrc\s*='
         $isJsonLd = $tag.Value -match 'application/ld\+json'

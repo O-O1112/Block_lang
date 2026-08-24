@@ -66,6 +66,12 @@ still target the versioned GitHub Release. Before moving or removing any release
 artifact, search the site files for references and verify the resulting public
 URLs.
 
+`_headers` contains the response-header policy for deployments that support
+static header rules. GitHub Pages does not apply that file, so every executable
+HTML page also carries the compatible CSP as a `<meta http-equiv>` policy.
+Header-only protections such as HSTS and `frame-ancestors` still require a
+header-capable deployment and should be checked at the deployed origin.
+
 ## Maintainer workflow
 
 From a Windows checkout:
