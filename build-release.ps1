@@ -19,7 +19,7 @@ function Invoke-ReleaseStep([string]$Script, [string[]]$Arguments) {
 }
 
 if (-not $SkipEngineBuild) {
-    Invoke-ReleaseStep 'build.ps1' @('-OutputDirectory', $ReleaseDirectory, '-SkipHash')
+    Invoke-ReleaseStep 'build.ps1' @('-OutputDirectory', $ReleaseDirectory, '-SkipHash', '-Version', $Version)
 }
 Invoke-ReleaseStep 'package-engine.ps1' @('-EngineDirectory', $ReleaseDirectory, '-OutputDirectory', $ReleaseDirectory)
 Invoke-ReleaseStep 'package-extensions.ps1' @('-OutputDirectory', $ReleaseDirectory, '-Version', $Version)

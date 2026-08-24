@@ -7,6 +7,10 @@ Please check the [README](README.md), the [examples](examples/README.md), and th
 host runtime versions, the smallest safe reproduction, and the relevant output with
 secrets and private paths removed.
 
+If you are joining a test round or want to contribute a fix, use the
+[Community Lab](docs/COMMUNITY-LAB.md) first. It provides the standard test
+commands and separates external validation from maintainer results.
+
 ## Where to ask
 
 - **Bug in the engine, installer, website, or extensions:**

@@ -33,9 +33,9 @@ foreach ($name in $coreNames) {
         continue
     }
     if (-not $SkipExecutableExecution) {
-        $version = (& $path --version 2>&1 | Out-String).Trim()
-        if ($version -notmatch [regex]::Escape($expectedVersions[$name])) {
-            $failures.Add("wrong engine version for ${name}: $version")
+        $actualVersion = (& $path --version 2>&1 | Out-String).Trim()
+        if ($actualVersion -notmatch [regex]::Escape($expectedVersions[$name])) {
+            $failures.Add("wrong engine version for ${name}: $actualVersion")
         }
     }
 }
@@ -82,7 +82,7 @@ try {
     foreach ($bundle in $bundles) {
         $archive = Join-Path $ReleaseDirectory $bundle.Archive
         $destination = Join-Path $tempRoot ([IO.Path]::GetFileNameWithoutExtension($bundle.Archive))
-        if (-not (Test-Path -LiteralPath $archive)) { continue }
+        if (-not (Test-Path -LiteralPath $archive)) { $failures.Add("missing engine bundle: $($bundle.Archive)"); continue }
         try {
             [IO.Compression.ZipFile]::ExtractToDirectory($archive, $destination)
             $files = @(Get-ChildItem -LiteralPath $destination -Recurse -File)
@@ -102,13 +102,13 @@ try {
     }
 
     $pluginPackages = @(
-        @{ Archive = "block-language-$Version.vsix"; Manifest = 'extension/package.json'; License = 'extension/LICENSE' },
-        @{ Archive = "acode-plugin-block-$Version.zip"; Manifest = 'plugin.json'; License = 'LICENSE' }
+        @{ Archive = "block-language-$Version.vsix"; Manifest = 'extension/package.json'; License = 'extension/LICENSE'; VsixManifest = 'extension.vsixmanifest' },
+        @{ Archive = "acode-plugin-block-$Version.zip"; Manifest = 'plugin.json'; License = 'LICENSE'; Main = 'main.js' }
     )
     foreach ($package in $pluginPackages) {
         $archive = Join-Path $ReleaseDirectory $package.Archive
         $destination = Join-Path $tempRoot ([IO.Path]::GetFileNameWithoutExtension($package.Archive))
-        if (-not (Test-Path -LiteralPath $archive)) { continue }
+        if (-not (Test-Path -LiteralPath $archive)) { $failures.Add("missing plugin package: $($package.Archive)"); continue }
         try {
             [IO.Compression.ZipFile]::ExtractToDirectory($archive, $destination)
             $manifestPath = Join-Path $destination $package.Manifest
@@ -118,6 +118,28 @@ try {
             $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
             if ($manifest.version -ne $Version) { $failures.Add("wrong package version in $($package.Archive): $($manifest.version)") }
             if ($manifest.license -ne 'MIT') { $failures.Add("missing MIT metadata in $($package.Archive)") }
+            if ($package.VsixManifest) {
+                $vsixManifestPath = Join-Path $destination $package.VsixManifest
+                if (-not (Test-Path -LiteralPath $vsixManifestPath)) {
+                    $failures.Add("missing VSIX manifest in $($package.Archive)")
+                } else {
+                    [xml]$vsixManifest = Get-Content -LiteralPath $vsixManifestPath -Raw
+                    if ($vsixManifest.PackageManifest.Metadata.Identity.Version -ne $Version) {
+                        $failures.Add("wrong VSIX identity version in $($package.Archive): $($vsixManifest.PackageManifest.Metadata.Identity.Version)")
+                    }
+                }
+            }
+            if ($package.Main) {
+                $mainPath = Join-Path $destination $package.Main
+                if (-not (Test-Path -LiteralPath $mainPath)) {
+                    $failures.Add("missing plugin entry point in $($package.Archive)")
+                } else {
+                    $mainText = Get-Content -LiteralPath $mainPath -Raw
+                    if ($mainText -notmatch [regex]::Escape("const BLOCK_PLUGIN_VERSION = '$Version';")) {
+                        $failures.Add("wrong runtime UI version in $($package.Archive)")
+                    }
+                }
+            }
         } catch {
             $failures.Add("cannot inspect plugin package $($package.Archive): $($_.Exception.Message)")
         }
@@ -139,4 +161,4 @@ if ($failures.Count -gt 0) {
     exit 1
 }
 
-Write-Host "Block Engine v$Version release verification passed."
+Write-Output "Block Engine v$Version release verification passed."

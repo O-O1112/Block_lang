@@ -32,10 +32,21 @@ namespace BlockEngine
                        "  except: pass\n" +
                        "_st=json.loads(_s) if _s.strip() else {}\n" +
                        "if os.environ.get('BLOCK_NETWORK_BLOCKED')=='1':\n" +
-                       "  import socket as _block_socket\n" +
+                       "  import socket as _block_socket, builtins as _block_builtins, importlib as _block_importlib\n" +
                        "  def _block_network(*a,**k): raise RuntimeError('Block network access is disabled')\n" +
                        "  _block_socket.socket=_block_network\n" +
                        "  _block_socket.create_connection=_block_network\n" +
+                       "  _block_denied={'socket','_socket','ssl','http','urllib','ftplib','smtplib','telnetlib','requests','aiohttp','subprocess','multiprocessing'}\n" +
+                       "  _block_import=_block_builtins.__import__\n" +
+                       "  def _block_guarded_import(name,*a,**k):\n" +
+                       "    if name.split('.')[0] in _block_denied: raise RuntimeError('Block advisory network guard denied module: '+name)\n" +
+                       "    return _block_import(name,*a,**k)\n" +
+                       "  _block_reload=_block_importlib.reload\n" +
+                       "  def _block_guarded_reload(module):\n" +
+                       "    if getattr(module,'__name__','').split('.')[0] in _block_denied: raise RuntimeError('Block advisory network guard denied module reload')\n" +
+                       "    return _block_reload(module)\n" +
+                       "  _block_builtins.__import__=_block_guarded_import\n" +
+                       "  _block_importlib.reload=_block_guarded_reload\n" +
                        "[globals().__setitem__(k,v) for k,v in _st.items() if k.isidentifier()]\n" +
                        code + "\n" +
                        "_ns={k:v for k,v in globals().items() if not k.startswith('_') and k not in('json','sys','os') and type(v) in(int,float,str,bool,list,dict)}\n" +
@@ -51,12 +62,13 @@ namespace BlockEngine
                        "let _s=process.env.BLOCK_STATE_JSON||'';\n" +
                        "if(!_s&&process.env.BLOCK_STATE_FILE){try{_s=fs.readFileSync(process.env.BLOCK_STATE_FILE,'utf8');}catch(e){}}\n" +
                        "let _st={};try{_st=_s.trim()?JSON.parse(_s):{};}catch(e){}\n" +
-                       "if(process.env.BLOCK_NETWORK_BLOCKED==='1'){const _net=require('net');const _tls=require('tls');const _blocked=()=>{throw new Error('Block network access is disabled');};_net.connect=_blocked;_net.createConnection=_blocked;_tls.connect=_blocked;}\n" +
+                       "const _base=new Set(Object.getOwnPropertyNames(global));\n" +
+                       "if(process.env.BLOCK_NETWORK_BLOCKED==='1'){const _net=require('net');const _tls=require('tls');const _http=require('http');const _https=require('https');const _dgram=require('dgram');const _dns=require('dns');const _Module=require('module');const _blocked=()=>{throw new Error('Block network access is disabled');};_net.connect=_blocked;_net.createConnection=_blocked;_tls.connect=_blocked;_http.request=_blocked;_http.get=_blocked;_https.request=_blocked;_https.get=_blocked;_dgram.createSocket=_blocked;_dns.lookup=_blocked;const _load=_Module._load;const _denied=new Set(['net','tls','http','https','http2','dgram','dns','child_process','cluster','worker_threads']);_Module._load=function(r,p,m){if(_denied.has(String(r).replace(/^node:/,'')))_blocked();return _load.call(this,r,p,m);};if(typeof global.fetch==='function')global.fetch=_blocked;if(typeof global.WebSocket==='function')global.WebSocket=_blocked;}\n" +
                        "for(let k in _st)if(/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(k))global[k]=_st[k];\n" +
                        code + "\n" +
-                       "let _ns={};for(let k of Object.getOwnPropertyNames(global)){try{if(/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(k)&&!['global','process','Buffer','localStorage','sessionStorage','clearImmediate','clearInterval','clearTimeout','setImmediate','setInterval','setTimeout'].includes(k)){let v=global[k];if(typeof v==='number'||typeof v==='string'||typeof v==='boolean')_ns[k]=v;}}catch(e){}}\n" +
-                       "const _ss=(o)=>{let c=new Set();return JSON.stringify(o,(_k,v)=>{if(typeof v==='object'&&v!==null){if(c.has(v))return;c.add(v);}return v;});};\n" +
-                       "let _nsj=_ss(_ns);\n" +
+                       "const _clone=(v)=>{let c=new Set();let s=JSON.stringify(v,(_k,x)=>{if(typeof x==='object'&&x!==null){if(c.has(x))return;c.add(x);}return x;});return s===undefined?undefined:JSON.parse(s);};\n" +
+                       "let _ns={};let _keys=new Set([...Object.keys(_st),...Object.getOwnPropertyNames(global).filter(k=>!_base.has(k))]);for(let k of _keys){try{if(/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(k)){let v=global[k];if(v===null||typeof v==='number'||typeof v==='string'||typeof v==='boolean'||Array.isArray(v)||(typeof v==='object'&&Object.getPrototypeOf(v)===Object.prototype)){let copy=_clone(v);if(copy!==undefined)_ns[k]=copy;}}}catch(e){}}\n" +
+                       "let _nsj=JSON.stringify(_ns);\n" +
                        "if(process.env.BLOCK_STATE_OUT){try{fs.writeFileSync(process.env.BLOCK_STATE_OUT,_nsj,'utf8');}catch(e){}}\n" +
                        "console.log('\\n" + StateMarker + "'+_nsj);\n";
             }
@@ -80,11 +92,24 @@ namespace BlockEngine
                        "        pass\n" +
                        "state = json.loads(state_json) if state_json.strip() else {}\n" +
                        "if os.environ.get('BLOCK_NETWORK_BLOCKED') == '1':\n" +
-                       "    import socket as _block_socket\n" +
+                       "    import socket as _block_socket, builtins as _block_builtins, importlib as _block_importlib\n" +
                        "    def _block_network(*args, **kwargs):\n" +
                        "        raise RuntimeError('Block network access is disabled')\n" +
                        "    _block_socket.socket = _block_network\n" +
                        "    _block_socket.create_connection = _block_network\n" +
+                       "    _block_denied = {'socket', '_socket', 'ssl', 'http', 'urllib', 'ftplib', 'smtplib', 'telnetlib', 'requests', 'aiohttp', 'subprocess', 'multiprocessing'}\n" +
+                       "    _block_original_import = _block_builtins.__import__\n" +
+                       "    def _block_guarded_import(name, *args, **kwargs):\n" +
+                       "        if name.split('.')[0] in _block_denied:\n" +
+                       "            raise RuntimeError('Block advisory network guard denied module: ' + name)\n" +
+                       "        return _block_original_import(name, *args, **kwargs)\n" +
+                       "    _block_original_reload = _block_importlib.reload\n" +
+                       "    def _block_guarded_reload(module):\n" +
+                       "        if getattr(module, '__name__', '').split('.')[0] in _block_denied:\n" +
+                       "            raise RuntimeError('Block advisory network guard denied module reload')\n" +
+                       "        return _block_original_reload(module)\n" +
+                       "    _block_builtins.__import__ = _block_guarded_import\n" +
+                       "    _block_importlib.reload = _block_guarded_reload\n" +
                        "for k, v in state.items():\n" +
                        "    if k.isidentifier(): globals()[k] = v\n" +
                        "try:\n" +
@@ -137,31 +162,34 @@ namespace BlockEngine
                        "}\n" +
                        "let state = {};\n" +
                        "try { state = state_json.trim() ? JSON.parse(state_json) : {}; } catch(e) {}\n" +
-                       "if (process.env.BLOCK_NETWORK_BLOCKED === '1') { const _net = require('net'); const _tls = require('tls'); const _blocked = () => { throw new Error('Block network access is disabled'); }; _net.connect = _blocked; _net.createConnection = _blocked; _tls.connect = _blocked; }\n" +
+                       "const block_global_baseline = new Set(Object.getOwnPropertyNames(global));\n" +
+                       "if (process.env.BLOCK_NETWORK_BLOCKED === '1') { const _net = require('net'); const _tls = require('tls'); const _http = require('http'); const _https = require('https'); const _dgram = require('dgram'); const _dns = require('dns'); const _Module = require('module'); const _blocked = () => { throw new Error('Block network access is disabled'); }; _net.connect = _blocked; _net.createConnection = _blocked; _tls.connect = _blocked; _http.request = _blocked; _http.get = _blocked; _https.request = _blocked; _https.get = _blocked; _dgram.createSocket = _blocked; _dns.lookup = _blocked; const _originalLoad = _Module._load; const _deniedModules = new Set(['net', 'tls', 'http', 'https', 'http2', 'dgram', 'dns', 'child_process', 'cluster', 'worker_threads']); _Module._load = function(request, parent, isMain) { if (_deniedModules.has(String(request).replace(/^node:/, ''))) _blocked(); return _originalLoad.call(this, request, parent, isMain); }; if (typeof global.fetch === 'function') global.fetch = _blocked; if (typeof global.WebSocket === 'function') global.WebSocket = _blocked; }\n" +
                        "for (let k in state) if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(k)) global[k] = state[k];\n" +
                        "try {\n" +
                        code + "\n" +
                         "} catch(e) { console.error('JS Error:', e.message); process.exitCode = 1; }\n" +
+                       "const block_clone_json = (value) => {\n" +
+                       "    let seen = new Set();\n" +
+                       "    let json = JSON.stringify(value, (key, item) => {\n" +
+                       "        if (typeof item === 'object' && item !== null) { if (seen.has(item)) return; seen.add(item); }\n" +
+                       "        return item;\n" +
+                       "    });\n" +
+                       "    return json === undefined ? undefined : JSON.parse(json);\n" +
+                       "};\n" +
                        "let new_state = {};\n" +
-                       "for (let k of Object.getOwnPropertyNames(global)) {\n" +
+                       "let block_candidate_keys = new Set([...Object.keys(state), ...Object.getOwnPropertyNames(global).filter(k => !block_global_baseline.has(k))]);\n" +
+                       "for (let k of block_candidate_keys) {\n" +
                        "    try {\n" +
-                        "        if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(k) && !['global', 'process', 'Buffer', 'localStorage', 'sessionStorage', 'clearImmediate', 'clearInterval', 'clearTimeout', 'setImmediate', 'setInterval', 'setTimeout', 'state_json', 'state', 'new_state', 'fs'].includes(k)) {\n" +
-                       "            let v = global[k];\n" +
-                       "            if (typeof v === 'number' || typeof v === 'string' || typeof v === 'boolean' || Array.isArray(v) || typeof v === 'object') new_state[k] = v;\n" +
+                       "        if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(k)) continue;\n" +
+                       "        let v = global[k];\n" +
+                       "        let isPlainObject = v !== null && typeof v === 'object' && Object.getPrototypeOf(v) === Object.prototype;\n" +
+                       "        if (v === null || typeof v === 'number' || typeof v === 'string' || typeof v === 'boolean' || Array.isArray(v) || isPlainObject) {\n" +
+                       "            let copy = block_clone_json(v);\n" +
+                       "            if (copy !== undefined) new_state[k] = copy;\n" +
                        "        }\n" +
                        "    } catch(e) {}\n" +
                        "}\n" +
-                       "const safeStringify = (obj) => {\n" +
-                       "    let cache = new Set();\n" +
-                       "    return JSON.stringify(obj, (key, value) => {\n" +
-                       "        if (typeof value === 'object' && value !== null) {\n" +
-                       "            if (cache.has(value)) return;\n" +
-                       "            cache.add(value);\n" +
-                       "        }\n" +
-                       "        return value;\n" +
-                       "    });\n" +
-                       "};\n" +
-                       "let new_state_json = safeStringify(new_state);\n" +
+                       "let new_state_json = JSON.stringify(new_state);\n" +
                        "if (process.env.BLOCK_STATE_OUT) { try { fs.writeFileSync(process.env.BLOCK_STATE_OUT, new_state_json, 'utf8'); } catch(e) {} }\n" +
                        "console.log('\\n" + StateMarker + "' + new_state_json);\n";
             }

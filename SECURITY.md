@@ -24,6 +24,11 @@ execution, path traversal, process isolation, state injection, installer
 behavior, or secret exposure should include the exact invocation and file
 layout used.
 
+`NetworkBlocked` is a best-effort language-runtime guard, not an operating-
+system security boundary. Never use it as the only isolation layer for
+untrusted code; use a container, virtual machine, AppContainer-equivalent, or
+firewall policy outside Block.
+
 Please allow time for assessment and a fix before public disclosure. Do not
 upload credentials, certificates, private keys, or malicious samples containing
 real user data.

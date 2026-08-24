@@ -29,22 +29,32 @@ namespace BlockEngine
 
         public static EngineConfig LoadConfig()
         {
-            if (!File.Exists(configPath)) return new EngineConfig();
+            if (!File.Exists(configPath)) return ApplyProcessOverrides(new EngineConfig());
             _configLock.Wait();
             try
             {
                 string json = File.ReadAllText(configPath, Encoding.UTF8);
                 // H6: Use JavaScriptSerializer (cross-platform .NET Framework compatible)
-                return _serializer.Deserialize<EngineConfig>(json) ?? new EngineConfig();
+                return ApplyProcessOverrides(_serializer.Deserialize<EngineConfig>(json) ?? new EngineConfig());
             }
             catch
             {
-                return new EngineConfig();
+                return ApplyProcessOverrides(new EngineConfig());
             }
             finally
             {
                 _configLock.Release();
             }
+        }
+
+        private static EngineConfig ApplyProcessOverrides(EngineConfig config)
+        {
+            // A parent process may opt into stricter networking for one run.
+            // There is intentionally no environment override that disables the
+            // configured guard.
+            if (Environment.GetEnvironmentVariable("BLOCK_NETWORK_BLOCKED_OVERRIDE") == "1")
+                config.NetworkBlocked = true;
+            return config;
         }
 
         public static void SaveConfig(EngineConfig config)
@@ -96,7 +106,7 @@ namespace BlockEngine
                 Console.WriteLine(string.Format("5. PowerShell Execution: {0} (WARNING: HIGH RISK)", cfg.PowerShellEnabled ? "[ON]" : "[OFF]"));
                 Console.WriteLine(string.Format("6. SQL Execution: {0}", cfg.SqlEnabled ? "[ON]" : "[OFF]"));
                 Console.WriteLine(string.Format("7. JS (Node) Execution: {0}", cfg.JsEnabled ? "[ON]" : "[OFF]"));
-                Console.WriteLine(string.Format("8. Runtime Network Guard (offline): {0}", cfg.NetworkBlocked ? "[ON]" : "[OFF]"));
+                Console.WriteLine(string.Format("8. Advisory Network Guard (best effort): {0}", cfg.NetworkBlocked ? "[ON]" : "[OFF]"));
                 Console.WriteLine(string.Format("9. Allow Custom <define> Tags: {0}", cfg.AllowCustomDefinitions ? "[ON]" : "[OFF]"));
                 Console.WriteLine(string.Format("T. Execution Timeout: {0}s", cfg.ExecutionTimeoutSeconds));
                 Console.WriteLine(string.Format("D. Sandbox Directory: {0}", cfg.SandboxDir));

@@ -70,9 +70,9 @@ namespace BlockEngine
             Console.WriteLine("  Sandbox: " + cfg.SandboxDir);
             Console.WriteLine("  Workspace: " + (string.IsNullOrWhiteSpace(cfg.WorkspaceDir) ? "(not set)" : cfg.WorkspaceDir));
             Console.WriteLine("  Timeout: " + cfg.ExecutionTimeoutSeconds + "s");
-            Console.WriteLine("  Network blocked: " + (cfg.NetworkBlocked ? "yes" : "no"));
+            Console.WriteLine("  Advisory network guard: " + (cfg.NetworkBlocked ? "on" : "off"));
             Console.WriteLine("  Custom definitions: " + (cfg.AllowCustomDefinitions ? "enabled" : "disabled"));
-            Console.WriteLine("  Commands: run, check, info/capabilities, runtimes, doctor, workspace, find, project, config");
+            Console.WriteLine("  Commands: run, check, ast, info/capabilities, runtimes, doctor, workspace, find, project, config");
 
             if (string.IsNullOrWhiteSpace(filePath)) return;
 
@@ -131,7 +131,7 @@ namespace BlockEngine
             Console.WriteLine();
             Console.WriteLine("  Sandbox: " + cfg.SandboxDir + (Directory.Exists(cfg.SandboxDir) ? " [exists]" : " [missing]"));
             Console.WriteLine("  Timeout: " + cfg.ExecutionTimeoutSeconds + "s");
-            Console.WriteLine("  Network blocked: " + (cfg.NetworkBlocked ? "yes" : "no"));
+            Console.WriteLine("  Advisory network guard: " + (cfg.NetworkBlocked ? "on" : "off"));
             Console.WriteLine("  Custom definitions: " + (cfg.AllowCustomDefinitions ? "enabled" : "disabled"));
 
             if (doctor && !Directory.Exists(cfg.SandboxDir))
@@ -158,7 +158,7 @@ namespace BlockEngine
             Console.WriteLine("  Lua: " + OnOff(cfg.LuaEnabled));
             Console.WriteLine("  PowerShell: " + OnOff(cfg.PowerShellEnabled));
             Console.WriteLine("  SQL: " + OnOff(cfg.SqlEnabled));
-            Console.WriteLine("  Network blocked: " + OnOff(cfg.NetworkBlocked));
+            Console.WriteLine("  Advisory network guard: " + OnOff(cfg.NetworkBlocked));
             Console.WriteLine("  Custom definitions: " + OnOff(cfg.AllowCustomDefinitions));
             Console.WriteLine("  Timeout: " + cfg.ExecutionTimeoutSeconds + "s");
             Console.WriteLine("  Sandbox: " + cfg.SandboxDir);

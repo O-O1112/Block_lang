@@ -1,17 +1,31 @@
 param(
     [string]$OutputDirectory = (Join-Path $PSScriptRoot 'bin'),
-    [switch]$SkipHash
+    [switch]$SkipHash,
+    [string]$Version = ""
 )
 
 $ErrorActionPreference = 'Stop'
-$version = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'VERSION') -Raw).Trim()
-if ($version -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid VERSION file: $version" }
+if ([string]::IsNullOrWhiteSpace($Version)) { $Version = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'VERSION') -Raw).Trim() }
+if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid build version: $Version" }
 $compiler = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 if (-not (Test-Path -LiteralPath $compiler)) { throw "C# compiler not found: $compiler" }
 
 $sourceDirectory = Join-Path $PSScriptRoot 'src'
-$sources = @(Get-ChildItem -LiteralPath $sourceDirectory -Filter '*.cs' -File | Sort-Object Name | ForEach-Object FullName)
+$sources = @(Get-ChildItem -LiteralPath $sourceDirectory -Filter '*.cs' -File |
+    Where-Object Name -ne 'BlockVersion.cs' |
+    Sort-Object Name |
+    ForEach-Object FullName)
 if ($sources.Count -eq 0) { throw "No C# sources found in $sourceDirectory" }
+
+$generatedDirectory = Join-Path ([IO.Path]::GetTempPath()) ('block-version-' + [Guid]::NewGuid().ToString('N'))
+$generatedVersionSource = Join-Path $generatedDirectory 'BlockVersion.g.cs'
+New-Item -ItemType Directory -Force -Path $generatedDirectory | Out-Null
+[IO.File]::WriteAllText(
+    $generatedVersionSource,
+    "namespace BlockEngine { internal static class BlockVersion { public const string Value = `"$Version`"; } }",
+    (New-Object Text.UTF8Encoding($false))
+)
+$sources += $generatedVersionSource
 
 $references = @(
     '/reference:System.dll',
@@ -29,14 +43,19 @@ $editions = @(
     @{ Name = 'block-plus.exe'; Define = 'BLOCK_PLUS' }
 )
 
-foreach ($edition in $editions) {
-    $outputPath = Join-Path $OutputDirectory $edition.Name
-    $arguments = @('/nologo', '/target:exe', '/platform:x86', ('/out:' + $outputPath))
-    if ($edition.Define) { $arguments += '/define:' + $edition.Define }
-    $arguments += $references
-    $arguments += $sources
-    & $compiler @arguments
-    if ($LASTEXITCODE -ne 0) { throw "Build failed for $($edition.Name)" }
+try {
+    foreach ($edition in $editions) {
+        $outputPath = Join-Path $OutputDirectory $edition.Name
+        $arguments = @('/nologo', '/target:exe', '/platform:x86', ('/out:' + $outputPath))
+        if ($edition.Define) { $arguments += '/define:' + $edition.Define }
+        $arguments += $references
+        $arguments += $sources
+        & $compiler @arguments
+        if ($LASTEXITCODE -ne 0) { throw "Build failed for $($edition.Name)" }
+    }
+}
+finally {
+    if (Test-Path -LiteralPath $generatedDirectory) { Remove-Item -LiteralPath $generatedDirectory -Recurse -Force }
 }
 
 if (-not $SkipHash) {
@@ -49,4 +68,4 @@ if (-not $SkipHash) {
         } | Set-Content -LiteralPath $hashPath -Encoding ascii
 }
 
-Write-Host "Block Engine v$version build completed."
+Write-Host "Block Engine v$Version build completed."

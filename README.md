@@ -8,7 +8,7 @@
 
 If you are looking for a polyglot programming language, a multi-language scripting workflow, a Python-to-JavaScript bridge, or a local-first automation engine built around readable `.blk` files, Block is designed for that use case.
 
-**Start here:** [download the engine](downloads.html) · [read the documentation](wiki.html) · [run the examples](examples/) · [read the book source](docs/book/) · [report an external result](docs/THIRD-PARTY-VALIDATION.md) · [browse the source on GitHub](https://github.com/O-O1112/Block_lang)
+**Start here:** [download the engine](downloads.html) · [read the documentation](wiki.html) · [run the examples](examples/) · [join the Community Lab](docs/COMMUNITY-LAB.md) · [read the book source](docs/book/) · [report an external result](docs/THIRD-PARTY-VALIDATION.md) · [browse the source on GitHub](https://github.com/O-O1112/Block_lang)
 
 Maintainers can use the [organic growth playbook](docs/GROWTH.md) to turn demos, releases, and user feedback into a repeatable discovery-to-install funnel.
 
@@ -269,6 +269,7 @@ in the v2.2.2 Windows build:
 | `<engine> config path` | ✓ | ✓ | ✓ | Print the user configuration file path |
 | `<engine> run <file>` | ✓ | ✓ | ✓ | Explicitly execute a document, including paths containing spaces |
 | `<engine> check <file>` | ✓ | ✓ | ✓ | Parse a document without executing its stages |
+| `<engine> ast <file>` | ✓ | ✓ | ✓ | Emit a stable JSON syntax tree and structured diagnostics without executing code |
 | `<engine> info [file]` / `capabilities` | ✓ | ✓ | ✓ | Show engine settings and optionally inspect a document's blocks |
 | `<engine> runtimes` | ✓ | ✓ | ✓ | Detect optional runtimes on the current `PATH` |
 | `<engine> doctor` | ✓ | ✓ | ✓ | Run read-only environment and configuration diagnostics |
@@ -746,7 +747,7 @@ Block adopts a local-first, conservative security design:
 * Circular imports and deeply nested import chains are rejected.
 * APIs and local servers bind to `localhost` by default.
 * API endpoints require `X-Api-Token` verification.
-* An optional network guard can block scripts from initiating outbound network connections.
+* An optional best-effort network guard blocks common runtime networking APIs.
 * Each block enforces strict execution timeouts.
 * Request concurrency, input sizes, and output payloads are capped by upper limits.
 * Certificates (`.pfx`), passwords, and private keys should never be committed into Block projects.
@@ -761,7 +762,7 @@ New configurations use conservative defaults:
 | --- | --- | --- |
 | Python / JavaScript / PHP / Ruby / Lua / SQLite | Enabled | These runtimes may be used when installed and supported by the edition |
 | PowerShell | Disabled | Enable only when the script and host environment are trusted |
-| Network guard | Blocked | Runtime network access is restricted by default |
+| Advisory network guard | On | Common runtime networking APIs are patched by default; this is not isolation |
 | Custom `<define>` tags | Disabled | Arbitrary custom process definitions require explicit opt-in |
 | Execution timeout | 15 seconds | Can be changed through `config`, within the engine's allowed range |
 | Import depth | 16 levels | Prevents excessively nested or circular import chains |
@@ -773,6 +774,16 @@ The process guard tracks child-process trees and terminates descendants after a
 timeout where the host platform supports it. This is process-lifecycle control,
 not a complete operating-system sandbox: a trusted host runtime can still access
 the permissions available to the user running Block.
+
+The advisory network guard has the same trust boundary. It reduces accidental
+network access through common Python and Node.js APIs, but code running with the
+user's permissions may bypass language-level patches. Use an OS sandbox,
+container, virtual machine, or firewall policy for untrusted code.
+
+Tagged releases also generate GitHub build-provenance attestations. After
+installing GitHub CLI, a downloaded artifact can be checked with
+`gh attestation verify <artifact> -R O-O1112/Block_lang`; continue to compare
+the artifact against `SHA256SUMS.txt` as well.
 
 ### Security boundaries to review
 
