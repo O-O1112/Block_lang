@@ -144,6 +144,10 @@ importlib.reload(_block_socket)
     Assert-True ($acodeSource -match 'JSON\.stringify\(safeProfiles\)') 'Acode profiles are not sanitized before persistent storage.'
     Assert-True ($acodeSource -notmatch "X-Block-Max-Parallel|X-Block-Cache") 'Acode still sends unsupported runtime headers.'
 
+    # The malformed-AST probe is expected to return 1. PowerShell preserves the
+    # last native process exit code even after every assertion has passed, which
+    # would otherwise make GitHub Actions mark this successful script as failed.
+    $global:LASTEXITCODE = 0
     Write-Host 'Health-hardening regression tests passed.'
 }
 finally {
