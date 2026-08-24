@@ -45,8 +45,12 @@ try {
             $logs = ((Get-Content -LiteralPath $stdout -Raw -ErrorAction SilentlyContinue) + (Get-Content -LiteralPath $stderr -Raw -ErrorAction SilentlyContinue))
             throw "API server exited during startup with code $($server.ExitCode): $logs"
         }
-        $content = Get-Content -LiteralPath $stdout -Raw -ErrorAction SilentlyContinue
-        $tokenMatch = [regex]::Match([string]$content, 'Security Token:\s*([a-fA-F0-9]+)')
+        $content = ''
+        if (Test-Path -LiteralPath $stdout) {
+            $content = [string](Get-Content -LiteralPath $stdout -Raw -ErrorAction SilentlyContinue)
+        }
+        if ($null -eq $content) { $content = '' }
+        $tokenMatch = [regex]::Match($content, 'Security Token:\s*([a-fA-F0-9]+)')
         if ($tokenMatch.Success) { $token = $tokenMatch.Groups[1].Value; break }
         Start-Sleep -Milliseconds 100
     }
@@ -89,6 +93,9 @@ try {
     Assert-True ($secondExit -ne 0) 'A listener startup failure returned exit code 0.'
     Assert-True ($secondOutput -match 'Failed to start API Server|Access Denied') 'Listener startup failure did not provide an actionable error.'
 
+    # The second listener is intentionally rejected, so clear its expected
+    # native exit code after the assertions have verified that behavior.
+    $global:LASTEXITCODE = 0
     Write-Host 'API server integration tests passed.'
 }
 finally {
