@@ -26,6 +26,21 @@ function Get-Sha256([string]$Path) {
     return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
 }
 
+function Get-NormalizedTextSha256([string]$Path) {
+    # Registry sources are UTF-8 text. Normalize checkout line endings so the
+    # digest describes the repository content consistently on Windows and Unix.
+    $text = [IO.File]::ReadAllText($Path, [Text.Encoding]::UTF8)
+    $text = $text.Replace("`r`n", "`n").Replace("`r", "`n")
+    $bytes = [Text.Encoding]::UTF8.GetBytes($text)
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try {
+        return ([BitConverter]::ToString($sha.ComputeHash($bytes))).Replace('-', '').ToLowerInvariant()
+    }
+    finally {
+        $sha.Dispose()
+    }
+}
+
 function Get-RelativePath([string]$Root, [string]$Path) {
     $rootPrefix = $Root.TrimEnd('\', '/') + '\'
     $fullPath = [IO.Path]::GetFullPath($Path)
@@ -87,9 +102,9 @@ foreach ($directory in $directories) {
         permissions = $permissions
         keywords = $keywords
         manifestUrl = $manifestUrl
-        manifestSha256 = Get-Sha256 $manifestPath
+        manifestSha256 = Get-NormalizedTextSha256 $manifestPath
         entryUrl = $entryUrl
-        entrySha256 = Get-Sha256 $entryPath
+        entrySha256 = Get-NormalizedTextSha256 $entryPath
     })
 }
 
