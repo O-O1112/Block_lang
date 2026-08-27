@@ -4,7 +4,7 @@ This roadmap is a public planning document, not a promise that an item is alread
 implemented. Shipped behavior belongs in the [README](README.md),
 [changelog](CHANGELOG.md), and release notes.
 
-## Current: v2.2.2 foundation
+## Current: v2.2.5 ecosystem and safety foundation
 
 The current release line focuses on making the core workflow usable and reviewable:
 
@@ -18,8 +18,12 @@ The current release line focuses on making the core workflow usable and reviewab
 - smoke tests, release verification, checksums, security guidance, and versioned
   documentation.
 - workspace-aware project discovery and deterministic native expression limits.
+- digest-pinned package registry with five official starter packages;
+- read-only `doctor --full` reports and scheduled creator-side health checks;
+- secure GitHub Release bootstrapper with SHA-256 verification and ZIP-slip
+  protection; optional host runtimes are detected, never silently installed.
 
-## Next: v2.3.0 ecosystem and first-run friction
+## Next: v2.3.0 ecosystem depth and first-run friction
 
 These are the highest-value improvements for the next patch release:
 

@@ -2,7 +2,7 @@ const pluginId = "com.blocklang.acode";
 
 const MAX_CODE_CHARS = 2 * 1024 * 1024;
 const MAX_RESPONSE_BYTES = 4 * 1024 * 1024;
-const BLOCK_PLUGIN_VERSION = '2.2.2';
+const BLOCK_PLUGIN_VERSION = '2.2.5';
 
 const svgIconUrl = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%232a2a2a'/%3E%3Cg fill='none' stroke='%23ffffff' stroke-width='5' stroke-linejoin='round'%3E%3Crect x='25' y='20' width='15' height='60'/%3E%3Cpolygon points='45,20 70,20 75,32.5 70,45 45,45'/%3E%3Cpolygon points='45,55 75,55 80,67.5 75,80 45,80'/%3E%3C/g%3E%3C/svg%3E";
 

@@ -4,16 +4,32 @@
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; media-src 'none'; worker-src 'self'; manifest-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://cloudflareinsights.com https://static.cloudflareinsights.com; form-action 'self'; upgrade-insecure-requests">
     <meta name="description" content="Learn the Block Engine mental model, editions and polyglot orchestration workflow.">
+    <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+    <meta name="application-name" content="Block Language">
+    <link rel="canonical" href="https://o-o1112.github.io/Block_lang/wiki.html">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://o-o1112.github.io/Block_lang/wiki.html">
+    <meta property="og:site_name" content="Block Engine">
+    <meta property="og:title" content="Introduction — Block Docs">
+    <meta property="og:description" content="Learn how Block coordinates native runtimes, moves state between language blocks and structures a readable polyglot program.">
+    <meta property="og:image" content="https://o-o1112.github.io/Block_lang/demo.gif">
+    <meta property="og:image:alt" content="Block Engine polyglot state pipeline demo">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Introduction — Block Docs">
+    <meta name="twitter:description" content="Start learning Block Language with its execution model, editions and first workflow.">
+    <meta name="twitter:image" content="https://o-o1112.github.io/Block_lang/demo.gif">
+    <meta name="twitter:image:alt" content="Block Engine polyglot state pipeline demo">
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Block Language","item":"https://o-o1112.github.io/Block_lang/"},{"@type":"ListItem","position":2,"name":"Documentation","item":"https://o-o1112.github.io/Block_lang/wiki.html"},{"@type":"ListItem","position":3,"name":"Introduction","item":"https://o-o1112.github.io/Block_lang/wiki.html"}]}</script>
     <meta name="theme-color" content="#000000"><title>Introduction — Block Docs</title>
     <link rel="icon" href="logo.svg" type="image/svg+xml"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="styles.css">
 </head>
 <body data-page="docs" data-doc="introduction">
     <canvas id="bg-canvas" aria-hidden="true"></canvas><div class="noise" aria-hidden="true"></div><div id="cursor-aura" aria-hidden="true"></div><div id="scroll-progress" aria-hidden="true"></div>
-    <nav class="navbar" aria-label="Primary navigation"><a href="index.html" class="logo" aria-label="Block home"><img src="logo.svg" alt="" class="logo-img-small"><span class="logo-text">BLOCK</span></a><button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false"><span></span><span></span></button><div class="nav-links"><a href="features.html">Product</a><a href="features.html#architecture">Architecture</a><a href="downloads.html">Downloads</a><a href="https://github.com/O-O1112/Block_lang" class="nav-github" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a><a href="wiki.html" class="btn-glow">Documentation</a></div></nav>
+            <nav class="navbar" aria-label="Primary navigation"><a href="index.html" class="logo" aria-label="Block home"><img src="logo.svg" alt="" class="logo-img-small"><span class="logo-text">BLOCK</span></a><button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false"><span></span><span></span></button><div class="nav-links"><a href="features.html">Product</a><a href="features.html#architecture">Architecture</a><a href="downloads.html">Downloads</a><a href="marketplace.html">Marketplace</a><a href="https://github.com/O-O1112/Block_lang" class="nav-github" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a><a href="wiki.html" class="btn-glow">Documentation</a></div></nav>
 
     <main class="docs-layout">
         <aside class="docs-sidebar">
-            <a href="wiki.html" class="docs-brand"><span>BLOCK / DOCS</span><small>ENGINE 2.2.2</small></a>
+            <a href="wiki.html" class="docs-brand"><span>BLOCK / DOCS</span><small>ENGINE 2.2.5</small></a>
             <label class="docs-search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg><input type="search" placeholder="Filter chapters" aria-label="Filter documentation chapters"></label>
             <nav class="docs-chapters" aria-label="Documentation chapters">
                 <p>Start here</p><a href="wiki.html" class="docs-link active"><span>01</span>Introduction</a><a href="wiki-install.html" class="docs-link"><span>02</span>Installation</a>
@@ -70,7 +86,7 @@ console.log(doubled.join(", "));
 
         <aside class="docs-toc"><p>ON THIS PAGE</p><a href="#what-is-block">What Block changes</a><a href="#mental-model">Mental model</a><a href="#first-look">First look</a><a href="#editions">Editions</a><div class="docs-toc-line"><i></i></div><a href="features.html">Product overview &nearr;</a></aside>
     </main>
-<footer class="site-footer docs-footer"><div class="footer-brand"><img src="logo.svg" alt="" width="34" height="34"><strong>BLOCK</strong></div><p>Documentation / Engine 2.2.2</p><div class="footer-links"><a href="features.html">Product</a><a href="downloads.html">Downloads</a><a href="wiki.html">Docs home</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="security.html">Security</a></div><p class="copyright">&copy; 2026 Block Engine.</p></footer>
+<footer class="site-footer docs-footer"><div class="footer-brand"><img src="logo.svg" alt="" width="34" height="34"><strong>BLOCK</strong></div><p>Documentation / Engine 2.2.5</p><div class="footer-links"><a href="features.html">Product</a><a href="downloads.html">Downloads</a><a href="wiki.html">Docs home</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="security.html">Security</a></div><p class="copyright">&copy; 2026 Block Engine.</p></footer>
     <script src="script.js"></script><!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "12b429e6c7ed419dba2c29a840359c59"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>

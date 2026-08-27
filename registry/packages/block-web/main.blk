@@ -1,0 +1,12 @@
+# Block Web v2.2.5 — request-safe native conventions.
+func block_web_ok(status):
+    return status >= 200 and status < 400
+block
+
+func block_web_summary(name, status):
+    if block_web_ok(status):
+        return name
+    else:
+        return "unavailable"
+    block
+block

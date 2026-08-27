@@ -1,0 +1,12 @@
+# Block Work v2.2.5 — the caller must explicitly approve each one-shot action.
+func block_work_approved(approval):
+    return approval == "APPROVE-ONCE"
+block
+
+func block_work_result(approval):
+    if block_work_approved(approval):
+        return "approved for one execution"
+    else:
+        return "blocked: explicit one-shot approval required"
+    block
+block

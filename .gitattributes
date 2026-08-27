@@ -3,7 +3,8 @@ SHA256SUMS.txt text eol=lf
 *.cs text
 *.ps1 text
 *.js text
-*.json text
+*.json text eol=lf
+*.blk text eol=lf
 *.md text
 *.html text
 *.css text

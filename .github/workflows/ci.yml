@@ -29,6 +29,10 @@ jobs:
         shell: powershell
         run: .\tests\Test-BlockCli.ps1 -EngineDirectory (Join-Path $PWD 'ci-release')
 
+      - name: Run package registry tests
+        shell: powershell
+        run: .\tests\Test-PackageRegistry.ps1 -EngineDirectory (Join-Path $PWD 'ci-release')
+
       - name: Run path resolution tests
         shell: powershell
         run: .\tests\Test-BlockPaths.ps1 -EngineDirectory (Join-Path $PWD 'ci-release')

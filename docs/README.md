@@ -17,6 +17,7 @@ This directory is the maintained documentation index for Block Language.
 
 - [Repository layout](REPOSITORY_LAYOUT.md)
 - [Release 2.2.2 notes](RELEASE-2.2.2.md)
+- [Release 2.2.5 notes](RELEASE-2.2.5.md)
 - [Release growth playbook](GROWTH.md)
 - [Third-party validation process](THIRD-PARTY-VALIDATION.md)
 - [External tester packet](TESTER-PACKET.md)

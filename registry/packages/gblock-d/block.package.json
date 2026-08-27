@@ -1,0 +1,11 @@
+{
+  "name": "gblock-d",
+  "version": "2.2.5",
+  "main": "main.blk",
+  "description": "Deterministic data-model helpers for Gblock:D game prototypes.",
+  "engine": ">=2.2.5",
+  "license": "MIT",
+  "repository": "https://github.com/O-O1112/Block_lang",
+  "permissions": ["native", "graphics"],
+  "keywords": ["game", "prototype", "state", "graphics"]
+}

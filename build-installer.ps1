@@ -1,7 +1,8 @@
 param(
     [string]$ReleaseDirectory = $PSScriptRoot,
     [string]$OutputDirectory = $ReleaseDirectory,
-    [string]$Version = ""
+    [string]$Version = "",
+    [string]$SigningCertificateThumbprint = ""
 )
 
 $ErrorActionPreference = 'Stop'
@@ -18,12 +19,6 @@ if (-not $compiler) { throw 'Microsoft .NET Framework C# compiler (csc.exe) not 
 
 $source = Join-Path $PSScriptRoot 'Installer.cs'
 $icon = Join-Path $PSScriptRoot 'icon.ico'
-$required = @('block.zip', 'block-lite.zip', 'block-plus.zip')
-foreach ($name in $required) {
-    if (-not (Test-Path -LiteralPath (Join-Path $ReleaseDirectory $name))) {
-        throw "Missing installer resource: $(Join-Path $ReleaseDirectory $name)"
-    }
-}
 if (-not (Test-Path -LiteralPath $source)) { throw "Installer source not found: $source" }
 if (-not (Test-Path -LiteralPath $icon)) { throw "Installer icon not found: $icon" }
 
@@ -31,10 +26,23 @@ New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
 $primary = Join-Path $OutputDirectory "BlockSetup-v$Version.exe"
 $generatedDirectory = Join-Path ([IO.Path]::GetTempPath()) ('block-installer-version-' + [Guid]::NewGuid().ToString('N'))
 $generatedVersionSource = Join-Path $generatedDirectory 'InstallerBuildVersion.g.cs'
+$generatedAssemblySource = Join-Path $generatedDirectory 'InstallerAssemblyInfo.g.cs'
 New-Item -ItemType Directory -Force -Path $generatedDirectory | Out-Null
 [IO.File]::WriteAllText(
     $generatedVersionSource,
     "namespace BlockInstaller { internal static class InstallerBuildVersion { public const string Value = `"$Version`"; } }",
+    (New-Object Text.UTF8Encoding($false))
+)
+$assemblyVersion = $Version + '.0'
+$assemblyInfo = 'using System.Reflection; ' +
+    '[assembly: AssemblyTitle("Block Engine Secure Bootstrapper")] ' +
+    '[assembly: AssemblyDescription("Downloads and verifies official Block Engine releases")] ' +
+    '[assembly: AssemblyVersion("' + $assemblyVersion + '")] ' +
+    '[assembly: AssemblyFileVersion("' + $assemblyVersion + '")] ' +
+    '[assembly: AssemblyInformationalVersion("' + $Version + '")]'
+[IO.File]::WriteAllText(
+    $generatedAssemblySource,
+    $assemblyInfo,
     (New-Object Text.UTF8Encoding($false))
 )
 $arguments = @(
@@ -43,9 +51,6 @@ $arguments = @(
     '/platform:x86',
     ('/out:' + $primary),
     ('/win32icon:' + $icon),
-    ('/resource:' + (Join-Path $ReleaseDirectory 'block.zip') + ',block.zip'),
-    ('/resource:' + (Join-Path $ReleaseDirectory 'block-lite.zip') + ',block-lite.zip'),
-    ('/resource:' + (Join-Path $ReleaseDirectory 'block-plus.zip') + ',block-plus.zip'),
     ('/resource:' + $icon + ',icon.ico'),
     '/reference:System.dll',
     '/reference:System.Core.dll',
@@ -53,8 +58,10 @@ $arguments = @(
     '/reference:System.Windows.Forms.dll',
     '/reference:System.IO.Compression.dll',
     '/reference:System.IO.Compression.FileSystem.dll',
+    '/reference:System.Web.Extensions.dll',
     $source,
-    $generatedVersionSource
+    $generatedVersionSource,
+    $generatedAssemblySource
 )
 
 try {
@@ -67,5 +74,14 @@ finally {
 
 $stableAlias = Join-Path $OutputDirectory 'BlockSetup.exe'
 Copy-Item -LiteralPath $primary -Destination $stableAlias -Force
+
+if (-not [string]::IsNullOrWhiteSpace($SigningCertificateThumbprint)) {
+    $signtool = Get-Command signtool.exe -ErrorAction SilentlyContinue
+    if (-not $signtool) { throw 'SigningCertificateThumbprint was supplied but signtool.exe was not found.' }
+    & $signtool.Source sign /sha1 $SigningCertificateThumbprint /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 $primary
+    if ($LASTEXITCODE -ne 0) { throw 'Authenticode signing failed for the versioned installer.' }
+    & $signtool.Source sign /sha1 $SigningCertificateThumbprint /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 $stableAlias
+    if ($LASTEXITCODE -ne 0) { throw 'Authenticode signing failed for BlockSetup.exe.' }
+}
 Write-Host "Created $primary"
 Write-Host "Updated $stableAlias"

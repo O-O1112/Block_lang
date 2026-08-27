@@ -1,7 +1,8 @@
 param(
     [string]$ReleaseDirectory = $PSScriptRoot,
     [switch]$SkipExecutableExecution,
-    [string]$Version = ""
+    [string]$Version = "",
+    [switch]$RequireSignedInstaller
 )
 
 $ErrorActionPreference = 'Stop'
@@ -26,6 +27,19 @@ $expectedVersions = @{
     'block-plus.exe' = "Block+ Engine v$Version (Flagship Edition)"
 }
 
+$installerSource = Join-Path $PSScriptRoot 'Installer.cs'
+if (-not (Test-Path -LiteralPath $installerSource)) {
+    $failures.Add('missing installer source')
+} else {
+    $installerText = Get-Content -LiteralPath $installerSource -Raw
+    foreach ($marker in @('OfficialApiBase', 'OfficialRepository', 'AllowAutoRedirect = true', 'ValidateReleaseAssetUri', 'ContainsReparsePoint', 'Extracted release executable exceeds', 'SHA-256 verification failed', 'ExtractVerifiedArchive', 'ValidateResponseUri')) {
+        if ($installerText -notmatch [regex]::Escape($marker)) { $failures.Add("secure installer marker missing: $marker") }
+    }
+    foreach ($forbidden in @('winget', 'choco.exe', 'RunRuntimeInstall', 'GetManifestResourceStream(resourceName)')) {
+        if ($installerText -match [regex]::Escape($forbidden)) { $failures.Add("unsafe installer behavior remains: $forbidden") }
+    }
+}
+
 foreach ($name in $coreNames) {
     $path = Join-Path $bin $name
     if (-not (Test-Path -LiteralPath $path)) {
@@ -43,6 +57,22 @@ foreach ($name in $coreNames) {
 foreach ($name in $requiredArtifacts) {
     $path = if ($coreNames -contains $name) { Join-Path $bin $name } else { Join-Path $ReleaseDirectory $name }
     if (-not (Test-Path -LiteralPath $path)) { $failures.Add("missing release artifact: $name") }
+}
+
+$versionedInstaller = Join-Path $ReleaseDirectory "BlockSetup-v$Version.exe"
+$installerPaths = @($versionedInstaller, (Join-Path $ReleaseDirectory 'BlockSetup.exe'))
+foreach ($installerPath in $installerPaths) {
+    if (-not (Test-Path -LiteralPath $installerPath)) { continue }
+    if ($installerPath -eq $versionedInstaller) {
+        $installerVersionInfo = [Diagnostics.FileVersionInfo]::GetVersionInfo($installerPath)
+        if ($installerVersionInfo.FileVersion -ne "$Version.0") {
+            $failures.Add("wrong installer file version: $($installerVersionInfo.FileVersion)")
+        }
+    }
+    if ($RequireSignedInstaller) {
+        $signature = Get-AuthenticodeSignature -LiteralPath $installerPath
+        if ($signature.Status -ne 'Valid') { $failures.Add("installer signature is not valid for $([IO.Path]::GetFileName($installerPath)): $($signature.Status)") }
+    }
 }
 
 $hashFile = Join-Path $ReleaseDirectory 'SHA256SUMS.txt'

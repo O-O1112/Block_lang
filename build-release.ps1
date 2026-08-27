@@ -2,7 +2,8 @@ param(
     [string]$ReleaseDirectory = $PSScriptRoot,
     [switch]$SkipEngineBuild,
     [switch]$SkipExecutableExecution,
-    [string]$Version = ""
+    [string]$Version = "",
+    [string]$SigningCertificateThumbprint = ""
 )
 
 $ErrorActionPreference = 'Stop'
@@ -23,7 +24,11 @@ if (-not $SkipEngineBuild) {
 }
 Invoke-ReleaseStep 'package-engine.ps1' @('-EngineDirectory', $ReleaseDirectory, '-OutputDirectory', $ReleaseDirectory)
 Invoke-ReleaseStep 'package-extensions.ps1' @('-OutputDirectory', $ReleaseDirectory, '-Version', $Version)
-Invoke-ReleaseStep 'build-installer.ps1' @('-ReleaseDirectory', $ReleaseDirectory, '-OutputDirectory', $ReleaseDirectory, '-Version', $Version)
+$installerArguments = @('-ReleaseDirectory', $ReleaseDirectory, '-OutputDirectory', $ReleaseDirectory, '-Version', $Version)
+if (-not [string]::IsNullOrWhiteSpace($SigningCertificateThumbprint)) {
+    $installerArguments += @('-SigningCertificateThumbprint', $SigningCertificateThumbprint)
+}
+Invoke-ReleaseStep 'build-installer.ps1' $installerArguments
 
 $artifacts = @(
     'block.exe', 'block-lite.exe', 'block-plus.exe',
@@ -42,5 +47,6 @@ $hashText = ($lines -join "`n") + "`n"
 [IO.File]::WriteAllText($hashFile, $hashText, [Text.Encoding]::ASCII)
 $verifyArguments = @('-ReleaseDirectory', $ReleaseDirectory, '-Version', $Version)
 if ($SkipExecutableExecution) { $verifyArguments += '-SkipExecutableExecution' }
+if (-not [string]::IsNullOrWhiteSpace($SigningCertificateThumbprint)) { $verifyArguments += '-RequireSignedInstaller' }
 Invoke-ReleaseStep 'verify-release.ps1' $verifyArguments
 Write-Host "Block Engine v$Version release completed in $ReleaseDirectory"

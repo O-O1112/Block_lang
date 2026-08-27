@@ -6,6 +6,10 @@ using System.IO;
 using System.IO.Compression;
 using System.Diagnostics;
 using System.Net;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Web.Script.Serialization;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Reflection;
@@ -46,6 +50,27 @@ namespace BlockInstaller
             catch { return false; }
         }
 
+        private static bool ContainsReparsePoint(string path)
+        {
+            string current;
+            try { current = Path.GetFullPath(path); }
+            catch { return true; }
+            while (!string.IsNullOrEmpty(current))
+            {
+                try
+                {
+                    if ((File.GetAttributes(current) & FileAttributes.ReparsePoint) != 0) return true;
+                }
+                catch (FileNotFoundException) { }
+                catch (DirectoryNotFoundException) { }
+                catch (UnauthorizedAccessException) { return true; }
+                string parent = Path.GetDirectoryName(current);
+                if (string.IsNullOrEmpty(parent) || string.Equals(parent, current, StringComparison.OrdinalIgnoreCase)) break;
+                current = parent;
+            }
+            return false;
+        }
+
         private static string NormalizePathEntry(string path)
         {
             if (string.IsNullOrWhiteSpace(path)) return "";
@@ -84,21 +109,11 @@ namespace BlockInstaller
             return string.Join(";", kept);
         }
 
-        private Dictionary<string, string> langWingetIds = new Dictionary<string, string>()
+        private static readonly string[] RuntimeNames = new string[]
         {
-            {"Python", "Python.Python.3.10"},
-            {"NodeJS (JS/TS)", "OpenJS.NodeJS"},
-            {"PHP", "PHP.PHP"},
-            {"Ruby", "RubyInstallerTeam.Ruby"},
-            {"Lua", "Lua.Lua"},
-            {"SQLite", "SQLite.SQLite"},
-            {"Go (Block+ Only)", "GoLang.Go"},
-            {"Rust (Block+ Only)", "Rustlang.Rustup"},
-            {"Java JDK (Block+ Only)", "Oracle.JDK.21"},
-            {"Dart (Block+ Only)", "Dart.Dart"},
-            {"Zig (Block+ Only)", "zig.zig"},
-            {"Perl (Block+ Only)", "StrawberryPerl.StrawberryPerl"},
-            {"R (Block+ Only)", "RProject.R"}
+            "Python", "NodeJS (JS/TS)", "PHP", "Ruby", "Lua", "SQLite",
+            "Go (Block+ Only)", "Rust (Block+ Only)", "Java JDK (Block+ Only)",
+            "Dart (Block+ Only)", "Zig (Block+ Only)", "Perl (Block+ Only)", "R (Block+ Only)"
         };
 
         private Dictionary<string, string[]> runtimeExecutables = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
@@ -118,20 +133,11 @@ namespace BlockInstaller
             {"R (Block+ Only)", new[] { "Rscript.exe", "R.exe" }}
         };
 
-        private Dictionary<string, string> runtimeChocolateyIds = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            {"PHP", "php"},
-            {"Ruby", "ruby"},
-            {"Lua", "lua"},
-            {"SQLite", "sqlite"},
-            {"Go (Block+ Only)", "golang"},
-            {"Rust (Block+ Only)", "rust"},
-            {"Java JDK (Block+ Only)", "temurin"},
-            {"Dart (Block+ Only)", "dart-sdk"},
-            {"Zig (Block+ Only)", "zig"},
-            {"Perl (Block+ Only)", "strawberryperl"},
-            {"R (Block+ Only)", "r.project"}
-        };
+        private const string OfficialRepository = "O-O1112/Block_lang";
+        private const string OfficialApiBase = "https://api.github.com/repos/" + OfficialRepository + "/releases/tags/v";
+        private const int MaxReleaseMetadataBytes = 4 * 1024 * 1024;
+        private const long MaxReleaseAssetBytes = 512L * 1024L * 1024L;
+        private static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = MaxReleaseMetadataBytes };
 
         public InstallerForm()
         {
@@ -291,7 +297,7 @@ namespace BlockInstaller
             };
             rbPlus.CheckedChanged += (s, e) => {
                 if (rbPlus.Checked)
-                    lblVersionDesc.Text = "Flagship edition. Unlocks 15+ advanced runtimes, Zero-IO, and Winget installer.";
+                    lblVersionDesc.Text = "Flagship edition. Unlocks 15+ advanced runtimes and extended tooling.";
             };
 
             Label lblLang = new Label
@@ -319,7 +325,7 @@ namespace BlockInstaller
             };
             
             clbLang.Items.Add("Block Engine Core (Required)", CheckState.Checked);
-            foreach (var key in langWingetIds.Keys)
+            foreach (string key in RuntimeNames)
             {
                 bool defaultCheck = key.StartsWith("Python") || key.StartsWith("NodeJS");
                 clbLang.Items.Add(key + " Runtime", defaultCheck ? CheckState.Checked : CheckState.Unchecked);
@@ -636,70 +642,44 @@ namespace BlockInstaller
             btnBrowse.Enabled = false;
             txtPath.Enabled = false;
             clbLang.Enabled = false;
-
             btnInstall.BackColor = Color.Gray;
             btnInstall.ForeColor = Color.White;
             progress.Visible = true;
             progress.Value = 0;
-            
+
             string targetDir = txtPath.Text;
             string selectedVersion = rbLite.Checked ? "lite" : rbPlus.Checked ? "plus" : "standard";
-
+            string downloadedAsset = null;
             try
             {
-                lblStatus.Text = "Deploying Block Engine Core and Registry entries...";
+                lblStatus.Text = "Fetching official GitHub release metadata...";
                 progress.Style = ProgressBarStyle.Marquee;
-                await Task.Run(() => DeployCoreEngine(targetDir, selectedVersion));
-                
-                await Task.Delay(800);
+                downloadedAsset = await Task.Run(() => DownloadVerifiedAsset(selectedVersion));
+                lblStatus.Text = "Verified SHA-256; deploying the selected edition...";
+                await Task.Run(() => DeployCoreEngine(targetDir, selectedVersion, downloadedAsset));
                 progress.Style = ProgressBarStyle.Continuous;
 
                 List<string> runtimeWarnings = new List<string>();
                 for (int i = 1; i < clbLang.Items.Count; i++)
                 {
-                    if (clbLang.GetItemChecked(i))
-                    {
-                        string itemText = clbLang.Items[i].ToString();
-                        string langName = itemText.Replace(" Runtime", "");
-                        
-                        if (langWingetIds.ContainsKey(langName))
-                        {
-                            if (IsRuntimeAvailable(langName))
-                            {
-                                lblStatus.Text = string.Format("{0} is already available; skipping install.", langName);
-                                continue;
-                            }
-
-                            string wingetId = langWingetIds[langName];
-                            lblStatus.Text = string.Format("Installing {0} via Winget...", langName);
-                            progress.Style = ProgressBarStyle.Marquee;
-                            try
-                            {
-                                await RunRuntimeInstall(langName, wingetId);
-                            }
-                            catch (Exception runtimeError)
-                            {
-                                // Optional runtimes must not roll back the core
-                                // engine or leave the installer in a failed state.
-                                runtimeWarnings.Add(string.Format("{0}: {1}", langName, runtimeError.Message));
-                            }
-                            progress.Style = ProgressBarStyle.Continuous;
-                        }
-                    }
+                    if (!clbLang.GetItemChecked(i)) continue;
+                    string langName = clbLang.Items[i].ToString().Replace(" Runtime", "");
+                    if (!IsRuntimeAvailable(langName))
+                        runtimeWarnings.Add(langName + ": not found on PATH (not installed by Block Setup)");
                 }
 
                 if (runtimeWarnings.Count > 0)
                 {
-                    lblStatus.Text = string.Format("Core installed; {0} optional runtime(s) skipped.", runtimeWarnings.Count);
+                    lblStatus.Text = string.Format("Core installed; {0} optional runtime(s) need manual setup.", runtimeWarnings.Count);
                     MessageBox.Show(
-                        "Block Engine core installation completed. The following optional runtimes were not installed:\n\n" +
+                        "Block Engine core installation completed. Optional runtimes are detected only; this secure installer never runs package managers or arbitrary commands.\n\n" +
                         string.Join("\n", runtimeWarnings.ToArray()) +
-                        "\n\nYou can install them later and run the installer again. Open a new terminal after setup; use 'block workspace set <folder>' to discover projects without changing directories.",
-                        "Optional runtime warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        "\n\nInstall runtimes from their official sources, then open a new terminal.",
+                        "Optional runtime notice", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
                 else
                 {
-                    lblStatus.Text = "Installed. Open a new terminal; project paths are resolved automatically.";
+                    lblStatus.Text = "Installed from the official release; SHA-256 verified.";
                 }
                 progress.Value = 100;
                 btnInstall.Text = "Finish";
@@ -713,24 +693,27 @@ namespace BlockInstaller
             {
                 lblStatus.Text = "Error: " + ex.Message;
                 lblStatus.ForeColor = Color.IndianRed;
-                
                 btnInstall.Enabled = true;
                 btnBrowse.Enabled = true;
                 txtPath.Enabled = true;
                 clbLang.Enabled = true;
-                
                 btnInstall.BackColor = accentColor;
                 btnInstall.ForeColor = bgColor;
             }
+            finally
+            {
+                try { if (!string.IsNullOrEmpty(downloadedAsset) && File.Exists(downloadedAsset)) File.Delete(downloadedAsset); } catch { }
+            }
         }
 
-        private void DeployCoreEngine(string installDir, string selectedVersion)
+        private void DeployCoreEngine(string installDir, string selectedVersion, string packagePath)
         {
+            if (ContainsReparsePoint(installDir))
+                throw new UnauthorizedAccessException("The selected installation path contains a reparse point and cannot be trusted.");
             if (!Directory.Exists(installDir))
                 Directory.CreateDirectory(installDir);
 
             string exeFileName = "block.exe";
-            string resourceName = "block.zip";
             string progId = "block_script";
             string progDesc = "Block Script";
             string mainExt = ".blk";
@@ -739,7 +722,6 @@ namespace BlockInstaller
             if (selectedVersion == "lite")
             {
                 exeFileName = "block-lite.exe";
-                resourceName = "block-lite.zip";
                 progId = "blocklite_script";
                 progDesc = "Block Lite Script";
                 mainExt = ".blkl";
@@ -748,7 +730,6 @@ namespace BlockInstaller
             else if (selectedVersion == "plus")
             {
                 exeFileName = "block-plus.exe";
-                resourceName = "block-plus.zip";
                 progId = "blockplus_script";
                 progDesc = "Block Plus Script";
                 mainExt = ".blkp";
@@ -762,6 +743,8 @@ namespace BlockInstaller
 
             string exePath = Path.Combine(installDir, exeFileName);
             string iconPath = Path.Combine(installDir, "icon.ico");
+            if (ContainsReparsePoint(exePath) || ContainsReparsePoint(iconPath))
+                throw new UnauthorizedAccessException("The existing installation target contains a reparse point.");
             
             // Extract icon from embedded resource
             using (Stream iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("icon.ico"))
@@ -775,40 +758,18 @@ namespace BlockInstaller
                 }
             }
             
-            // Extract verified embedded bundle (never fall back to untrusted current directory)
-            using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resourceName))
+            if (string.IsNullOrWhiteSpace(packagePath) || !File.Exists(packagePath))
+                throw new FileNotFoundException("Verified release package was not downloaded.", packagePath);
+            string tempExtract = Path.Combine(Path.GetTempPath(), "BlockEngineInstaller_" + Guid.NewGuid().ToString("N"));
+            try
             {
-                if (stream != null)
-                {
-                    string tempZip = Path.Combine(Path.GetTempPath(), "BlockEngineInstaller_" + Guid.NewGuid().ToString("N") + ".zip");
-                    string tempExtract = Path.Combine(Path.GetTempPath(), "BlockEngineInstaller_" + Guid.NewGuid().ToString("N"));
-                    try
-                    {
-                        using (FileStream fs = new FileStream(tempZip, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-                        {
-                            stream.CopyTo(fs);
-                        }
-
-                        Directory.CreateDirectory(tempExtract);
-                        System.IO.Compression.ZipFile.ExtractToDirectory(tempZip, tempExtract);
-
-                        if (File.Exists(Path.Combine(tempExtract, exeFileName)))
-                            InstallExecutableAtomically(Path.Combine(tempExtract, exeFileName), exePath);
-                        else if (File.Exists(Path.Combine(tempExtract, "block.exe")))
-                            InstallExecutableAtomically(Path.Combine(tempExtract, "block.exe"), exePath);
-                        else
-                            throw new Exception(exeFileName + " not found in embedded archive");
-                    }
-                    finally
-                    {
-                        try { if (File.Exists(tempZip)) File.Delete(tempZip); } catch { }
-                        try { if (Directory.Exists(tempExtract)) Directory.Delete(tempExtract, true); } catch { }
-                    }
-                }
-                else
-                {
-                    throw new Exception("Embedded resource missing: " + resourceName);
-                }
+                Directory.CreateDirectory(tempExtract);
+                ExtractVerifiedArchive(packagePath, tempExtract, exeFileName);
+                InstallExecutableAtomically(Path.Combine(tempExtract, exeFileName), exePath);
+            }
+            finally
+            {
+                try { if (Directory.Exists(tempExtract)) Directory.Delete(tempExtract, true); } catch { }
             }
 
             // Keep other Block editions in a shared directory. Installing one edition
@@ -882,6 +843,197 @@ namespace BlockInstaller
             NativeMethods.SHChangeNotify(0x08000000, 0x0000, IntPtr.Zero, IntPtr.Zero);
         }
 
+        private sealed class ReleaseInfo
+        {
+            public string tag_name { get; set; }
+            public List<ReleaseAssetInfo> assets { get; set; }
+        }
+
+        private sealed class ReleaseAssetInfo
+        {
+            public string name { get; set; }
+            public string browser_download_url { get; set; }
+        }
+
+        private string DownloadVerifiedAsset(string selectedVersion)
+        {
+            string assetName = selectedVersion == "lite" ? "block-lite.zip" : selectedVersion == "plus" ? "block-plus.zip" : "block.zip";
+            string apiUrl = OfficialApiBase + InstallerVersion;
+            ReleaseInfo release = Json.Deserialize<ReleaseInfo>(Encoding.UTF8.GetString(DownloadRemoteBytes(apiUrl, MaxReleaseMetadataBytes)));
+            if (release == null || !string.Equals(release.tag_name, "v" + InstallerVersion, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidDataException("Official release tag does not match installer version v" + InstallerVersion + ".");
+            ReleaseAssetInfo package = FindAsset(release, assetName);
+            ReleaseAssetInfo sums = FindAsset(release, "SHA256SUMS.txt");
+            if (package == null || sums == null) throw new InvalidDataException("Official release is missing the selected package or SHA256SUMS.txt.");
+            ValidateReleaseAssetUri(package.browser_download_url, assetName);
+            ValidateReleaseAssetUri(sums.browser_download_url, "SHA256SUMS.txt");
+
+            string sumsText = Encoding.UTF8.GetString(DownloadRemoteBytes(sums.browser_download_url, MaxReleaseMetadataBytes));
+            string expectedHash = FindHash(sumsText, assetName);
+            if (string.IsNullOrEmpty(expectedHash)) throw new InvalidDataException("SHA256SUMS.txt has no digest for " + assetName + ".");
+
+            string outputPath = Path.Combine(Path.GetTempPath(), "BlockEngineInstaller-" + Guid.NewGuid().ToString("N") + ".zip");
+            try
+            {
+                string actualHash = DownloadRemoteFile(package.browser_download_url, outputPath, MaxReleaseAssetBytes);
+                if (!string.Equals(actualHash, expectedHash, StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidDataException("SHA-256 verification failed for " + assetName + ".");
+                return outputPath;
+            }
+            catch
+            {
+                try { if (File.Exists(outputPath)) File.Delete(outputPath); } catch { }
+                throw;
+            }
+        }
+
+        private static ReleaseAssetInfo FindAsset(ReleaseInfo release, string name)
+        {
+            if (release == null || release.assets == null) return null;
+            foreach (ReleaseAssetInfo asset in release.assets)
+                if (asset != null && string.Equals(asset.name, name, StringComparison.Ordinal)) return asset;
+            return null;
+        }
+
+        private static string FindHash(string sumsText, string assetName)
+        {
+            foreach (string line in (sumsText ?? "").Replace("\r", "").Split('\n'))
+            {
+                Match match = Regex.Match(line.Trim(), "^([0-9a-fA-F]{64})\\s+(.+)$");
+                if (match.Success && string.Equals(match.Groups[2].Value.Trim(), assetName, StringComparison.Ordinal))
+                    return match.Groups[1].Value.ToLowerInvariant();
+            }
+            return null;
+        }
+
+        private static byte[] DownloadRemoteBytes(string url, int maxBytes)
+        {
+            Uri uri = ValidateRemoteUri(url);
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(uri);
+            request.Method = "GET";
+            request.UserAgent = "BlockSetup/" + InstallerVersion;
+            request.Accept = "application/json, text/plain, */*";
+            request.Timeout = 20000;
+            request.ReadWriteTimeout = 20000;
+            request.AllowAutoRedirect = true;
+            using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+            {
+                ValidateResponseUri(response.ResponseUri);
+                if (response.StatusCode != HttpStatusCode.OK) throw new InvalidDataException("GitHub returned HTTP " + (int)response.StatusCode + ".");
+                using (Stream input = response.GetResponseStream())
+                using (MemoryStream output = new MemoryStream())
+                {
+                    byte[] buffer = new byte[8192];
+                    int read;
+                    while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        if (output.Length + read > maxBytes) throw new InvalidDataException("GitHub response exceeds the safe limit.");
+                        output.Write(buffer, 0, read);
+                    }
+                    return output.ToArray();
+                }
+            }
+        }
+
+        private static void ValidateReleaseAssetUri(string url, string assetName)
+        {
+            Uri uri = ValidateRemoteUri(url);
+            string expectedPrefix = "/" + OfficialRepository + "/releases/download/v" + InstallerVersion + "/";
+            if (!string.Equals(uri.Host, "github.com", StringComparison.OrdinalIgnoreCase) ||
+                !uri.AbsolutePath.StartsWith(expectedPrefix, StringComparison.OrdinalIgnoreCase) ||
+                !string.Equals(uri.AbsolutePath.Substring(expectedPrefix.Length), assetName, StringComparison.Ordinal))
+                throw new InvalidDataException("GitHub release asset is not an official v" + InstallerVersion + " asset: " + assetName + ".");
+        }
+
+        private static string DownloadRemoteFile(string url, string outputPath, long maxBytes)
+        {
+            Uri uri = ValidateRemoteUri(url);
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(uri);
+            request.Method = "GET";
+            request.UserAgent = "BlockSetup/" + InstallerVersion;
+            request.Timeout = 30000;
+            request.ReadWriteTimeout = 30000;
+            using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+            {
+                ValidateResponseUri(response.ResponseUri);
+                if (response.StatusCode != HttpStatusCode.OK) throw new InvalidDataException("GitHub asset returned HTTP " + (int)response.StatusCode + ".");
+                using (Stream input = response.GetResponseStream())
+                using (FileStream output = new FileStream(outputPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                using (SHA256 sha = SHA256.Create())
+                {
+                    byte[] buffer = new byte[1024 * 64];
+                    long total = 0;
+                    int read;
+                    while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        total += read;
+                        if (total > maxBytes) throw new InvalidDataException("Release asset exceeds the safe size limit.");
+                        sha.TransformBlock(buffer, 0, read, buffer, 0);
+                        output.Write(buffer, 0, read);
+                    }
+                    sha.TransformFinalBlock(new byte[0], 0, 0);
+                    return BitConverter.ToString(sha.Hash).Replace("-", "").ToLowerInvariant();
+                }
+            }
+        }
+
+        private static Uri ValidateRemoteUri(string url)
+        {
+            Uri uri;
+            if (!Uri.TryCreate(url, UriKind.Absolute, out uri) || uri.Scheme != Uri.UriSchemeHttps)
+                throw new InvalidDataException("Installer accepts HTTPS GitHub URLs only.");
+            if (!string.Equals(uri.Host, "api.github.com", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(uri.Host, "github.com", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(uri.Host, "objects.githubusercontent.com", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidDataException("Installer rejected a non-GitHub download host.");
+            return uri;
+        }
+
+        private static void ValidateResponseUri(Uri uri)
+        {
+            if (uri == null) throw new InvalidDataException("GitHub response has no final URI.");
+            ValidateRemoteUri(uri.AbsoluteUri);
+        }
+
+        private static void ExtractVerifiedArchive(string archivePath, string destination, string executableName)
+        {
+            using (ZipArchive archive = ZipFile.OpenRead(archivePath))
+            {
+                ZipArchiveEntry executable = null;
+                int fileCount = 0;
+                foreach (ZipArchiveEntry entry in archive.Entries)
+                {
+                    string normalized = (entry.FullName ?? "").Replace('\\', '/');
+                    if (normalized.StartsWith("/", StringComparison.Ordinal) || normalized.IndexOf("../", StringComparison.Ordinal) >= 0 ||
+                        normalized.IndexOf("/..", StringComparison.Ordinal) >= 0)
+                        throw new InvalidDataException("Release archive contains an unsafe path.");
+                    if (string.IsNullOrEmpty(entry.Name)) continue;
+                    fileCount++;
+                    if (!string.Equals(normalized, executableName, StringComparison.Ordinal))
+                        throw new InvalidDataException("Release archive contains an unexpected file: " + entry.FullName);
+                    if (entry.Length <= 0 || entry.Length > MaxReleaseAssetBytes) throw new InvalidDataException("Release executable has an invalid size.");
+                    executable = entry;
+                }
+                if (fileCount != 1 || executable == null) throw new InvalidDataException("Release archive must contain exactly one executable.");
+                string target = Path.GetFullPath(Path.Combine(destination, executable.Name));
+                string root = Path.GetFullPath(destination).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+                if (!target.StartsWith(root, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("Release archive path escaped staging directory.");
+                using (Stream input = executable.Open())
+                using (FileStream output = new FileStream(target, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                {
+                    byte[] buffer = new byte[64 * 1024];
+                    long total = 0;
+                    int read;
+                    while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        total += read;
+                        if (total > MaxReleaseAssetBytes) throw new InvalidDataException("Extracted release executable exceeds the safe size limit.");
+                        output.Write(buffer, 0, read);
+                    }
+                }
+            }
+        }
+
         private void InstallExecutableAtomically(string sourcePath, string targetPath)
         {
             string stagedPath = targetPath + ".staging-" + Guid.NewGuid().ToString("N");
@@ -947,97 +1099,6 @@ namespace BlockInstaller
             }
         }
         
-        private async Task RunWingetInstall(string packageId)
-        {
-            await Task.Run(() => {
-                try
-                {
-                    string extraArgs = packageId == "Rustlang.Rustup" ? "--override \"-y\"" : "";
-                    ProcessStartInfo psi = new ProcessStartInfo();
-                    psi.FileName = "winget";
-                    psi.Arguments = string.Format("install -e --id {0} --accept-package-agreements --accept-source-agreements --silent {1}", packageId, extraArgs);
-                    psi.UseShellExecute = false;
-                    psi.CreateNoWindow = true;
-                    
-                    using (Process p = Process.Start(psi))
-                    {
-                        p.WaitForExit();
-                        if (p.ExitCode != 0)
-                            throw new InvalidOperationException(string.Format("Winget exited with code {0} for {1}.", p.ExitCode, packageId));
-                    }
-                }
-                catch (Exception)
-                {
-                    throw;
-                }
-            });
-        }
-
-        private async Task RunRuntimeInstall(string runtimeName, string wingetId)
-        {
-            Exception wingetError = null;
-            try
-            {
-                await RunWingetInstall(wingetId);
-                return;
-            }
-            catch (Exception ex)
-            {
-                wingetError = ex;
-            }
-
-            string chocolateyId;
-            if (!runtimeChocolateyIds.TryGetValue(runtimeName, out chocolateyId) || !IsCommandAvailable("choco.exe"))
-                throw new InvalidOperationException(string.Format("Winget failed ({0}). Install App Installer or Chocolatey, then retry.", wingetError.Message));
-
-            try
-            {
-                await RunChocolateyInstall(chocolateyId);
-            }
-            catch (Exception chocolateyError)
-            {
-                throw new InvalidOperationException(string.Format("Winget failed ({0}); Chocolatey fallback also failed ({1}).", wingetError.Message, chocolateyError.Message));
-            }
-        }
-
-        private async Task RunChocolateyInstall(string packageId)
-        {
-            await Task.Run(() => {
-                ProcessStartInfo psi = new ProcessStartInfo();
-                psi.FileName = "choco.exe";
-                psi.Arguments = string.Format("install {0} -y --no-progress", packageId);
-                psi.UseShellExecute = false;
-                psi.CreateNoWindow = true;
-
-                using (Process p = Process.Start(psi))
-                {
-                    if (p == null) throw new InvalidOperationException("Chocolatey process could not be started.");
-                    p.WaitForExit();
-                    if (p.ExitCode != 0)
-                        throw new InvalidOperationException(string.Format("Chocolatey exited with code {0}.", p.ExitCode));
-                }
-            });
-        }
-
-        private bool IsCommandAvailable(string executableName)
-        {
-            string processPath = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.Process);
-            string userPath = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User);
-            foreach (string value in new[] { processPath, userPath })
-            {
-                if (string.IsNullOrWhiteSpace(value)) continue;
-                foreach (string directory in value.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
-                {
-                    try
-                    {
-                        if (File.Exists(Path.Combine(directory.Trim().Trim('"'), executableName))) return true;
-                    }
-                    catch { }
-                }
-            }
-            return false;
-        }
-
         private bool IsRuntimeAvailable(string runtimeName)
         {
             string[] executableNames;

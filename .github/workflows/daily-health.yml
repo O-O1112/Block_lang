@@ -1,0 +1,28 @@
+name: Daily Block health check
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 2 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run read-only health check
+        shell: powershell
+        run: .\tools\daily-health-check.ps1 -RepositoryRoot $PWD
+
+      - name: Upload health report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: block-health-${{ github.sha }}
+          path: .blocklang/health/*.json
+          if-no-files-found: warn
