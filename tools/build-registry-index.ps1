@@ -103,9 +103,50 @@ $json = $index | ConvertTo-Json -Depth 8
 
 if ($Check) {
     if (-not (Test-Path -LiteralPath $indexPath -PathType Leaf)) { throw "Registry index is missing: $indexPath" }
-    $existing = Get-Content -LiteralPath $indexPath -Raw | ConvertFrom-Json | ConvertTo-Json -Depth 8
-    $expected = $json | ConvertFrom-Json | ConvertTo-Json -Depth 8
-    if ($existing -ne $expected) { throw 'registry/index.json is stale; run tools/build-registry-index.ps1.' }
+    $existing = Get-Content -LiteralPath $indexPath -Raw | ConvertFrom-Json
+    $expected = $json | ConvertFrom-Json
+
+    # Compare the catalog as data rather than comparing ConvertTo-Json output.
+    # Windows PowerShell and PowerShell 7 can serialize the same object with
+    # different whitespace, escaping, or line endings. Those formatting-only
+    # differences must not make a digest-pinned catalog fail CI.
+    if ([string]$existing.schema -ne [string]$expected.schema) {
+        throw 'registry/index.json has an unexpected schema.'
+    }
+    if ([string]$existing.generated -ne [string]$expected.generated) {
+        throw 'registry/index.json has an unexpected generated date.'
+    }
+
+    $existingPackages = @($existing.packages)
+    $expectedPackages = @($expected.packages)
+    if ($existingPackages.Count -ne $expectedPackages.Count) {
+        throw 'registry/index.json has the wrong package count; run tools/build-registry-index.ps1.'
+    }
+
+    $scalarFields = @('name', 'version', 'description', 'engine', 'license', 'repository', 'manifestUrl', 'manifestSha256', 'entryUrl', 'entrySha256')
+    $arrayFields = @('permissions', 'keywords')
+    for ($index = 0; $index -lt $expectedPackages.Count; $index++) {
+        $expectedPackage = $expectedPackages[$index]
+        $existingPackage = $existingPackages[$index]
+        $packageName = [string]$expectedPackage.name
+        foreach ($field in $scalarFields) {
+            if ([string]$existingPackage.$field -ne [string]$expectedPackage.$field) {
+                throw "registry/index.json is stale for package '$packageName' field '$field'; run tools/build-registry-index.ps1."
+            }
+        }
+        foreach ($field in $arrayFields) {
+            $expectedValues = @($expectedPackage.$field | ForEach-Object { [string]$_ })
+            $existingValues = @($existingPackage.$field | ForEach-Object { [string]$_ })
+            if ($existingValues.Count -ne $expectedValues.Count) {
+                throw "registry/index.json is stale for package '$packageName' field '$field'; run tools/build-registry-index.ps1."
+            }
+            for ($valueIndex = 0; $valueIndex -lt $expectedValues.Count; $valueIndex++) {
+                if ($existingValues[$valueIndex] -ne $expectedValues[$valueIndex]) {
+                    throw "registry/index.json is stale for package '$packageName' field '$field'; run tools/build-registry-index.ps1."
+                }
+            }
+        }
+    }
     Write-Host 'Registry index is current.'
     exit 0
 }

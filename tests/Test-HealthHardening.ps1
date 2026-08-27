@@ -111,7 +111,8 @@ importlib.reload(_block_socket)
             $env:BLOCK_NETWORK_BLOCKED_OVERRIDE = $previousNetworkOverride
         }
         Assert-True ($networkProbe.ExitCode -ne 0) 'The advisory guard allowed socket module reload.'
-        Assert-True ($networkProbe.Output -match 'denied module reload') 'Network guard rejection was not actionable.'
+        $networkMessage = $networkProbe.Output -replace '\s', ''
+        Assert-True ($networkMessage -match 'deniedmodulereload') 'Network guard rejection was not actionable.'
     }
 
     $example = Join-Path $RepositoryRoot 'examples\hello-polyglot.blk'
