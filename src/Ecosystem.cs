@@ -33,6 +33,11 @@ namespace BlockEngine
         public string version { get; set; }
         public string main { get; set; }
         public string description { get; set; }
+        public string engine { get; set; }
+        public string license { get; set; }
+        public string repository { get; set; }
+        public List<string> permissions { get; set; }
+        public List<string> keywords { get; set; }
 
         public BlockPackageManifest()
         {
@@ -40,6 +45,11 @@ namespace BlockEngine
             version = "0.1.0";
             main = "main.blk";
             description = "";
+            engine = "2.2.5";
+            license = "MIT";
+            repository = "";
+            permissions = new List<string>();
+            keywords = new List<string>();
         }
     }
 
@@ -94,6 +104,11 @@ namespace BlockEngine
             if (string.IsNullOrWhiteSpace(manifest.name)) manifest.name = new DirectoryInfo(packageRoot).Name;
             if (string.IsNullOrWhiteSpace(manifest.version)) manifest.version = "0.1.0";
             if (string.IsNullOrWhiteSpace(manifest.main)) manifest.main = "main.blk";
+            if (string.IsNullOrWhiteSpace(manifest.engine)) manifest.engine = "2.2.5";
+            if (string.IsNullOrWhiteSpace(manifest.license)) manifest.license = "MIT";
+            if (manifest.permissions == null) manifest.permissions = new List<string>();
+            if (manifest.keywords == null) manifest.keywords = new List<string>();
+            ValidatePackageManifest(manifest);
             return manifest;
         }
 
@@ -115,6 +130,7 @@ namespace BlockEngine
                 throw new UnauthorizedAccessException("Package path escapes the Block project root.");
 
             BlockPackageManifest package = LoadPackage(packageRoot);
+            if (package != null) ValidatePackageManifest(package);
             string entry = requestedEntry;
             if (string.IsNullOrWhiteSpace(entry)) entry = package != null ? package.main : "main.blk";
             if (string.IsNullOrWhiteSpace(entry)) entry = "main.blk";
@@ -150,6 +166,29 @@ namespace BlockEngine
                     if (args.Length < 3) throw new ArgumentException("Usage: block ecosystem add <package-directory> [project-directory]");
                     string projectDirectory = args.Length > 3 ? args[3] : Environment.CurrentDirectory;
                     AddPackage(projectDirectory, args[2]);
+                }
+                else if (command == "search")
+                {
+                    BlockRegistryClient.Search(args.Length > 2 ? args[2] : null);
+                }
+                else if (command == "info")
+                {
+                    if (args.Length < 3) throw new ArgumentException("Usage: block pkg info <package-name>");
+                    BlockRegistryClient.Info(args[2]);
+                }
+                else if (command == "install" || command == "fetch")
+                {
+                    if (args.Length < 3) throw new ArgumentException("Usage: block pkg install <package-name> --remote");
+                    BlockRegistryClient.Install(args[2], Environment.CurrentDirectory, HasFlag(args, "--remote"));
+                }
+                else if (command == "verify")
+                {
+                    BlockRegistryClient.Verify(args.Length > 2 ? args[2] : Environment.CurrentDirectory);
+                }
+                else if (command == "remove" || command == "uninstall")
+                {
+                    if (args.Length < 3) throw new ArgumentException("Usage: block pkg remove <package-name> [project-directory]");
+                    RemovePackage(args.Length > 3 ? args[3] : Environment.CurrentDirectory, args[2]);
                 }
                 else
                 {
@@ -238,6 +277,50 @@ namespace BlockEngine
             project.dependencies[packageName] = Path.Combine("packages", packageName);
             WriteJson(Path.Combine(projectRoot, ProjectManifestName), project);
             Console.WriteLine("[Block Ecosystem] Added package " + packageName + " to " + project.name);
+        }
+
+        public static void RemovePackage(string projectDirectory, string packageName)
+        {
+            ValidatePackageName(packageName);
+            string projectRoot = FindProjectRoot(projectDirectory);
+            BlockProjectManifest project = LoadProject(projectRoot);
+            string packageRoot = Path.GetFullPath(Path.Combine(projectRoot, "packages", packageName));
+            string packagesRoot = Path.GetFullPath(Path.Combine(projectRoot, "packages"));
+            if (!IsPathInSandbox(packageRoot, packagesRoot))
+                throw new UnauthorizedAccessException("Package path escapes the project's packages directory.");
+            if (!Directory.Exists(packageRoot))
+                throw new DirectoryNotFoundException("Package is not installed: " + packageName);
+            if (ContainsReparsePoint(packageRoot))
+                throw new UnauthorizedAccessException("Refusing to remove a package containing a reparse point.");
+            Directory.Delete(packageRoot, true);
+            if (project.dependencies != null) project.dependencies.Remove(packageName);
+            WriteJson(Path.Combine(projectRoot, ProjectManifestName), project);
+            Console.WriteLine("[Block Ecosystem] Removed package " + packageName + " from " + project.name);
+        }
+
+        internal static bool HasFlag(string[] args, string flag)
+        {
+            if (args == null) return false;
+            foreach (string arg in args)
+                if (string.Equals(arg, flag, StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
+        }
+
+        public static void ValidatePackageManifest(BlockPackageManifest manifest)
+        {
+            if (manifest == null) return;
+            ValidatePackageName(manifest.name);
+            if (string.IsNullOrWhiteSpace(manifest.main) || Path.IsPathRooted(manifest.main) ||
+                manifest.main.IndexOf("..", StringComparison.Ordinal) >= 0)
+                throw new InvalidDataException("Package main entry must be a relative path inside the package.");
+            string[] allowedPermissions = { "native", "runtime", "read_workspace", "write_workspace", "network", "graphics" };
+            foreach (string permission in manifest.permissions ?? new List<string>())
+            {
+                bool known = false;
+                foreach (string allowed in allowedPermissions)
+                    if (string.Equals(permission, allowed, StringComparison.OrdinalIgnoreCase)) known = true;
+                if (!known) throw new InvalidDataException("Unknown package permission: " + permission);
+            }
         }
 
         public static bool IsPathInSandbox(string fullPath, string sandboxRoot)
@@ -348,6 +431,11 @@ namespace BlockEngine
             Console.WriteLine("  block ecosystem init [directory] [name]");
             Console.WriteLine("  block ecosystem list [directory]");
             Console.WriteLine("  block ecosystem add <package-directory> [project-directory]");
+            Console.WriteLine("  block pkg search [query]");
+            Console.WriteLine("  block pkg info <package-name>");
+            Console.WriteLine("  block pkg install <package-name> --remote");
+            Console.WriteLine("  block pkg verify [project-directory]");
+            Console.WriteLine("  block pkg remove <package-name> [project-directory]");
             Console.WriteLine("  <use package=\"name\" /> loads packages/name/main.blk");
         }
     }

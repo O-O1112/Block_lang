@@ -1,4 +1,4 @@
-# Block Language canonical knowledge (v2.2.2)
+# Block Language canonical knowledge (v2.2.5)
 
 ## Product identity
 
@@ -60,6 +60,22 @@ The native core intentionally does not expose file, network, process, or package
 APIs. A Python, JavaScript, or other runtime block is required for those
 capabilities.
 
+## v2.2.5 package registry
+
+Standard and Plus expose the package commands `pkg search`, `pkg info`,
+`pkg install <name> --remote`, `pkg verify`, and `pkg remove`. The official
+registry is a reviewable `registry/index.json` catalog. The five starter
+packages are `octopus`, `block-web`, `gblock-d`, `block-work`, and `drawing`.
+Remote installation is explicit and fails closed unless the source is an
+official HTTPS raw GitHub file with a matching SHA-256 digest. The installer
+stages only a package manifest and entry document; it does not execute package
+code while installing.
+
+`block doctor --full --root <dir> --report <file> --strict` performs a read-only
+health scan of Block scripts, package manifests, website metadata, and required
+repository files. It should be used as a review signal, not as an operating
+system sandbox or a substitute for independent testing.
+
 ## State boundary
 
 The preceding executable stage produces values, Block serializes them, and the
@@ -93,4 +109,3 @@ Block language blocks can start native programs on the local machine. A timeout,
 import limit, or edition policy is not a complete operating-system sandbox.
 Users should review untrusted `.blk`, `.blkl`, and `.blkp` files, install only
 required runtimes, and verify release SHA-256 checksums before installation.
-

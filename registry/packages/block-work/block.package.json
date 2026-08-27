@@ -1,0 +1,11 @@
+{
+  "name": "block-work",
+  "version": "2.2.5",
+  "main": "main.blk",
+  "description": "One-shot workflow guard for reviewed Block workspaces.",
+  "engine": ">=2.2.5",
+  "license": "MIT",
+  "repository": "https://github.com/O-O1112/Block_lang",
+  "permissions": ["native", "read_workspace", "write_workspace"],
+  "keywords": ["workspace", "automation", "review", "safety"]
+}

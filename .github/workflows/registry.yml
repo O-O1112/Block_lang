@@ -1,0 +1,37 @@
+name: Verify Block package registry
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'registry/**'
+      - 'tools/build-registry-index.ps1'
+      - '.github/workflows/registry.yml'
+  pull_request:
+    paths:
+      - 'registry/**'
+      - 'tools/build-registry-index.ps1'
+      - '.github/workflows/registry.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  registry:
+    runs-on: windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify digest-pinned catalog
+        shell: powershell
+        run: .\tools\build-registry-index.ps1 -RepositoryRoot $PWD -Check -Generated (Get-Content .\registry\index.json -Raw | ConvertFrom-Json).generated
+
+      - name: Build the engine used by package tests
+        shell: powershell
+        run: .\build-release.ps1 -ReleaseDirectory (Join-Path $PWD 'ci-release')
+
+      - name: Run package registry tests
+        shell: powershell
+        run: .\tests\Test-PackageRegistry.ps1 -EngineDirectory (Join-Path $PWD 'ci-release')

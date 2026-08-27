@@ -1,0 +1,16 @@
+# Octopus v2.2.5 — safe native batching helpers.
+# These helpers are deterministic; they do not create processes or threads.
+func octopus_count(items):
+    total = 0
+    for item in items:
+        total = total + 1
+    block
+    return total
+block
+
+func octopus_chunks(items, size):
+    if size <= 0:
+        return []
+    block
+    return items
+block

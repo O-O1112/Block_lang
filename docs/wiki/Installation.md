@@ -6,9 +6,10 @@
 - **Block Standard (`.blk`)** — the recommended general-purpose edition.
 - **Block+ (`.blkp`)** — expanded runtime and tooling support.
 
-The Windows installer is published as [`BlockSetup-v2.2.2.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.2/BlockSetup-v2.2.2.exe)
-on the [download page](../../downloads.html). Existing runtimes are detected
-before optional runtime installation is attempted.
+The Windows installer is published as [`BlockSetup-v2.2.5.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.5/BlockSetup-v2.2.5.exe)
+on the [download page](../../downloads.html). The secure bootstrapper downloads
+the selected official GitHub asset, verifies SHA-256, and detects optional
+runtimes without invoking Winget or Chocolatey.
 
 ## Install and verify
 
@@ -22,9 +23,9 @@ before optional runtime installation is attempted.
    block --version
    ```
 
-The core engine can complete installation even when an optional runtime package
-cannot be downloaded. The installer reports those optional failures so they
-can be installed later and the installer can be run again.
+The core engine can complete installation even when an optional runtime is not
+present. Install missing runtimes from their official sources; the installer
+never executes a package manager or a downloaded script.
 
 ## Run without changing directories
 

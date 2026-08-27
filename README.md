@@ -16,7 +16,7 @@ Maintainers can use the [organic growth playbook](docs/GROWTH.md) to turn demos,
 
 | Item | Details |
 | --- | --- |
-| Current release | `2.2.2` |
+| Current release | `2.2.5` |
 | Primary platform | Windows 10/11 release workflow |
 | Execution model | Parse one document, run native stages in order, transfer serializable state |
 | Editions | Lite (`.blkl`), Standard (`.blk`), Plus (`.blkp`) |
@@ -140,15 +140,15 @@ Use Block when you want:
 
 ### Windows installer
 
-The versioned installer is [`BlockSetup-v2.2.2.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.2/BlockSetup-v2.2.2.exe).
-The stable download alias is [`BlockSetup.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.2/BlockSetup.exe).
+The versioned installer is [`BlockSetup-v2.2.5.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.5/BlockSetup-v2.2.5.exe).
+The stable download alias is [`BlockSetup.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.5/BlockSetup.exe).
 The same files are also linked from the [download page](downloads.html).
 
 1. Run the installer.
 2. Choose the installation directory.
 3. Select Lite, Standard, or Plus. Standard is the recommended general-purpose
    edition.
-4. Select any optional host runtimes you need.
+4. Select the runtimes you want the installer to check.
 5. Open a new PowerShell or Command Prompt window so the updated `PATH` is
    loaded.
 6. Verify the installed engine:
@@ -158,10 +158,11 @@ The same files are also linked from the [download page](downloads.html).
    block --help
    ```
 
-The core engine and optional runtimes are separate installation tasks. If an
-optional Winget or Chocolatey installation fails, the core engine may still be
-usable. Install the missing runtime manually, confirm it is on `PATH`, and run
-the installer again if you want the checklist refreshed.
+The secure installer downloads only the selected official GitHub Release asset,
+checks its SHA-256 value against `SHA256SUMS.txt`, rejects unsafe ZIP paths, and
+then installs the executable atomically. It never invokes Winget, Chocolatey,
+PowerShell, or a downloaded script. Optional runtimes are detected only; install
+them from their official sources and reopen the terminal afterward.
 
 ### Runtime prerequisites
 
@@ -182,7 +183,7 @@ runtime.
 
 ### Build from source
 
-The v2.2.2 Windows build uses the .NET Framework C# compiler available at
+The v2.2.5 Windows build uses the .NET Framework C# compiler available at
 `%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\csc.exe`:
 
 ```powershell
@@ -257,7 +258,7 @@ communicate which engine is expected.
 ## CLI reference
 
 The executable name depends on the edition. The following commands are available
-in the v2.2.2 Windows build:
+in the v2.2.5 Windows build:
 
 | Command | Lite | Standard | Plus | Purpose |
 | --- |:---:|:---:|:---:| --- |
@@ -278,6 +279,7 @@ in the v2.2.2 Windows build:
 | `<engine> project root\|run [path]` | ✓ | ✓ | ✓ | Discover a project manifest or run its configured entry file |
 | `<engine> serve [port]` | — | ✓ | ✓ | Start a local HTTP server document |
 | `<engine> ecosystem ...` / `project ...` | — | ✓ | ✓ | Create, add, and list local packages |
+| `<engine> pkg search|info|install|verify|remove ...` | — | ✓ | ✓ | Discover the signed-by-digest registry and manage packages |
 | `block-plus fmt <file>` | — | — | ✓ | Format a Plus document and keep a `.bak` backup |
 | `block-plus doc <file>` | — | — | ✓ | Generate a `.doc.md` block summary |
 
@@ -653,6 +655,36 @@ Basic `block.package.json`:
 
 Block ecosystem commands are local-first: adding a package reorganizes local directories without downloading or executing untrusted code. Package contents enter the execution pipeline only when explicitly invoked via script tags.
 
+### Official package registry
+
+The v2.2.5 registry is a reviewable `registry/index.json` file in this
+repository. It currently lists the starter packages `octopus`, `block-web`,
+`gblock-d`, `block-work`, and `drawing`. Each entry declares its license,
+permissions, source files, and SHA-256 digests. Search and inspect before an
+explicit remote install:
+
+```powershell
+block pkg search
+block pkg info drawing
+block pkg install drawing --remote
+block pkg verify .
+```
+
+Remote package installation is restricted to official HTTPS raw GitHub files,
+requires a digest for every file, stages only the manifest and entry document,
+and never executes package code during installation. See the [package
+marketplace](marketplace.html) and [`registry/`](registry/) for the current
+catalog and source.
+
+Maintainers can rebuild the catalog after reviewing a package change. The
+generator hashes each manifest and entry file, rejects reparse points and
+unsafe paths, and the registry workflow fails if the committed index is stale:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\build-registry-index.ps1
+powershell -ExecutionPolicy Bypass -File .\tools\build-registry-index.ps1 -Check -Generated (Get-Content .\registry\index.json -Raw | ConvertFrom-Json).generated
+```
+
 ---
 
 ## Local Server
@@ -718,7 +750,7 @@ Because this spawns external processes, it is subject to security policy checks.
 
 ### VS Code
 
-The repository publishes [`block-language-2.2.2.vsix`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.2/block-language-2.2.2.vsix).
+The repository publishes [`block-language-2.2.5.vsix`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.5/block-language-2.2.5.vsix).
 In VS Code, open **Extensions**, choose **Install from VSIX...**, select the
 package, and reload the window if prompted.
 
@@ -730,7 +762,7 @@ host runtime.
 ### Acode
 
 The mobile editor package is
-[`acode-plugin-block-2.2.2.zip`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.2/acode-plugin-block-2.2.2.zip). Install it through
+[`acode-plugin-block-2.2.5.zip`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.5/acode-plugin-block-2.2.5.zip). Install it through
 Acode's plugin workflow, then configure the local execution command if the device
 or terminal environment uses a non-default path.
 
@@ -754,7 +786,7 @@ Block adopts a local-first, conservative security design:
 
 Security configurations do not replace rigorous code review. Never execute untrusted `.blk`, `.blkl`, or `.blkp` files, as language blocks invoke host runtimes directly.
 
-### Default configuration in v2.2.2
+### Default configuration in v2.2.5
 
 New configurations use conservative defaults:
 
@@ -842,7 +874,7 @@ Executable logic must reside inside explicit tags like `<py>...</py>` or `<js>..
 | --- | --- |
 | `block` is not recognized | Open a new terminal, check the selected install directory, and run the executable by its full path |
 | `Script file not found` | Run `block find <name>`; check the project root/workspace, quote paths containing spaces, and confirm the real extension is not hidden by Explorer |
-| Optional runtime installation failed | Install the runtime manually, verify its command on `PATH`, then run the installer again if needed |
+| Optional runtime is missing | Install the runtime manually, verify its command on `PATH`, then reopen the terminal |
 | A language block cannot start | Run the host runtime directly, confirm the selected edition supports the tag, and check both opening and closing tags |
 | State is missing in the next stage | Return plain serializable values and check stage order; handles and functions cannot cross processes |
 | Import is rejected | Confirm the file is inside the configured sandbox, the path is correct, and the import is not circular or too deep |
@@ -958,7 +990,7 @@ when both host runtimes are available.
 
 ### Package and verify a release
 
-The complete v2.2.2 release flow builds the three engines, creates matching ZIP
+The complete v2.2.5 release flow builds the three engines, creates matching ZIP
 bundles, packages the VS Code and Acode extensions, builds the installer, and
 verifies the published artifacts and hashes:
 
@@ -980,12 +1012,13 @@ published checksum changes.
 
 ---
 
-## v2.2.2 status and known boundaries
+## v2.2.5 status and known boundaries
 
-Version 2.2.2 is the current documented release line. It includes the Lite,
+Version 2.2.5 is the current documented release line. It includes the Lite,
 Standard, and Plus engines, the Windows installer, the VS Code extension, the
 Acode plugin, native control flow, cross-runtime state synchronization, local
-imports and packages, the Plus formatting/check/documentation commands, safe
+imports and packages, the verified package registry, the Plus
+formatting/check/documentation commands, safe
 workspace/project discovery, deterministic logical short-circuit parsing, and
 explicit range limits.
 
@@ -1002,7 +1035,7 @@ promises:
 - Process timeouts and import limits reduce accidental resource abuse but do not
   turn arbitrary native code into a security sandbox.
 
-See the [changelog](CHANGELOG.md) and [v2.2.2 release notes](docs/RELEASE-2.2.2.md)
+See the [changelog](CHANGELOG.md) and [v2.2.5 release notes](docs/RELEASE-2.2.5.md)
 for the tested changes and release artifact contract. Planned behavior should not
 be read as shipped behavior.
 
@@ -1010,7 +1043,7 @@ be read as shipped behavior.
 
 ## Roadmap
 
-The [public roadmap](ROADMAP.md) separates the v2.2.2 foundation, proposed next
+The [public roadmap](ROADMAP.md) separates the v2.2.5 foundation, proposed next
 steps, and longer-term ideas. If you want to help Block grow, a reproducible
 example, documentation fix, regression test, or real workflow is more useful than
 an unverified benchmark.
@@ -1054,7 +1087,7 @@ makes project growth easy to verify.
 - [Code of Conduct](CODE_OF_CONDUCT.md)
 - [Citation metadata](CITATION.cff)
 - [MIT License](LICENSE)
-- [v2.2.2 release manifest](docs/RELEASE-2.2.2.md)
+- [v2.2.5 release manifest](docs/RELEASE-2.2.5.md)
 
 The visual documentation site is available from [`wiki.html`](wiki.html). The
 Markdown Wiki is the reviewable source for the same installation, syntax,

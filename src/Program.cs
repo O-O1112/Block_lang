@@ -58,6 +58,12 @@ namespace BlockEngine
                 return;
             }
 
+            if (arg0 == "doctor" && args.Length > 1)
+            {
+                BlockHealthCheck.Run(args);
+                return;
+            }
+
             if (arg0 == "runtimes" || arg0 == "doctor")
             {
                 CliCommands.RunRuntimes(arg0 == "doctor");
@@ -331,7 +337,7 @@ namespace BlockEngine
             Console.WriteLine("       block-lite info [file.blkl]");
             Console.WriteLine("       block-lite capabilities");
             Console.WriteLine("       block-lite runtimes");
-            Console.WriteLine("       block-lite doctor");
+            Console.WriteLine("       block-lite doctor [--full] [--root <dir>] [--report <file>] [--strict]");
             Console.WriteLine("       block-lite workspace show|set|clear");
             Console.WriteLine("       block-lite find [name]");
             Console.WriteLine("       block-lite project root|run [path]");
@@ -345,7 +351,7 @@ namespace BlockEngine
             Console.WriteLine("       block-plus info [file.blkp]");
             Console.WriteLine("       block-plus capabilities");
             Console.WriteLine("       block-plus runtimes");
-            Console.WriteLine("       block-plus doctor");
+            Console.WriteLine("       block-plus doctor [--full] [--root <dir>] [--report <file>] [--strict]");
             Console.WriteLine("       block-plus workspace show|set|clear");
             Console.WriteLine("       block-plus find [name]");
             Console.WriteLine("       block-plus project root|run [path]");
@@ -353,6 +359,7 @@ namespace BlockEngine
             Console.WriteLine("       block-plus config show|path");
             Console.WriteLine("       block-plus serve [port]");
             Console.WriteLine("       block-plus ecosystem|project init|list|add ...");
+            Console.WriteLine("       block-plus pkg search|info|install|verify|remove ...");
             Console.WriteLine("       block-plus fmt <file.blkp>");
             Console.WriteLine("       block-plus check <file.blkp>");
             Console.WriteLine("       block-plus doc <file.blkp>");
@@ -364,7 +371,7 @@ namespace BlockEngine
             Console.WriteLine("       block info [file.blk]");
             Console.WriteLine("       block capabilities");
             Console.WriteLine("       block runtimes");
-            Console.WriteLine("       block doctor");
+            Console.WriteLine("       block doctor [--full] [--root <dir>] [--report <file>] [--strict]");
             Console.WriteLine("       block workspace show|set|clear");
             Console.WriteLine("       block find [name]");
             Console.WriteLine("       block project root|run [path]");
@@ -372,6 +379,7 @@ namespace BlockEngine
             Console.WriteLine("       block config show|path");
             Console.WriteLine("       block serve 8080");
             Console.WriteLine("       block ecosystem|project init|list|add ...");
+            Console.WriteLine("       block pkg search|info|install|verify|remove ...");
 #endif
         }
 

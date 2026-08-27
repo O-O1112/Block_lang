@@ -1,0 +1,8 @@
+# Drawing v2.2.5 — pure helpers; rendering remains the host application's job.
+func drawing_point_count(points):
+    return len(points)
+block
+
+func drawing_in_bounds(value, minimum, maximum):
+    return value >= minimum and value <= maximum
+block

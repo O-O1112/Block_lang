@@ -1,6 +1,7 @@
 # Local build output
 /bin/
 /ci-release/
+/ci-test/
 /release/
 /_release/
 /obj/

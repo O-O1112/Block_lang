@@ -8,10 +8,10 @@ install directory selected in the installer.
 
 ## The installer reports optional runtime failures
 
-The engine and optional runtimes are separate. A failed Winget or Chocolatey
-operation does not necessarily mean the core engine failed. Install the missing
-runtime manually, ensure its command is on `PATH`, and run the installer again
-if you want the runtime checklist refreshed.
+The engine and optional runtimes are separate. The v2.2.5 secure installer only
+detects optional runtimes; it never runs Winget, Chocolatey, PowerShell, or a
+downloaded script. Install a missing runtime from its official source, ensure
+its command is on `PATH`, and reopen the terminal.
 
 ## `Script file not found`
 

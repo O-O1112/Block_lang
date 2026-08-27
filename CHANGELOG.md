@@ -23,6 +23,27 @@ All notable changes to the Block execution engine will be documented in this fil
 - Added security, API, Community Lab, and arbitrary-version release regression
   tests to CI.
 
+## [2.2.5] - 2026-08-27
+
+### Package registry
+- Added the official digest-pinned `registry/index.json` catalog.
+- Added `pkg search`, `pkg info`, `pkg install <name> --remote`, `pkg verify`,
+  and `pkg remove` for Standard and Plus.
+- Added five reviewable starter packages: Octopus, Block Web, Gblock:D, Block
+  Work, and Drawing.
+
+### Health and installer safety
+- Added read-only `doctor --full` repository health reports and a scheduled
+  GitHub Actions workflow for creator-side daily checks.
+- Rebuilt the Windows installer as an official GitHub Release bootstrapper with
+  HTTPS host allowlisting, SHA-256 verification, ZIP-slip protection, atomic
+  deployment, version metadata, and no package-manager or downloaded-script
+  execution.
+- Optional runtimes are now detected and reported only; they are not silently
+  installed by the setup program.
+- Added release and package-registry regression coverage and updated the website
+  marketplace, docs, AI knowledge pack, and extension metadata.
+
 ## [2.2.2] - 2026-08-23
 
 ### CLI workspace and project discovery
