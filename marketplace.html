@@ -10,23 +10,90 @@
     <meta name="twitter:card" content="summary"><meta name="twitter:title" content="Package Marketplace — Block Engine"><meta name="twitter:description" content="Discover verified Block packages and install them from the official GitHub registry.">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"CollectionPage","name":"Block Package Marketplace","url":"https://o-o1112.github.io/Block_lang/marketplace.html","isPartOf":{"@type":"WebSite","name":"Block Language","url":"https://o-o1112.github.io/Block_lang/"}}</script>
     <title>Package Marketplace — Block Engine</title>
-    <link rel="icon" href="logo.svg" type="image/svg+xml"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="styles.css">
-    <style>
-        .market-hero{max-width:1080px;margin:0 auto;padding:150px 30px 60px}.market-hero h1{max-width:760px;font-size:clamp(48px,8vw,100px);line-height:.94;margin:22px 0}.market-hero h1 em{font-style:normal;color:#888}.market-hero p{max-width:680px;color:#999;line-height:1.75}.market-grid{max-width:1080px;margin:0 auto;padding:0 30px 110px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.market-card{border:1px solid #303034;background:linear-gradient(145deg,#121214,#080809);padding:28px;min-height:250px;display:flex;flex-direction:column;justify-content:space-between}.market-card h2{margin:0 0 12px;font-size:27px}.market-card p{color:#999;line-height:1.6;margin:0 0 20px}.market-tags{display:flex;flex-wrap:wrap;gap:7px;margin:20px 0}.market-tags span{border:1px solid #3a3a3e;color:#bbb;padding:5px 8px;font:11px 'Space Mono',monospace;text-transform:uppercase}.market-command{border-top:1px solid #29292c;padding-top:16px;color:#ddd;font:12px 'Space Mono',monospace;overflow-wrap:anywhere}.market-command code{color:#fff}.market-note{max-width:1080px;margin:0 auto;padding:0 30px 55px;color:#888;line-height:1.7}.market-note a{color:#fff}.market-card:first-child{grid-column:span 2}.market-card:first-child .market-command{max-width:620px}@media(max-width:700px){.market-grid{grid-template-columns:1fr}.market-card:first-child{grid-column:span 1}.market-hero{padding-top:120px}}
-    </style>
+    <link rel="icon" href="logo.svg" type="image/svg+xml"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="styles.css?v=225-marketplace">
 </head>
 <body data-page="marketplace">
     <canvas id="bg-canvas" aria-hidden="true"></canvas><div class="noise" aria-hidden="true"></div><div id="cursor-aura" aria-hidden="true"></div><div id="scroll-progress" aria-hidden="true"></div>
     <nav class="navbar" aria-label="Primary navigation"><a href="index.html" class="logo" aria-label="Block home"><img src="logo.svg" alt="" class="logo-img-small"><span class="logo-text">BLOCK</span></a><button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false"><span></span><span></span></button><div class="nav-links"><a href="features.html">Product</a><a href="marketplace.html" data-nav="marketplace">Marketplace</a><a href="downloads.html">Downloads</a><a href="https://github.com/O-O1112/Block_lang" class="nav-github" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a><a href="wiki.html" class="btn-glow">Documentation</a></div></nav>
     <main>
-        <header class="market-hero"><p class="eyebrow"><span class="status-dot"></span> Official registry / v2.2.5</p><h1>Extend the flow.<br><em>Keep the boundary.</em></h1><p>Block packages are ordinary, reviewable files. The official registry publishes metadata and SHA-256 digests; the engine verifies remote files before installing them and never executes package code during installation.</p></header>
-        <p class="market-note">Install a package after reviewing its permissions: <code>block pkg info drawing</code>, then <code>block pkg install drawing --remote</code>. The registry is maintained in <a href="https://github.com/O-O1112/Block_lang/tree/main/registry" target="_blank" rel="noopener noreferrer">GitHub source</a>; package capabilities remain explicit and host runtimes are never bundled silently.</p>
-        <section class="market-grid" aria-label="Official packages">
-            <article class="market-card"><div><p class="eyebrow">01 / concurrency</p><h2>Octopus</h2><p>Bounded native helpers for batching and concurrency-oriented workflows. The v2.2.5 starter surface is deterministic and does not create processes or threads.</p><div class="market-tags"><span>native</span><span>batch</span><span>performance</span></div></div><div class="market-command"><code>block pkg install octopus --remote</code></div></article>
-            <article class="market-card"><div><p class="eyebrow">02 / web</p><h2>Block Web</h2><p>Safe native conventions for web documents and status handling. Network access remains a host policy decision.</p><div class="market-tags"><span>native</span><span>web</span><span>api</span></div></div><div class="market-command"><code>block pkg install block-web --remote</code></div></article>
-            <article class="market-card"><div><p class="eyebrow">03 / games</p><h2>Gblock:D</h2><p>Deterministic state helpers for game prototypes, including clamping and alive-state checks.</p><div class="market-tags"><span>native</span><span>graphics</span><span>game</span></div></div><div class="market-command"><code>block pkg install gblock-d --remote</code></div></article>
-            <article class="market-card"><div><p class="eyebrow">04 / reviewed work</p><h2>Block Work</h2><p>One-shot approval helpers for reviewed workspace workflows. File operations must still be granted by the host policy.</p><div class="market-tags"><span>native</span><span>read workspace</span><span>write workspace</span></div></div><div class="market-command"><code>block pkg install block-work --remote</code></div></article>
-            <article class="market-card"><div><p class="eyebrow">05 / geometry</p><h2>Drawing</h2><p>Pure native geometry helpers for drawing and chart prototypes. Rendering remains the responsibility of the host application.</p><div class="market-tags"><span>native</span><span>graphics</span><span>chart</span></div></div><div class="market-command"><code>block pkg install drawing --remote</code></div></article>
+        <header class="market-hero">
+            <div class="market-hero-copy reveal">
+                <p class="eyebrow"><span class="status-dot"></span> Official registry / v2.2.5</p>
+                <h1>Extensions,<br><em>with proof.</em></h1>
+                <p class="market-lede">Add focused capabilities to Block without giving up reviewability. Every official package publishes its permissions, source files and SHA-256 digests before installation.</p>
+                <div class="market-actions">
+                    <a class="btn-primary magnetic" href="#packages"><span>Explore packages</span><span aria-hidden="true">↓</span></a>
+                    <a class="btn-secondary" href="https://github.com/O-O1112/Block_lang/tree/main/registry" target="_blank" rel="noopener noreferrer">Registry source <span aria-hidden="true">↗</span></a>
+                </div>
+            </div>
+            <aside class="market-proof reveal" aria-label="Registry guarantees">
+                <div class="market-proof-head"><span>REGISTRY STATUS</span><strong><i></i> Online</strong></div>
+                <div class="market-proof-mark" aria-hidden="true"><span>B</span><b>PKG</b></div>
+                <dl>
+                    <div><dt>Packages</dt><dd>05</dd></div>
+                    <div><dt>License</dt><dd>MIT</dd></div>
+                    <div><dt>Integrity</dt><dd>SHA-256</dd></div>
+                </dl>
+                <div class="market-terminal"><span>$</span><code>block pkg search</code><b aria-hidden="true"></b></div>
+            </aside>
+        </header>
+
+        <section class="market-catalog" id="packages">
+            <div class="market-section-head reveal">
+                <div><p class="eyebrow">01 / Verified catalog</p><h2>Choose a capability.</h2></div>
+                <p>Inspect first, install second. Package code is never executed during installation, and every downloaded file must match the digest recorded in the official registry.</p>
+            </div>
+
+            <div class="market-grid" aria-label="Official packages">
+                <article class="market-card market-card-featured tilt-card reveal">
+                    <div class="market-card-top"><span>01 / Concurrency</span><strong><i></i> Verified</strong></div>
+                    <div class="market-card-symbol" aria-hidden="true">OCT</div>
+                    <div class="market-card-copy"><h3>Octopus</h3><p>Bounded helpers for batching and concurrency-oriented workflows, designed for deterministic execution without spawning processes or threads.</p></div>
+                    <ul class="market-tags" aria-label="Capabilities"><li>native</li><li>batch</li><li>performance</li></ul>
+                    <div class="market-card-footer"><code>block pkg install octopus --remote</code><a href="https://github.com/O-O1112/Block_lang/tree/main/registry/packages/octopus" target="_blank" rel="noopener noreferrer" aria-label="Inspect Octopus source">Inspect ↗</a></div>
+                </article>
+
+                <article class="market-card market-card-web tilt-card reveal">
+                    <div class="market-card-top"><span>02 / Web</span><strong><i></i> Verified</strong></div>
+                    <div class="market-card-symbol" aria-hidden="true">WEB</div>
+                    <div class="market-card-copy"><h3>Block Web</h3><p>Safe conventions for web documents, API-shaped data and status handling. Network access remains a host policy decision.</p></div>
+                    <ul class="market-tags" aria-label="Capabilities"><li>native</li><li>web</li><li>api</li></ul>
+                    <div class="market-card-footer"><code>block pkg install block-web --remote</code><a href="https://github.com/O-O1112/Block_lang/tree/main/registry/packages/block-web" target="_blank" rel="noopener noreferrer" aria-label="Inspect Block Web source">Inspect ↗</a></div>
+                </article>
+
+                <article class="market-card tilt-card reveal">
+                    <div class="market-card-top"><span>03 / Games</span><strong><i></i> Verified</strong></div>
+                    <div class="market-card-symbol" aria-hidden="true">G:D</div>
+                    <div class="market-card-copy"><h3>Gblock:D</h3><p>Deterministic state helpers for game prototypes, including clamping, health and alive-state checks.</p></div>
+                    <ul class="market-tags" aria-label="Capabilities"><li>native</li><li>graphics</li><li>game</li></ul>
+                    <div class="market-card-footer"><code>block pkg install gblock-d --remote</code><a href="https://github.com/O-O1112/Block_lang/tree/main/registry/packages/gblock-d" target="_blank" rel="noopener noreferrer" aria-label="Inspect Gblock D source">Inspect ↗</a></div>
+                </article>
+
+                <article class="market-card tilt-card reveal">
+                    <div class="market-card-top"><span>04 / Work</span><strong><i></i> Verified</strong></div>
+                    <div class="market-card-symbol" aria-hidden="true">WRK</div>
+                    <div class="market-card-copy"><h3>Block Work</h3><p>One-shot approval helpers for reviewed workspace workflows, with explicit read and write boundaries.</p></div>
+                    <ul class="market-tags" aria-label="Capabilities"><li>native</li><li>read workspace</li><li>write workspace</li></ul>
+                    <div class="market-card-footer"><code>block pkg install block-work --remote</code><a href="https://github.com/O-O1112/Block_lang/tree/main/registry/packages/block-work" target="_blank" rel="noopener noreferrer" aria-label="Inspect Block Work source">Inspect ↗</a></div>
+                </article>
+
+                <article class="market-card tilt-card reveal">
+                    <div class="market-card-top"><span>05 / Geometry</span><strong><i></i> Verified</strong></div>
+                    <div class="market-card-symbol" aria-hidden="true">DRW</div>
+                    <div class="market-card-copy"><h3>Drawing</h3><p>Pure geometry helpers for drawing and chart prototypes. Rendering remains in the host application's control.</p></div>
+                    <ul class="market-tags" aria-label="Capabilities"><li>native</li><li>graphics</li><li>chart</li></ul>
+                    <div class="market-card-footer"><code>block pkg install drawing --remote</code><a href="https://github.com/O-O1112/Block_lang/tree/main/registry/packages/drawing" target="_blank" rel="noopener noreferrer" aria-label="Inspect Drawing source">Inspect ↗</a></div>
+                </article>
+            </div>
+        </section>
+
+        <section class="market-install reveal" aria-labelledby="market-install-title">
+            <div class="market-install-copy"><p class="eyebrow">02 / Deliberate installation</p><h2 id="market-install-title">Three commands.<br>Every boundary visible.</h2><p>The registry is metadata-first. Read the declared permissions, install into the current project, then verify every installed file without running package code.</p></div>
+            <ol class="market-command-list">
+                <li><span>01</span><div><small>Discover</small><code>block pkg search</code></div></li>
+                <li><span>02</span><div><small>Inspect</small><code>block pkg info drawing</code></div></li>
+                <li><span>03</span><div><small>Install + verify</small><code>block pkg install drawing --remote</code></div></li>
+            </ol>
         </section>
     </main>
     <footer class="site-footer"><div class="footer-brand"><img src="logo.svg" alt="" width="34" height="34"><strong>BLOCK</strong></div><p>Native execution, orchestrated.</p><div class="footer-links"><a href="index.html">Home</a><a href="downloads.html">Downloads</a><a href="marketplace.html">Marketplace</a><a href="wiki.html">Documentation</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="security.html">Security</a></div><p class="copyright">&copy; 2026 Block Engine.</p></footer>
