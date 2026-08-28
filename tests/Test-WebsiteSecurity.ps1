@@ -61,6 +61,10 @@ foreach ($file in $htmlFiles) {
         }
     }
 
+    if ($html -match '(?i)<style\b|\sstyle\s*=' -and $html -match '(?i)style-src' -and $html -notmatch '(?i)style-src[^;>]*unsafe-inline') {
+        throw "Inline CSS would be blocked by the CSP meta policy in $($file.Name)."
+    }
+
     foreach ($tag in [regex]::Matches($html, '<script\b[^>]*>([\s\S]*?)</script>', [Text.RegularExpressions.RegexOptions]::IgnoreCase)) {
         $isInline = $tag.Value -notmatch '\bsrc\s*='
         $isJsonLd = $tag.Value -match 'application/ld\+json'
