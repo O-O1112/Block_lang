@@ -23,11 +23,7 @@ namespace BlockEngine
             }
             catch (Exception ex)
             {
-                // Keep fatal errors actionable even when the host cannot render Exception.ToString().
-                Console.Error.WriteLine("[Block fatal] " + ex.GetType().FullName);
-                Console.Error.WriteLine(ex.Message ?? "(no message)");
-                if (!string.IsNullOrEmpty(ex.StackTrace)) Console.Error.WriteLine(ex.StackTrace);
-                Environment.ExitCode = 1;
+                CliDiagnostics.Report(ex, "startup");
             }
         }
 
@@ -97,8 +93,7 @@ namespace BlockEngine
 
             if (arg0 == "check")
             {
-                Console.Error.WriteLine("Usage: block check <file>");
-                Environment.ExitCode = 1;
+                CliDiagnostics.ReportUsage("check", "block check <file>", "Quote file paths that contain spaces.");
                 return;
             }
 
@@ -106,13 +101,12 @@ namespace BlockEngine
             {
                 if (args.Length < 2)
                 {
-                    Console.Error.WriteLine("Usage: block ast <file>");
-                    Environment.ExitCode = 1;
+                    CliDiagnostics.ReportUsage("ast", "block ast <file>", "Provide a Block document to inspect without executing it.");
                     return;
                 }
 
                 EngineConfig astCfg = Config.LoadConfig();
-                string astPath;
+                string astPath = null;
                 try
                 {
                     astPath = BlockPathResolver.ResolveScript(JoinCommandLinePath(args, 1), astCfg, "ast");
@@ -123,8 +117,7 @@ namespace BlockEngine
                 }
                 catch (Exception ex)
                 {
-                    Console.Error.WriteLine("[Block] " + ex.Message);
-                    Environment.ExitCode = 1;
+                    CliDiagnostics.Report(ex, "ast", astPath ?? JoinCommandLinePath(args, 1));
                 }
                 return;
             }
@@ -173,8 +166,7 @@ namespace BlockEngine
                 int port = 8080;
                 if (args.Length > 1 && (!int.TryParse(args[1], out port) || port < 1 || port > 65535))
                 {
-                    Console.Error.WriteLine("Invalid port. Use an integer between 1 and 65535.");
-                    Environment.ExitCode = 1;
+                    CliDiagnostics.ReportUsage("serve", "block serve [1-65535]", "Use an available TCP port, for example: block serve 8080");
                     return;
                 }
                 EngineConfig apiCfg = Config.LoadConfig();
@@ -211,8 +203,7 @@ namespace BlockEngine
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine("[Block] " + ex.Message);
-                Environment.ExitCode = 1;
+                CliDiagnostics.Report(ex, arg0 == "run" ? "run" : "script", scriptArgument);
                 return;
             }
 
@@ -244,8 +235,7 @@ namespace BlockEngine
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine(string.Format("Execution Error: {0}", ex.Message));
-                Environment.ExitCode = 1;
+                CliDiagnostics.Report(ex, "execute", scriptPath);
             }
         }
 
@@ -387,7 +377,7 @@ namespace BlockEngine
         static void RunFmtCLI(string filePath)
         {
             string path = Path.GetFullPath(filePath);
-            if (!File.Exists(path)) { Console.Error.WriteLine("File not found: " + path); Environment.ExitCode = 1; return; }
+            if (!File.Exists(path)) { CliDiagnostics.Report(new FileNotFoundException("Format target not found.", path), "fmt", path); return; }
             
             // H9: Fix: Write backup before overwriting original
             string backupPath = path + ".bak";
@@ -419,15 +409,15 @@ namespace BlockEngine
             {
                 // H9: Fix: Restore backup on failure
                 File.Copy(backupPath, path, overwrite: true);
-                Console.Error.WriteLine("[Block+ Fmt] FAILED and restored original: " + ex.Message);
-                Environment.ExitCode = 1;
+                CliDiagnostics.Report(ex, "fmt (original restored)", path,
+                    "The original file was restored from its backup. Fix the reported problem and run fmt again.");
             }
         }
 
         static void RunDocCLI(string filePath)
         {
             string path = Path.GetFullPath(filePath);
-            if (!File.Exists(path)) { Console.Error.WriteLine("File not found: " + path); Environment.ExitCode = 1; return; }
+            if (!File.Exists(path)) { CliDiagnostics.Report(new FileNotFoundException("Documentation source not found.", path), "doc", path); return; }
             string code = ReadScriptFile(path);
             var blocks = Parser.ParseBlocks(code, path, Config.LoadConfig());
             string docPath = Path.ChangeExtension(path, ".doc.md");

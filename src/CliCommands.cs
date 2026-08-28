@@ -55,8 +55,7 @@ namespace BlockEngine
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine("[Block Check] Syntax Check Failed: " + ex.Message);
-                Environment.ExitCode = 1;
+                CliDiagnostics.Report(ex, "check", filePath);
             }
         }
 
@@ -93,8 +92,7 @@ namespace BlockEngine
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine("[Block Info] Could not inspect script: " + ex.Message);
-                Environment.ExitCode = 1;
+                CliDiagnostics.Report(ex, "info", filePath);
             }
         }
 
@@ -136,8 +134,9 @@ namespace BlockEngine
 
             if (doctor && !Directory.Exists(cfg.SandboxDir))
             {
-                Console.Error.WriteLine("[Block Doctor] Sandbox directory does not exist: " + cfg.SandboxDir);
-                Environment.ExitCode = 1;
+                CliDiagnostics.Report(new DirectoryNotFoundException("Configured sandbox directory does not exist."),
+                    "doctor", cfg.SandboxDir,
+                    "Open 'block config' and select an existing sandbox directory.");
             }
             else if (doctor && missingEnabled > 0)
             {
@@ -206,15 +205,13 @@ namespace BlockEngine
                     return;
                 }
 
-                Console.WriteLine("Usage:");
-                Console.WriteLine("  block workspace show");
-                Console.WriteLine("  block workspace set <directory>");
-                Console.WriteLine("  block workspace clear");
+                CliDiagnostics.ReportUsage("workspace",
+                    "block workspace show | set <directory> | clear",
+                    "Use 'show' to inspect both configured and environment search roots.");
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine("[Block Workspace] Error: " + ex.Message);
-                Environment.ExitCode = 1;
+                CliDiagnostics.Report(ex, "workspace");
             }
         }
 
@@ -235,8 +232,7 @@ namespace BlockEngine
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine("[Block Find] Error: " + ex.Message);
-                Environment.ExitCode = 1;
+                CliDiagnostics.Report(ex, "find", query);
             }
         }
 
@@ -265,14 +261,13 @@ namespace BlockEngine
                     return;
                 }
 
-                Console.WriteLine("Usage:");
-                Console.WriteLine("  block project root [path]");
-                Console.WriteLine("  block project run [file|project-directory]");
+                CliDiagnostics.ReportUsage("project",
+                    "block project root [path] | run [file|project-directory]",
+                    "Use 'block find <name>' if you do not know the project entry path.");
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine("[Block Project] Error: " + ex.Message);
-                Environment.ExitCode = 1;
+                CliDiagnostics.Report(ex, "project");
             }
         }
 

@@ -60,12 +60,15 @@ namespace BlockEngine
             List<CodeBlock> blocks = new List<CodeBlock>();
             string currentLang = "block";
             List<string> buffer = new List<string>();
+            int lineNumber = 0;
+            int blockStartLine = 0;
 
             using (StringReader sr = new StringReader(code))
             {
                 string line;
                 while ((line = sr.ReadLine()) != null)
                 {
+                    lineNumber++;
 #if !BLOCK_LITE
                     var importMatch = Regex.Match(line.Trim(), @"^<\s*import\s+src=[""']([^""']+)[""']\s*\/?>$", RegexOptions.IgnoreCase);
                     if (importMatch.Success)
@@ -78,8 +81,18 @@ namespace BlockEngine
                             blocks.Add(new CodeBlock { Language = currentLang, Code = string.Join("\n", buffer) });
                             buffer.Clear();
                         }
-                        blocks.AddRange(LoadImportedBlocks(fullImportPath, cfg, visitedFiles, depth,
-                            ref importCount, ref importBytes));
+                        try
+                        {
+                            blocks.AddRange(LoadImportedBlocks(fullImportPath, cfg, visitedFiles, depth,
+                                ref importCount, ref importBytes));
+                        }
+                        catch (BlockDiagnosticException) { throw; }
+                        catch (Exception ex)
+                        {
+                            throw new BlockDiagnosticException("BLK1201", "Import failed", ex.Message,
+                                currentScriptPath, lineNumber, 1,
+                                "Check the <import src=\"...\"> path and keep imported files inside the configured sandbox.");
+                        }
                         continue;
                     }
 
@@ -93,9 +106,19 @@ namespace BlockEngine
                             blocks.Add(new CodeBlock { Language = currentLang, Code = string.Join("\n", buffer) });
                             buffer.Clear();
                         }
-                        string packagePath = Ecosystem.ResolvePackageEntry(currentScriptPath, packageName, packageEntry, cfg);
-                        blocks.AddRange(LoadImportedBlocks(packagePath, cfg, visitedFiles, depth,
-                            ref importCount, ref importBytes));
+                        try
+                        {
+                            string packagePath = Ecosystem.ResolvePackageEntry(currentScriptPath, packageName, packageEntry, cfg);
+                            blocks.AddRange(LoadImportedBlocks(packagePath, cfg, visitedFiles, depth,
+                                ref importCount, ref importBytes));
+                        }
+                        catch (BlockDiagnosticException) { throw; }
+                        catch (Exception ex)
+                        {
+                            throw new BlockDiagnosticException("BLK1301", "Package reference failed", ex.Message,
+                                currentScriptPath, lineNumber, 1,
+                                "Run 'block pkg info " + packageName + "' and verify that the package is installed in this project.");
+                        }
                         continue;
                     }
 
@@ -105,7 +128,10 @@ namespace BlockEngine
                     {
                         if (!cfg.AllowCustomDefinitions)
                         {
-                            throw new UnauthorizedAccessException("Security: <define> tag is disabled (AllowCustomDefinitions=false). Arbitrary process execution is blocked.");
+                            throw new BlockDiagnosticException("BLK2101", "Custom language definition blocked",
+                                "The <define> tag is disabled because AllowCustomDefinitions=false.",
+                                currentScriptPath, lineNumber, 1,
+                                "Use a built-in runtime, or review the file before enabling custom definitions in 'block config'.");
                         }
                         string dLang = defMatch.Groups[1].Value.ToLower();
                         string dCmd = defMatch.Groups[2].Value;
@@ -128,12 +154,19 @@ namespace BlockEngine
                         if (isClosing && IsValidLanguageTag(lang))
                         {
                             if (currentLang == "block")
-                                throw new InvalidOperationException(string.Format("Unmatched closing tag </{0}>.", lang));
+                                throw new BlockDiagnosticException("BLK1101", "Unmatched closing tag",
+                                    string.Format("Found </{0}> without a matching opening tag.", lang),
+                                    currentScriptPath, lineNumber, 1,
+                                    string.Format("Remove </{0}> or add <{0}> before this line.", lang));
                             if (!string.Equals(currentLang, lang, StringComparison.OrdinalIgnoreCase))
-                                throw new InvalidOperationException(string.Format("Mismatched closing tag </{0}>; expected </{1}>.", lang, currentLang));
+                                throw new BlockDiagnosticException("BLK1101", "Mismatched closing tag",
+                                    string.Format("Found </{0}> while <{1}> is still open.", lang, currentLang),
+                                    currentScriptPath, lineNumber, 1,
+                                    string.Format("Replace </{0}> with </{1}>, or close <{1}> before this line.", lang, currentLang));
 
                             blocks.Add(new CodeBlock { Language = currentLang, Code = string.Join("\n", buffer) });
                             currentLang = "block";
+                            blockStartLine = 0;
                             buffer.Clear();
                         }
                         else if (!isClosing && currentLang == "block" && IsValidLanguageTag(lang))
@@ -144,6 +177,7 @@ namespace BlockEngine
                                 buffer.Clear();
                             }
                             currentLang = lang;
+                            blockStartLine = lineNumber;
                         }
                         else
                         {
@@ -156,7 +190,10 @@ namespace BlockEngine
             } // Close using block
             
             if (!string.Equals(currentLang, "block", StringComparison.OrdinalIgnoreCase))
-                throw new InvalidOperationException(string.Format("Unclosed language block <{0}>.", currentLang));
+                throw new BlockDiagnosticException("BLK1101", "Unclosed language block",
+                    string.Format("The <{0}> block opened here has no closing </{0}> tag.", currentLang),
+                    currentScriptPath, blockStartLine > 0 ? blockStartLine : lineNumber, 1,
+                    string.Format("Add </{0}> after the final line of this block.", currentLang));
 
             if (buffer.Count > 0)
                 blocks.Add(new CodeBlock { Language = currentLang, Code = string.Join("\n", buffer) });

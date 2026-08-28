@@ -4,6 +4,9 @@ All notable changes to the Block execution engine will be documented in this fil
 
 ## Unreleased
 
+- Standardized CLI failures as stable `BLKxxxx` diagnostics with operation,
+  source location, context, and actionable repair hints while hiding internal
+  stack traces unless `BLOCK_DEBUG=1` is explicitly enabled.
 - Added context-aware HTML template escaping and rejection of executable
   attribute, script/style, and unsafe URL substitutions.
 - Corrected JSON rendering for booleans, numbers, lists, maps, and null values.
