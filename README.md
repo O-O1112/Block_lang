@@ -870,6 +870,26 @@ Executable logic must reside inside explicit tags like `<py>...</py>` or `<js>..
 
 ## Troubleshooting
 
+Block errors now use stable diagnostic codes and show the operation, file,
+source location, and a suggested next action when that information is
+available:
+
+```text
+error[BLK1101]: Mismatched closing tag
+  operation: check
+  file     : C:\Projects\demo.blk
+  location : 3:1
+  source   : 3 | </js>
+               | ^
+  detail   : Expected </py>, but found </js>.
+  hint     : Replace </js> with </py>.
+```
+
+Use the `BLKxxxx` code when searching the documentation or opening an issue.
+Normal output intentionally hides internal stack traces. Maintainers can set
+`BLOCK_DEBUG=1` before reproducing a failure to include the stack trace; remove
+private paths and secrets before sharing it publicly.
+
 | Symptom | First checks |
 | --- | --- |
 | `block` is not recognized | Open a new terminal, check the selected install directory, and run the executable by its full path |

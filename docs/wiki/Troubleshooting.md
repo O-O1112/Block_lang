@@ -1,5 +1,34 @@
 # Troubleshooting
 
+## Reading Block diagnostics
+
+Command failures use stable `BLKxxxx` codes. A diagnostic can include the
+operation, file, line and column, source excerpt, technical detail, and a
+specific repair hint. For example:
+
+```text
+error[BLK1001]: File not found
+  operation: run
+  file     : C:\Projects\missing.blk
+  detail   : Could not find the requested Block document.
+  hint     : Run 'block find <name>', quote paths that contain spaces, or provide an absolute path.
+```
+
+Include the diagnostic code when searching or reporting a problem. Internal
+stack traces are hidden by default. Maintainers may set `BLOCK_DEBUG=1` for one
+reproduction to expose the stack trace, but should remove private paths and
+secrets before sharing the output.
+
+Common groups are:
+
+| Code range | Meaning |
+| --- | --- |
+| `BLK0001`–`BLK0002` | Invalid command usage or input |
+| `BLK1001`–`BLK1301` | Files, syntax, imports, or package references |
+| `BLK2001`–`BLK2101` | Safety-policy rejection |
+| `BLK4001`–`BLK4002` | Timeout or missing host runtime |
+| `BLK9001` | Unexpected internal failure |
+
 ## `block` is not recognized
 
 Open a new terminal after installation so the updated `PATH` is loaded. If it

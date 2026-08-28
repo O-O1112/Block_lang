@@ -190,15 +190,21 @@ namespace BlockEngine
                     if (args.Length < 3) throw new ArgumentException("Usage: block pkg remove <package-name> [project-directory]");
                     RemovePackage(args.Length > 3 ? args[3] : Environment.CurrentDirectory, args[2]);
                 }
-                else
+                else if (command == "help" || command == "--help" || command == "-h")
                 {
                     PrintHelp();
+                }
+                else
+                {
+                    CliDiagnostics.ReportUsage((args.Length > 0 ? args[0] : "pkg") + " " + command,
+                        "block pkg search | info <name> | install <name> --remote | verify [path] | remove <name>",
+                        "Run 'block pkg search' to list packages in the official registry.");
                 }
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine("[Block Ecosystem] Error: " + ex.Message);
-                Environment.ExitCode = 1;
+                string operation = (args.Length > 0 ? args[0] : "ecosystem") + " " + command;
+                CliDiagnostics.Report(ex, operation.Trim());
             }
         }
 

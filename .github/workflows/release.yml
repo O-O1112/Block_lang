@@ -36,6 +36,7 @@ jobs:
         run: |
           .\tests\Test-BlockEngine.ps1 -EngineDirectory (Join-Path $PWD 'release')
           .\tests\Test-BlockCli.ps1 -EngineDirectory (Join-Path $PWD 'release')
+          .\tests\Test-ActionableErrors.ps1 -EngineDirectory (Join-Path $PWD 'release')
           .\tests\Test-PackageRegistry.ps1 -EngineDirectory (Join-Path $PWD 'release')
           .\tests\Test-BlockPaths.ps1 -EngineDirectory (Join-Path $PWD 'release')
           .\tests\Test-NativeLanguage.ps1 -EngineDirectory (Join-Path $PWD 'release')
