@@ -70,3 +70,7 @@ if ($failures.Count -gt 0) {
 }
 
 Write-Host 'Actionable error diagnostics passed.'
+# Negative-path assertions intentionally run commands that exit with code 1.
+# Reset the native exit code so CI records the successful test result while
+# allowing callers (including release.yml) to continue running later tests.
+$global:LASTEXITCODE = 0
