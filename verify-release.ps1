@@ -32,7 +32,7 @@ if (-not (Test-Path -LiteralPath $installerSource)) {
     $failures.Add('missing installer source')
 } else {
     $installerText = Get-Content -LiteralPath $installerSource -Raw
-    foreach ($marker in @('OfficialApiBase', 'OfficialRepository', 'AllowAutoRedirect = true', 'ValidateReleaseAssetUri', 'ContainsReparsePoint', 'Extracted release executable exceeds', 'SHA-256 verification failed', 'ExtractVerifiedArchive', 'ValidateResponseUri')) {
+    foreach ($marker in @('OfficialApiBase', 'OfficialRepository', 'ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12', 'AllowAutoRedirect = true', 'ValidateReleaseAssetUri', 'ContainsReparsePoint', 'Extracted release executable exceeds', 'SHA-256 verification failed', 'ExtractVerifiedArchive', 'ValidateResponseUri')) {
         if ($installerText -notmatch [regex]::Escape($marker)) { $failures.Add("secure installer marker missing: $marker") }
     }
     foreach ($forbidden in @('winget', 'choco.exe', 'RunRuntimeInstall', 'GetManifestResourceStream(resourceName)')) {

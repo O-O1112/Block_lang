@@ -53,6 +53,10 @@ jobs:
         shell: powershell
         run: .\tests\Test-MarketplaceLayout.ps1 -RepositoryRoot $PWD
 
+      - name: Verify installer TLS transport
+        shell: powershell
+        run: .\tests\Test-InstallerTransport.ps1 -RepositoryRoot $PWD
+
       - name: Verify Block AI knowledge corpus
         shell: powershell
         run: .\tests\Test-BlockAiCorpus.ps1 -RepositoryRoot $PWD

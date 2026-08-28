@@ -139,6 +139,15 @@ namespace BlockInstaller
         private const long MaxReleaseAssetBytes = 512L * 1024L * 1024L;
         private static readonly JavaScriptSerializer Json = new JavaScriptSerializer { MaxJsonLength = MaxReleaseMetadataBytes };
 
+        static InstallerForm()
+        {
+            // GitHub requires TLS 1.2 or newer. Older .NET Framework releases can
+            // otherwise default to TLS 1.0 even on a fully updated Windows host.
+            // Select only TLS 1.2; never fall back to SSL 3.0 or legacy TLS.
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            ServicePointManager.Expect100Continue = false;
+        }
+
         public InstallerForm()
         {
             this.Text = "Block Installer";
@@ -909,29 +918,30 @@ namespace BlockInstaller
         private static byte[] DownloadRemoteBytes(string url, int maxBytes)
         {
             Uri uri = ValidateRemoteUri(url);
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(uri);
-            request.Method = "GET";
-            request.UserAgent = "BlockSetup/" + InstallerVersion;
-            request.Accept = "application/json, text/plain, */*";
-            request.Timeout = 20000;
-            request.ReadWriteTimeout = 20000;
-            request.AllowAutoRedirect = true;
-            using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+            HttpWebRequest request = CreateGitHubRequest(uri, 20000, "application/json, text/plain, */*");
+            try
             {
-                ValidateResponseUri(response.ResponseUri);
-                if (response.StatusCode != HttpStatusCode.OK) throw new InvalidDataException("GitHub returned HTTP " + (int)response.StatusCode + ".");
-                using (Stream input = response.GetResponseStream())
-                using (MemoryStream output = new MemoryStream())
+                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 {
-                    byte[] buffer = new byte[8192];
-                    int read;
-                    while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
+                    ValidateResponseUri(response.ResponseUri);
+                    if (response.StatusCode != HttpStatusCode.OK) throw new InvalidDataException("GitHub returned HTTP " + (int)response.StatusCode + ".");
+                    using (Stream input = response.GetResponseStream())
+                    using (MemoryStream output = new MemoryStream())
                     {
-                        if (output.Length + read > maxBytes) throw new InvalidDataException("GitHub response exceeds the safe limit.");
-                        output.Write(buffer, 0, read);
+                        byte[] buffer = new byte[8192];
+                        int read;
+                        while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
+                        {
+                            if (output.Length + read > maxBytes) throw new InvalidDataException("GitHub response exceeds the safe limit.");
+                            output.Write(buffer, 0, read);
+                        }
+                        return output.ToArray();
                     }
-                    return output.ToArray();
                 }
+            }
+            catch (WebException ex)
+            {
+                throw CreateNetworkFailure(ex, uri);
             }
         }
 
@@ -948,32 +958,87 @@ namespace BlockInstaller
         private static string DownloadRemoteFile(string url, string outputPath, long maxBytes)
         {
             Uri uri = ValidateRemoteUri(url);
+            HttpWebRequest request = CreateGitHubRequest(uri, 30000, "application/octet-stream, */*");
+            try
+            {
+                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+                {
+                    ValidateResponseUri(response.ResponseUri);
+                    if (response.StatusCode != HttpStatusCode.OK) throw new InvalidDataException("GitHub asset returned HTTP " + (int)response.StatusCode + ".");
+                    using (Stream input = response.GetResponseStream())
+                    using (FileStream output = new FileStream(outputPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                    using (SHA256 sha = SHA256.Create())
+                    {
+                        byte[] buffer = new byte[1024 * 64];
+                        long total = 0;
+                        int read;
+                        while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
+                        {
+                            total += read;
+                            if (total > maxBytes) throw new InvalidDataException("Release asset exceeds the safe size limit.");
+                            sha.TransformBlock(buffer, 0, read, buffer, 0);
+                            output.Write(buffer, 0, read);
+                        }
+                        sha.TransformFinalBlock(new byte[0], 0, 0);
+                        return BitConverter.ToString(sha.Hash).Replace("-", "").ToLowerInvariant();
+                    }
+                }
+            }
+            catch (WebException ex)
+            {
+                throw CreateNetworkFailure(ex, uri);
+            }
+        }
+
+        private static HttpWebRequest CreateGitHubRequest(Uri uri, int timeout, string accept)
+        {
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(uri);
             request.Method = "GET";
             request.UserAgent = "BlockSetup/" + InstallerVersion;
-            request.Timeout = 30000;
-            request.ReadWriteTimeout = 30000;
-            using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+            request.Accept = accept;
+            request.Timeout = timeout;
+            request.ReadWriteTimeout = timeout;
+            request.AllowAutoRedirect = true;
+            request.MaximumAutomaticRedirections = 5;
+            request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+            request.ProtocolVersion = HttpVersion.Version11;
+            return request;
+        }
+
+        private static Exception CreateNetworkFailure(WebException error, Uri endpoint)
+        {
+            string host = endpoint == null ? "GitHub" : endpoint.Host;
+            HttpWebResponse response = error.Response as HttpWebResponse;
+            if (response != null)
             {
-                ValidateResponseUri(response.ResponseUri);
-                if (response.StatusCode != HttpStatusCode.OK) throw new InvalidDataException("GitHub asset returned HTTP " + (int)response.StatusCode + ".");
-                using (Stream input = response.GetResponseStream())
-                using (FileStream output = new FileStream(outputPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-                using (SHA256 sha = SHA256.Create())
-                {
-                    byte[] buffer = new byte[1024 * 64];
-                    long total = 0;
-                    int read;
-                    while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
-                    {
-                        total += read;
-                        if (total > maxBytes) throw new InvalidDataException("Release asset exceeds the safe size limit.");
-                        sha.TransformBlock(buffer, 0, read, buffer, 0);
-                        output.Write(buffer, 0, read);
-                    }
-                    sha.TransformFinalBlock(new byte[0], 0, 0);
-                    return BitConverter.ToString(sha.Hash).Replace("-", "").ToLowerInvariant();
-                }
+                return new InvalidDataException(
+                    host + " returned HTTP " + (int)response.StatusCode + " (" + response.StatusCode + ").",
+                    error);
+            }
+            switch (error.Status)
+            {
+                case WebExceptionStatus.SecureChannelFailure:
+                case WebExceptionStatus.TrustFailure:
+                    return new InvalidOperationException(
+                        "Secure TLS 1.2 connection to " + host + " failed. Check the Windows date/time, install current root certificates, and ensure HTTPS inspection or a proxy is not replacing GitHub's certificate.",
+                        error);
+                case WebExceptionStatus.NameResolutionFailure:
+                case WebExceptionStatus.ProxyNameResolutionFailure:
+                    return new InvalidOperationException(
+                        "Could not resolve " + host + ". Check DNS, proxy, and internet access, then retry.",
+                        error);
+                case WebExceptionStatus.Timeout:
+                    return new TimeoutException(
+                        "The secure connection to " + host + " timed out. Check the firewall or proxy, then retry.",
+                        error);
+                case WebExceptionStatus.ConnectFailure:
+                    return new InvalidOperationException(
+                        "Could not connect to " + host + " over HTTPS. Check the firewall, proxy, and internet access, then retry.",
+                        error);
+                default:
+                    return new InvalidOperationException(
+                        "The verified download from " + host + " failed (" + error.Status + "). Retry after checking network and proxy settings.",
+                        error);
             }
         }
 

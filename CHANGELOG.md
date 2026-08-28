@@ -4,6 +4,8 @@ All notable changes to the Block execution engine will be documented in this fil
 
 ## Unreleased
 
+- Fixed GitHub downloads on older .NET Framework installations by requiring
+  TLS 1.2 and reporting actionable TLS, DNS, proxy, and timeout failures.
 - Standardized CLI failures as stable `BLKxxxx` diagnostics with operation,
   source location, context, and actionable repair hints while hiding internal
   stack traces unless `BLOCK_DEBUG=1` is explicitly enabled.

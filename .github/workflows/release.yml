@@ -44,6 +44,7 @@ jobs:
           .\tests\Test-WebsiteLinks.ps1 -RepositoryRoot $PWD
           .\tests\Test-WebsiteSecurity.ps1 -RepositoryRoot $PWD
           .\tests\Test-MarketplaceLayout.ps1 -RepositoryRoot $PWD
+          .\tests\Test-InstallerTransport.ps1 -RepositoryRoot $PWD
           .\tests\Test-HealthHardening.ps1 -EngineDirectory (Join-Path $PWD 'release') -RepositoryRoot $PWD
           .\tests\Test-ApiServer.ps1 -EngineDirectory (Join-Path $PWD 'release')
           .\tests\Test-CommunityLab.ps1 -EngineDirectory (Join-Path $PWD 'release') -SkipPolyglot
