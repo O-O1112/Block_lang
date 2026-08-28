@@ -674,7 +674,10 @@ Remote package installation is restricted to official HTTPS raw GitHub files,
 requires a digest for every file, stages only the manifest and entry document,
 and never executes package code during installation. See the [package
 marketplace](marketplace.html) and [`registry/`](registry/) for the current
-catalog and source.
+catalog and source. The web marketplace reads this same-origin index at page
+load, so reviewed additions and removals appear without hand-editing HTML. Its
+layout adapts from an empty publishing invitation through single-, two-,
+three-, four-, and larger catalog views.
 
 Maintainers can rebuild the catalog after reviewing a package change. The
 generator hashes each manifest and entry file, rejects reparse points and

@@ -7,6 +7,8 @@ All notable changes to the Block execution engine will be documented in this fil
 - Standardized CLI failures as stable `BLKxxxx` diagnostics with operation,
   source location, context, and actionable repair hints while hiding internal
   stack traces unless `BLOCK_DEBUG=1` is explicitly enabled.
+- Replaced the fixed package-marketplace cards with a safe registry-driven
+  catalog that adapts its empty, single, small, and growing-package layouts.
 - Added context-aware HTML template escaping and rejection of executable
   attribute, script/style, and unsafe URL substitutions.
 - Corrected JSON rendering for booleans, numbers, lists, maps, and null values.

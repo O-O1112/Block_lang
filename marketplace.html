@@ -10,7 +10,7 @@
     <meta name="twitter:card" content="summary"><meta name="twitter:title" content="Package Marketplace — Block Engine"><meta name="twitter:description" content="Discover verified Block packages and install them from the official GitHub registry.">
     <script type="application/ld+json">{"@context":"https://schema.org","@type":"CollectionPage","name":"Block Package Marketplace","url":"https://o-o1112.github.io/Block_lang/marketplace.html","isPartOf":{"@type":"WebSite","name":"Block Language","url":"https://o-o1112.github.io/Block_lang/"}}</script>
     <title>Package Marketplace — Block Engine</title>
-    <link rel="icon" href="logo.svg" type="image/svg+xml"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="styles.css?v=225-marketplace">
+    <link rel="icon" href="logo.svg" type="image/svg+xml"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="styles.css?v=225-marketplace-adaptive">
 </head>
 <body data-page="marketplace">
     <canvas id="bg-canvas" aria-hidden="true"></canvas><div class="noise" aria-hidden="true"></div><div id="cursor-aura" aria-hidden="true"></div><div id="scroll-progress" aria-hidden="true"></div>
@@ -27,10 +27,10 @@
                 </div>
             </div>
             <aside class="market-proof reveal" aria-label="Registry guarantees">
-                <div class="market-proof-head"><span>REGISTRY STATUS</span><strong><i></i> Online</strong></div>
+                <div class="market-proof-head"><span>REGISTRY STATUS</span><strong id="market-registry-status"><i></i> Syncing</strong></div>
                 <div class="market-proof-mark" aria-hidden="true"><span>B</span><b>PKG</b></div>
                 <dl>
-                    <div><dt>Packages</dt><dd>05</dd></div>
+                    <div><dt>Packages</dt><dd id="market-package-count" aria-live="polite">--</dd></div>
                     <div><dt>License</dt><dd>MIT</dd></div>
                     <div><dt>Integrity</dt><dd>SHA-256</dd></div>
                 </dl>
@@ -44,47 +44,22 @@
                 <p>Inspect first, install second. Package code is never executed during installation, and every downloaded file must match the digest recorded in the official registry.</p>
             </div>
 
-            <div class="market-grid" aria-label="Official packages">
-                <article class="market-card market-card-featured tilt-card reveal">
-                    <div class="market-card-top"><span>01 / Concurrency</span><strong><i></i> Verified</strong></div>
-                    <div class="market-card-symbol" aria-hidden="true">OCT</div>
-                    <div class="market-card-copy"><h3>Octopus</h3><p>Bounded helpers for batching and concurrency-oriented workflows, designed for deterministic execution without spawning processes or threads.</p></div>
-                    <ul class="market-tags" aria-label="Capabilities"><li>native</li><li>batch</li><li>performance</li></ul>
-                    <div class="market-card-footer"><code>block pkg install octopus --remote</code><a href="https://github.com/O-O1112/Block_lang/tree/main/registry/packages/octopus" target="_blank" rel="noopener noreferrer" aria-label="Inspect Octopus source">Inspect ↗</a></div>
-                </article>
-
-                <article class="market-card market-card-web tilt-card reveal">
-                    <div class="market-card-top"><span>02 / Web</span><strong><i></i> Verified</strong></div>
-                    <div class="market-card-symbol" aria-hidden="true">WEB</div>
-                    <div class="market-card-copy"><h3>Block Web</h3><p>Safe conventions for web documents, API-shaped data and status handling. Network access remains a host policy decision.</p></div>
-                    <ul class="market-tags" aria-label="Capabilities"><li>native</li><li>web</li><li>api</li></ul>
-                    <div class="market-card-footer"><code>block pkg install block-web --remote</code><a href="https://github.com/O-O1112/Block_lang/tree/main/registry/packages/block-web" target="_blank" rel="noopener noreferrer" aria-label="Inspect Block Web source">Inspect ↗</a></div>
-                </article>
-
-                <article class="market-card tilt-card reveal">
-                    <div class="market-card-top"><span>03 / Games</span><strong><i></i> Verified</strong></div>
-                    <div class="market-card-symbol" aria-hidden="true">G:D</div>
-                    <div class="market-card-copy"><h3>Gblock:D</h3><p>Deterministic state helpers for game prototypes, including clamping, health and alive-state checks.</p></div>
-                    <ul class="market-tags" aria-label="Capabilities"><li>native</li><li>graphics</li><li>game</li></ul>
-                    <div class="market-card-footer"><code>block pkg install gblock-d --remote</code><a href="https://github.com/O-O1112/Block_lang/tree/main/registry/packages/gblock-d" target="_blank" rel="noopener noreferrer" aria-label="Inspect Gblock D source">Inspect ↗</a></div>
-                </article>
-
-                <article class="market-card tilt-card reveal">
-                    <div class="market-card-top"><span>04 / Work</span><strong><i></i> Verified</strong></div>
-                    <div class="market-card-symbol" aria-hidden="true">WRK</div>
-                    <div class="market-card-copy"><h3>Block Work</h3><p>One-shot approval helpers for reviewed workspace workflows, with explicit read and write boundaries.</p></div>
-                    <ul class="market-tags" aria-label="Capabilities"><li>native</li><li>read workspace</li><li>write workspace</li></ul>
-                    <div class="market-card-footer"><code>block pkg install block-work --remote</code><a href="https://github.com/O-O1112/Block_lang/tree/main/registry/packages/block-work" target="_blank" rel="noopener noreferrer" aria-label="Inspect Block Work source">Inspect ↗</a></div>
-                </article>
-
-                <article class="market-card tilt-card reveal">
-                    <div class="market-card-top"><span>05 / Geometry</span><strong><i></i> Verified</strong></div>
-                    <div class="market-card-symbol" aria-hidden="true">DRW</div>
-                    <div class="market-card-copy"><h3>Drawing</h3><p>Pure geometry helpers for drawing and chart prototypes. Rendering remains in the host application's control.</p></div>
-                    <ul class="market-tags" aria-label="Capabilities"><li>native</li><li>graphics</li><li>chart</li></ul>
-                    <div class="market-card-footer"><code>block pkg install drawing --remote</code><a href="https://github.com/O-O1112/Block_lang/tree/main/registry/packages/drawing" target="_blank" rel="noopener noreferrer" aria-label="Inspect Drawing source">Inspect ↗</a></div>
-                </article>
+            <div class="market-grid" id="market-grid" data-registry-url="registry/index.json" data-layout="loading" aria-label="Official packages" aria-live="polite" aria-busy="true">
+                <div class="market-state market-loading" role="status">
+                    <span class="market-state-mark" aria-hidden="true">B</span>
+                    <div><p class="eyebrow">Reading the registry</p><h3>Loading verified packages…</h3></div>
+                </div>
             </div>
+
+            <template id="market-card-template">
+                <article class="market-card tilt-card reveal">
+                    <div class="market-card-top"><span data-market-meta></span><strong><i></i> Verified</strong></div>
+                    <div class="market-card-symbol" data-market-symbol aria-hidden="true"></div>
+                    <div class="market-card-copy"><h3 data-market-title></h3><p data-market-description></p></div>
+                    <ul class="market-tags" data-market-tags aria-label="Capabilities"></ul>
+                    <div class="market-card-footer"><code data-market-command></code><a data-market-source target="_blank" rel="noopener noreferrer">Inspect ↗</a></div>
+                </article>
+            </template>
         </section>
 
         <section class="market-install reveal" aria-labelledby="market-install-title">
@@ -97,6 +72,6 @@
         </section>
     </main>
     <footer class="site-footer"><div class="footer-brand"><img src="logo.svg" alt="" width="34" height="34"><strong>BLOCK</strong></div><p>Native execution, orchestrated.</p><div class="footer-links"><a href="index.html">Home</a><a href="downloads.html">Downloads</a><a href="marketplace.html">Marketplace</a><a href="wiki.html">Documentation</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="security.html">Security</a></div><p class="copyright">&copy; 2026 Block Engine.</p></footer>
-    <script src="script.js"></script>
+    <script src="script.js"></script><script src="marketplace.js?v=225-adaptive"></script>
 </body>
 </html>
