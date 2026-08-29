@@ -96,6 +96,14 @@ handler = "alert(1)"
 '@
     Assert-True ($eventProbe.ExitCode -ne 0) 'Template substitution into an event handler was accepted.'
 
+    $unknownProbe = Invoke-Probe 'unknown-language' @'
+<notaruntime>
+hello
+</notaruntime>
+'@
+    Assert-True ($unknownProbe.ExitCode -ne 0) 'An unknown language tag was treated as an operating-system command.'
+    Assert-True ($unknownProbe.Output -match 'BLK1101|Unknown language tag') 'Unknown language failure was not actionable.'
+
     if (Get-Command python.exe -ErrorAction SilentlyContinue) {
         $previousNetworkOverride = $env:BLOCK_NETWORK_BLOCKED_OVERRIDE
         $env:BLOCK_NETWORK_BLOCKED_OVERRIDE = '1'
@@ -138,8 +146,17 @@ importlib.reload(_block_socket)
     Assert-True (@($badAst.Diagnostics).Count -gt 0) 'Malformed AST input did not include structured diagnostics.'
 
     $apiSource = Get-Content -LiteralPath (Join-Path $RepositoryRoot 'src\ApiServer.cs') -Raw
-    Assert-True ($apiSource -match 'catch \(PlatformNotSupportedException\)[\s\S]*?Environment\.ExitCode = 1') 'Unsupported API listener still returns a success exit code.'
+    Assert-True ($apiSource -match 'catch \(PlatformNotSupportedException(?:\s+\w+)?\)[\s\S]*?Environment\.ExitCode = 1') 'Unsupported API listener still returns a success exit code.'
     Assert-True ($apiSource -match 'catch \(HttpListenerException ex\)[\s\S]*?Environment\.ExitCode = 1') 'HTTP listener startup failure still returns a success exit code.'
+
+    $programSource = Get-Content -LiteralPath (Join-Path $RepositoryRoot 'src\Program.cs') -Raw
+    Assert-True ($programSource -match 'finally[\s\S]*?Console\.CursorVisible = true') 'CLI startup animation can leave the terminal cursor hidden after an error.'
+    Assert-True ($programSource -match 'ShowAnimationAndUsage\(bool infinite = false\)') 'No-argument CLI still defaults to an effectively unbounded animation.'
+
+    $executorSource = Get-Content -LiteralPath (Join-Path $RepositoryRoot 'src\Executor.cs') -Raw
+    Assert-True ($executorSource -notmatch '(?i)\bwinget\b|choco\.exe') 'Engine source still invokes an automatic package manager.'
+    Assert-True ($executorSource -match 'cfg\.AllowCustomDefinitions && CustomLangRegistry\.TryGet') 'Global custom runtimes can bypass AllowCustomDefinitions.'
+    Assert-True ($executorSource -match "Unknown language tag") 'Unknown tags are not rejected before process launch.'
 
     $acodeSource = Get-Content -LiteralPath (Join-Path $RepositoryRoot 'acode-plugin-block\main.js') -Raw
     Assert-True ($acodeSource -match 'JSON\.stringify\(safeProfiles\)') 'Acode profiles are not sanitized before persistent storage.'

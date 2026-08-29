@@ -247,7 +247,7 @@ namespace BlockEngine
                 if (action == "root")
                 {
                     string root = BlockPathResolver.ResolveProjectRoot(hint, cfg);
-                    BlockProjectManifest project = Ecosystem.LoadProject(root);
+                    BlockProjectManifest project = ProjectWorkspace.LoadProject(root);
                     Console.WriteLine(root);
                     Console.WriteLine("  Name: " + project.name);
                     Console.WriteLine("  Entry: " + project.entry);

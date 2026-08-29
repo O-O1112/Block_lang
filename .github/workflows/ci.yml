@@ -33,9 +33,9 @@ jobs:
         shell: powershell
         run: .\tests\Test-ActionableErrors.ps1 -EngineDirectory (Join-Path $PWD 'ci-release')
 
-      - name: Run package registry tests
+      - name: Verify third-party package removal
         shell: powershell
-        run: .\tests\Test-PackageRegistry.ps1 -EngineDirectory (Join-Path $PWD 'ci-release')
+        run: .\tests\Test-NoThirdPartyPackages.ps1 -EngineDirectory (Join-Path $PWD 'ci-release') -RepositoryRoot $PWD
 
       - name: Run path resolution tests
         shell: powershell
@@ -48,10 +48,6 @@ jobs:
       - name: Verify website security controls
         shell: powershell
         run: .\tests\Test-WebsiteSecurity.ps1 -RepositoryRoot $PWD
-
-      - name: Verify adaptive package marketplace
-        shell: powershell
-        run: .\tests\Test-MarketplaceLayout.ps1 -RepositoryRoot $PWD
 
       - name: Verify installer TLS transport
         shell: powershell
@@ -84,6 +80,14 @@ jobs:
       - name: Verify release version injection
         shell: powershell
         run: .\tests\Test-ReleaseVersioning.ps1 -RepositoryRoot $PWD
+
+      - name: Verify version consistency
+        shell: powershell
+        run: .\tests\Test-VersionConsistency.ps1 -RepositoryRoot $PWD
+
+      - name: Verify repository integrity
+        shell: powershell
+        run: .\tests\Test-RepositoryIntegrity.ps1 -RepositoryRoot $PWD
 
       - name: Upload release verification bundle
         uses: actions/upload-artifact@v4

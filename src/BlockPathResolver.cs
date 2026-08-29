@@ -49,7 +49,7 @@ namespace BlockEngine
             List<string> roots = GetSearchRoots(cfg, hint);
             foreach (string root in roots)
             {
-                if (File.Exists(Path.Combine(root, Ecosystem.ProjectManifestName))) return root;
+                if (File.Exists(Path.Combine(root, ProjectWorkspace.ProjectManifestName))) return root;
             }
 
             List<string> workspaceProjects = GetWorkspaceProjectRoots(cfg);
@@ -140,11 +140,11 @@ namespace BlockEngine
                     foreach (string projectRoot in GetWorkspaceProjectRoots(cfg)) AddUniqueDirectory(roots, projectRoot);
                     foreach (string root in roots)
                     {
-                        string manifest = Path.Combine(root, Ecosystem.ProjectManifestName);
+                        string manifest = Path.Combine(root, ProjectWorkspace.ProjectManifestName);
                         if (!File.Exists(manifest)) continue;
                         try
                         {
-                            BlockProjectManifest project = Ecosystem.LoadProject(root);
+                            BlockProjectManifest project = ProjectWorkspace.LoadProject(root);
                             AddCandidate(candidates, Path.Combine(root, project.entry));
                         }
                         catch (Exception ex)
@@ -159,10 +159,10 @@ namespace BlockEngine
             if (Directory.Exists(value))
             {
                 string root = Path.GetFullPath(value);
-                string manifest = Path.Combine(root, Ecosystem.ProjectManifestName);
+                string manifest = Path.Combine(root, ProjectWorkspace.ProjectManifestName);
                 if (File.Exists(manifest))
                 {
-                    BlockProjectManifest project = Ecosystem.LoadProject(root);
+                    BlockProjectManifest project = ProjectWorkspace.LoadProject(root);
                     AddCandidate(candidates, Path.Combine(root, project.entry));
                 }
                 return candidates;
@@ -192,8 +192,8 @@ namespace BlockEngine
         {
             try
             {
-                string candidate = Ecosystem.FindProjectRoot(startDirectory);
-                return File.Exists(Path.Combine(candidate, Ecosystem.ProjectManifestName)) ? candidate : null;
+                string candidate = ProjectWorkspace.FindProjectRoot(startDirectory);
+                return File.Exists(Path.Combine(candidate, ProjectWorkspace.ProjectManifestName)) ? candidate : null;
             }
             catch (Exception) { return null; }
         }
@@ -207,7 +207,7 @@ namespace BlockEngine
             {
                 foreach (string directory in Directory.GetDirectories(workspace))
                 {
-                    if (File.Exists(Path.Combine(directory, Ecosystem.ProjectManifestName)))
+                    if (File.Exists(Path.Combine(directory, ProjectWorkspace.ProjectManifestName)))
                         AddUniqueDirectory(projects, directory);
                 }
             }

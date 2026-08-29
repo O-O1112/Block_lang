@@ -2,15 +2,40 @@
 
 All notable changes to the Block execution engine will be documented in this file.
 
-## Unreleased
+## [2.2.6] - 2026-08-29
 
+- Removed the third-party package loader, remote registry, package CLI, starter
+  packages, and website marketplace. Project discovery and explicit local file
+  imports remain supported.
+- Fixed Windows interpreter stages being falsely reported as timed out when the
+  .NET Framework `Process.Exited` event races with a short-lived Node.js process.
 - Fixed GitHub downloads on older .NET Framework installations by requiring
   TLS 1.2 and reporting actionable TLS, DNS, proxy, and timeout failures.
+- Accepted GitHub's exact `release-assets.githubusercontent.com` redirect host
+  while continuing to reject non-GitHub and non-HTTPS download endpoints.
+- Made project-relative imports work when a project is launched from another
+  directory, while retaining project/sandbox boundaries, reparse-point checks,
+  file-count limits, byte limits, circular-import checks, and Block-only source
+  extensions.
+- Guaranteed restoration of the terminal cursor and colors when the startup
+  animation encounters an unsupported or redirected console.
+- Removed all automatic Winget runtime installation from Block+; missing host
+  runtimes now produce an actionable error and must come from their official
+  publishers.
+- Rejected unknown runtime tags before process launch and required
+  `AllowCustomDefinitions=true` for both inline and global custom runtimes.
+- Added size limits for configuration, project manifests, custom-runtime
+  registries, and runtime state files; invalid state output now fails explicitly
+  instead of silently leaking stale values into later stages.
+- Made configuration and project-manifest fallbacks preserve the previous valid
+  file if an atomic replacement is unavailable or interrupted.
+- Bounded the no-argument startup animation, improved local-server shutdown and
+  accept-loop diagnostics, and restricted localhost CORS to HTTP(S) origins.
+- Corrected the published Windows architecture metadata and added version,
+  repository-integrity, deployment-security, and signing checks.
 - Standardized CLI failures as stable `BLKxxxx` diagnostics with operation,
   source location, context, and actionable repair hints while hiding internal
   stack traces unless `BLOCK_DEBUG=1` is explicitly enabled.
-- Replaced the fixed package-marketplace cards with a safe registry-driven
-  catalog that adapts its empty, single, small, and growing-package layouts.
 - Added context-aware HTML template escaping and rejection of executable
   attribute, script/style, and unsafe URL substitutions.
 - Corrected JSON rendering for booleans, numbers, lists, maps, and null values.
@@ -69,10 +94,6 @@ All notable changes to the Block execution engine will be documented in this fil
 
 The v2.2.2 release is built and verified by the GitHub Windows runner before
 the release tag is published.
-
-## [Unreleased]
-
-Future changes will be recorded here.
 
 ## [2.2.0] - 2026-08-18
 

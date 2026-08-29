@@ -30,17 +30,20 @@ try {
     $project = Join-Path $workspace 'demo-project'
     $nested = Join-Path $project 'src\nested'
     New-Item -ItemType Directory -Force -Path $nested | Out-Null
+    New-Item -ItemType Directory -Force -Path (Join-Path $project 'modules') | Out-Null
     @'
 {
   "name": "path-test-project",
   "version": "0.1.0",
   "engine": "standard",
-  "entry": "main.blk",
-  "dependencies": {}
+  "entry": "main.blk"
 }
 '@ | Set-Content -LiteralPath (Join-Path $project 'block.project.json') -Encoding UTF8
     @'
 message = "path-ok"
+'@ | Set-Content -LiteralPath (Join-Path $project 'modules\message.blk') -Encoding UTF8
+    @'
+<import src="modules/message.blk" />
 print(message)
 '@ | Set-Content -LiteralPath (Join-Path $project 'main.blk') -Encoding UTF8
 

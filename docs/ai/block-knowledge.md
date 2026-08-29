@@ -1,4 +1,4 @@
-# Block Language canonical knowledge (v2.2.5)
+# Block Language canonical knowledge (v2.2.6)
 
 ## Product identity
 
@@ -56,23 +56,18 @@ block
 print(total)
 ```
 
-The native core intentionally does not expose file, network, process, or package
+The native core intentionally does not expose file, network, or process
 APIs. A Python, JavaScript, or other runtime block is required for those
 capabilities.
 
-## v2.2.5 package registry
+## Local reuse boundary
 
-Standard and Plus expose the package commands `pkg search`, `pkg info`,
-`pkg install <name> --remote`, `pkg verify`, and `pkg remove`. The official
-registry is a reviewable `registry/index.json` catalog. The five starter
-packages are `octopus`, `block-web`, `gblock-d`, `block-work`, and `drawing`.
-Remote installation is explicit and fails closed unless the source is an
-official HTTPS raw GitHub file with a matching SHA-256 digest. The installer
-stages only a package manifest and entry document; it does not execute package
-code while installing.
+Block does not provide a third-party package loader or marketplace. Reviewed
+local Block source can be composed with explicit relative `<import src="..." />`
+directives inside the configured sandbox.
 
 `block doctor --full --root <dir> --report <file> --strict` performs a read-only
-health scan of Block scripts, package manifests, website metadata, and required
+health scan of Block scripts, website metadata, and required
 repository files. It should be used as a review signal, not as an operating
 system sandbox or a substitute for independent testing.
 

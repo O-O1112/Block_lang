@@ -1,8 +1,8 @@
 {
     "name": "block-language",
     "displayName": "Block Language (Polyglot Orchestrator)",
-    "description": "Official VS Code Extension for Block Engine v2.2.5 (Ecosystem Edition)",
-    "version": "2.2.5",
+    "description": "Official VS Code Extension for Block Engine v2.2.6",
+    "version": "2.2.6",
     "license": "MIT",
     "repository": {
         "type": "git",
@@ -69,18 +69,8 @@
             },
             {
                 "command": "block.initProject",
-                "title": "Initialize Block Ecosystem Project",
+                "title": "Initialize Block Project",
                 "icon": "$(folder-opened)"
-            },
-            {
-                "command": "block.listPackages",
-                "title": "List Block Ecosystem Packages",
-                "icon": "$(package)"
-            },
-            {
-                "command": "block.addPackage",
-                "title": "Add Local Block Package",
-                "icon": "$(cloud-download)"
             }
         ],
         "keybindings": [
@@ -129,12 +119,7 @@
                 {
                     "when": "resourceLangId == block",
                     "command": "block.initProject",
-                    "group": "3_ecosystem"
-                },
-                {
-                    "when": "resourceLangId == block",
-                    "command": "block.listPackages",
-                    "group": "3_ecosystem"
+                    "group": "3_project"
                 }
             ]
         },

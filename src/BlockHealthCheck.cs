@@ -8,7 +8,7 @@ namespace BlockEngine
 {
     // Read-only repository health checks for the creator's daily review.  The
     // checker parses scripts and inspects metadata; it never executes a Block
-    // document, downloads packages, or changes the active configuration.
+    // document, downloads code, or changes the active configuration.
     public static class BlockHealthCheck
     {
         private const int MaxFiles = 512;
@@ -41,7 +41,6 @@ namespace BlockEngine
             List<string> errors = new List<string>();
             List<string> warnings = new List<string>();
             int scripts = 0;
-            int packages = 0;
             try
             {
                 if (!Directory.Exists(root)) throw new DirectoryNotFoundException("Health-check root not found: " + root);
@@ -61,21 +60,6 @@ namespace BlockEngine
                         }
                         catch (Exception ex) { AddIssue(errors, "script: " + file + " — " + ex.Message); }
                     }
-                    else if (string.Equals(Path.GetFileName(file), Ecosystem.PackageManifestName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        try
-                        {
-                            string packageRoot = Path.GetDirectoryName(file);
-                            BlockPackageManifest package = Ecosystem.LoadPackage(packageRoot);
-                            if (package == null) throw new InvalidDataException("manifest could not be read");
-                            if (!Ecosystem.IsPathInSandbox(Path.Combine(packageRoot, package.main), packageRoot))
-                                throw new InvalidDataException("main entry escapes package directory");
-                            if (!File.Exists(Path.Combine(packageRoot, package.main)))
-                                throw new FileNotFoundException("main entry is missing", package.main);
-                            packages++;
-                        }
-                        catch (Exception ex) { AddIssue(errors, "package: " + file + " — " + ex.Message); }
-                    }
                 }
 
                 CheckWebsite(root, warnings);
@@ -93,7 +77,6 @@ namespace BlockEngine
             report["generatedUtc"] = DateTime.UtcNow.ToString("o");
             report["root"] = root;
             report["scriptsChecked"] = scripts;
-            report["packagesChecked"] = packages;
             report["errors"] = errors;
             report["warnings"] = warnings;
             report["status"] = errors.Count == 0 && (!strict || warnings.Count == 0) ? "pass" : "fail";
@@ -113,7 +96,6 @@ namespace BlockEngine
             Console.WriteLine("Block Health Check v" + BlockVersion.Value);
             Console.WriteLine("  Root: " + root);
             Console.WriteLine("  Scripts checked: " + scripts);
-            Console.WriteLine("  Packages checked: " + packages);
             Console.WriteLine("  Errors: " + errors.Count + "; warnings: " + warnings.Count);
             foreach (string warning in warnings) Console.WriteLine("  [warning] " + warning);
             foreach (string error in errors) Console.Error.WriteLine("  [error] " + error);

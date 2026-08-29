@@ -99,12 +99,10 @@ function activate(context) {
     const formatCmd = vscode.commands.registerCommand('block.formatScript', formatBlockCode);
     const diagCmd = vscode.commands.registerCommand('block.checkDiagnostics', runDiagnostics);
     const previewHtmlCmd = vscode.commands.registerCommand('block.previewHtml', previewHtmlRender);
-    const initProjectCmd = vscode.commands.registerCommand('block.initProject', () => runEcosystemCommand(['init']));
-    const listPackagesCmd = vscode.commands.registerCommand('block.listPackages', () => runEcosystemCommand(['list']));
-    const addPackageCmd = vscode.commands.registerCommand('block.addPackage', addLocalPackage);
+    const initProjectCmd = vscode.commands.registerCommand('block.initProject', () => runProjectCommand(['init']));
 
     context.subscriptions.push(runScriptCmd, runLiteCmd, runPlusCmd, formatCmd, diagCmd, previewHtmlCmd,
-        initProjectCmd, listPackagesCmd, addPackageCmd);
+        initProjectCmd);
 
     // 4. Register Editor Active File Change Listener for Status Bar
     context.subscriptions.push(
@@ -175,7 +173,7 @@ function resolveEngineCommand(document) {
         (lowerPath.endsWith('.blkl') || lowerPath.endsWith('.blocklite')) ? 'block-lite' : 'block';
 }
 
-function runEcosystemCommand(ecosystemArgs) {
+function runProjectCommand(projectArgs) {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
         vscode.window.showErrorMessage('Open a Block script inside a workspace first.');
@@ -185,27 +183,7 @@ function runEcosystemCommand(ecosystemArgs) {
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
     const projectRoot = workspaceFolder ? workspaceFolder.uri.fsPath : require('path').dirname(document.fileName);
     const cmd = resolveEngineCommand(document);
-    runChildProcess(cmd, ['ecosystem'].concat(ecosystemArgs || []).concat([projectRoot]), projectRoot, 'Block Ecosystem');
-}
-
-async function addLocalPackage() {
-    if (!vscode.workspace.isTrusted) {
-        vscode.window.showErrorMessage('Block package operations are disabled until this workspace is trusted.');
-        return;
-    }
-    const selected = await vscode.window.showOpenDialog({
-        canSelectFiles: false,
-        canSelectFolders: true,
-        canSelectMany: false,
-        openLabel: 'Add Block Package'
-    });
-    if (!selected || selected.length === 0) return;
-
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) return;
-    const workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
-    const projectRoot = workspaceFolder ? workspaceFolder.uri.fsPath : require('path').dirname(editor.document.fileName);
-    runEcosystemCommand(['add', selected[0].fsPath, projectRoot]);
+    runChildProcess(cmd, ['project'].concat(projectArgs || []).concat([projectRoot]), projectRoot, 'Block Project');
 }
 
 function formatBlockCode() {

@@ -33,12 +33,16 @@ namespace BlockEngine
             _configLock.Wait();
             try
             {
+                FileInfo configInfo = new FileInfo(configPath);
+                if (configInfo.Length > SecurityLimits.MaxJsonBytes)
+                    throw new InvalidDataException("config.json exceeds the 4 MiB safety limit.");
                 string json = File.ReadAllText(configPath, Encoding.UTF8);
                 // H6: Use JavaScriptSerializer (cross-platform .NET Framework compatible)
                 return ApplyProcessOverrides(_serializer.Deserialize<EngineConfig>(json) ?? new EngineConfig());
             }
-            catch
+            catch (Exception ex)
             {
+                Console.Error.WriteLine("[Block Warning] Config could not be loaded; safe defaults are active: " + ex.Message);
                 return ApplyProcessOverrides(new EngineConfig());
             }
             finally
@@ -75,10 +79,23 @@ namespace BlockEngine
                     {
                         File.Replace(tempPath, configPath, null);
                     }
-                    catch (PlatformNotSupportedException)
+                    catch (Exception ex)
                     {
-                        File.Delete(configPath);
-                        File.Move(tempPath, configPath);
+                        if (!(ex is PlatformNotSupportedException) && !(ex is IOException)) throw;
+
+                        string backupPath = configPath + ".backup-" + Guid.NewGuid().ToString("N");
+                        File.Move(configPath, backupPath);
+                        try
+                        {
+                            File.Move(tempPath, configPath);
+                            File.Delete(backupPath);
+                        }
+                        catch
+                        {
+                            if (!File.Exists(configPath) && File.Exists(backupPath))
+                                File.Move(backupPath, configPath);
+                            throw;
+                        }
                     }
                 }
                 else

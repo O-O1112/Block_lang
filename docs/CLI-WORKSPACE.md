@@ -20,7 +20,7 @@ matches, the command fails with the candidates so the user can choose safely.
 Initialize a project once:
 
 ```powershell
-block ecosystem init C:\Users\you\BlockProjects\demo demo
+block project init C:\Users\you\BlockProjects\demo demo
 ```
 
 Then run it from the project root or any child directory:

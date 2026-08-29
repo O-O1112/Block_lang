@@ -4,14 +4,14 @@ This page is a ready-to-post campaign for finding a small first group of indepen
 
 ## The offer
 
-We are looking for 3–5 developers, teachers, students, or automation builders who can spend 10–15 minutes testing Block v2.2.5 on Windows. No source build is required. Testers may choose a native example, a Python/Node.js example, the installer, or a small real workflow.
+We are looking for 3–5 developers, teachers, students, or automation builders who can spend 10–15 minutes testing Block v2.2.6 on Windows. No source build is required. Testers may choose a native example, a Python/Node.js example, the installer, or a small real workflow.
 
 In return, testers get a direct route to report bugs and confusing behavior, acknowledgement if they want it, and the chance to influence the next release. We will not publish a name, screenshot, quote, or repository link without permission.
 
 ## English post
 
 ```text
-Looking for 3–5 independent testers for Block v2.2.5.
+Looking for 3–5 independent testers for Block v2.2.6.
 
 Block is a local-first polyglot programming engine: one readable .blk file can combine native Block control flow with runtimes such as Python and Node.js.
 
@@ -26,7 +26,7 @@ Interested? Comment with your Windows/runtime environment, or open a tester requ
 ## Traditional Chinese post
 
 ```text
-正在招募 3–5 位獨立測試者協助測試 Block v2.2.5。
+正在招募 3–5 位獨立測試者協助測試 Block v2.2.6。
 
 Block 是 local-first 的多語言程式引擎，可以在同一個可讀的 .blk 檔案中，混合 Block 原生控制流程與 Python、Node.js 等 runtime。
 
@@ -63,10 +63,10 @@ Do not repost the same link-only announcement to every subreddit. `r/Blazor` sho
 
 ### GitHub Discussions
 
-Title: `Call for independent Block v2.2.5 testers`
+Title: `Call for independent Block v2.2.6 testers`
 
 ```text
-Block v2.2.5 is looking for 3–5 independent testers on Windows.
+Block v2.2.6 is looking for 3–5 independent testers on Windows.
 
 Block is a local-first polyglot engine. A readable .blk file can combine native Block control flow with local runtimes such as Python and Node.js, passing serializable state between stages.
 
@@ -83,7 +83,7 @@ Please reply with your Windows/runtime environment and the test you would like t
 ### X
 
 ```text
-Looking for 3–5 independent testers for Block v2.2.5 on Windows.
+Looking for 3–5 independent testers for Block v2.2.6 on Windows.
 
 Block runs native Block, Python, Node.js and other local runtimes in one readable .blk file. The first test takes 10–15 minutes; no source build required. Honest bug and UX feedback welcome.
 
@@ -92,10 +92,10 @@ Tester packet: https://github.com/O-O1112/Block_lang/blob/main/docs/TESTER-PACKE
 
 ### Reddit `r/opensource`
 
-Title: `Seeking independent validation for a local-first polyglot engine (Block v2.2.5)`
+Title: `Seeking independent validation for a local-first polyglot engine (Block v2.2.6)`
 
 ```text
-I am looking for 3–5 independent Windows users to test Block v2.2.5, an open-source local-first polyglot execution engine.
+I am looking for 3–5 independent Windows users to test Block v2.2.6, an open-source local-first polyglot execution engine.
 
 The project lets one readable .blk document combine native Block control flow with local runtimes such as Python and Node.js, passing serializable state between stages. The current release includes Lite, Standard, and Plus editions, Windows binaries, examples, an installer, and validation documentation.
 

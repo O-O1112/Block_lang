@@ -138,9 +138,11 @@ namespace BlockEngine
                 listener.Prefixes.Add(string.Format("http://127.0.0.1:{0}/", port));
                 listener.Start();
             }
-            catch (PlatformNotSupportedException)
+            catch (PlatformNotSupportedException ex)
             {
-                Console.Error.WriteLine("[ERROR] The local HTTP listener is not supported by this runtime/platform.");
+                Console.Error.WriteLine("[ERROR] The local HTTP listener is not supported by this runtime/platform: " + ex.Message);
+                if (Environment.GetEnvironmentVariable("BLOCK_DEBUG") == "1")
+                    Console.Error.WriteLine(ex.ToString());
                 Environment.ExitCode = 1;
                 return;
             }
@@ -187,8 +189,10 @@ namespace BlockEngine
                             try
                             {
                                 Uri originUri = new Uri(origin);
-                                if (originUri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
-                                    originUri.Host.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase))
+                                bool httpScheme = originUri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
+                                                  originUri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase);
+                                if (httpScheme && (originUri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase) ||
+                                    originUri.Host.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase)))
                                 {
                                     isTrustedOrigin = true;
                                 }

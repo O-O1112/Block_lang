@@ -141,7 +141,7 @@ namespace BlockEngine
                 view.Code = "BLK3001";
                 view.Title = "Invalid or untrusted data";
                 if (string.IsNullOrWhiteSpace(view.Hint))
-                    view.Hint = "For packages, run 'block pkg verify .'. Re-download files whose digest or manifest does not match.";
+                    view.Hint = "Review the referenced file or manifest, keep it inside the project boundary, and retry with a known-good copy.";
                 return view;
             }
 

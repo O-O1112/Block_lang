@@ -4,6 +4,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $RepositoryRoot = [IO.Path]::GetFullPath($RepositoryRoot)
+$releaseVersion = (Get-Content -LiteralPath (Join-Path $RepositoryRoot 'VERSION') -Raw).Trim()
+if ($releaseVersion -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid repository version: $releaseVersion" }
 $sourcePath = Join-Path $RepositoryRoot 'Installer.cs'
 $buildScript = Join-Path $RepositoryRoot 'build-installer.ps1'
 
@@ -16,6 +18,7 @@ $requiredMarkers = @(
     'CreateGitHubRequest',
     'MaximumAutomaticRedirections = 5',
     'AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate',
+    'release-assets.githubusercontent.com',
     'WebExceptionStatus.SecureChannelFailure',
     'WebExceptionStatus.TrustFailure',
     'Secure TLS 1.2 connection to '
@@ -34,12 +37,12 @@ if ($requestFactoryUses -lt 3) { throw 'Not every GitHub download path uses the 
 $tempRoot = Join-Path ([IO.Path]::GetTempPath()) ('block-installer-transport-' + [Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Force -Path $tempRoot | Out-Null
 try {
-    & $buildScript -ReleaseDirectory $tempRoot -OutputDirectory $tempRoot -Version '2.2.5'
+    & $buildScript -ReleaseDirectory $tempRoot -OutputDirectory $tempRoot -Version $releaseVersion
     if ($LASTEXITCODE -ne 0) { throw 'TLS-hardened installer failed to compile.' }
-    $installer = Join-Path $tempRoot 'BlockSetup-v2.2.5.exe'
+    $installer = Join-Path $tempRoot "BlockSetup-v$releaseVersion.exe"
     if (-not (Test-Path -LiteralPath $installer)) { throw 'TLS-hardened installer artifact is missing.' }
     $version = [Diagnostics.FileVersionInfo]::GetVersionInfo($installer).FileVersion
-    if ($version -ne '2.2.5.0') { throw "TLS-hardened installer has the wrong file version: $version" }
+    if ($version -ne "$releaseVersion.0") { throw "TLS-hardened installer has the wrong file version: $version" }
 }
 finally {
     if (Test-Path -LiteralPath $tempRoot) { Remove-Item -LiteralPath $tempRoot -Recurse -Force }

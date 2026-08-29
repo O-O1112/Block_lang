@@ -1049,7 +1049,8 @@ namespace BlockInstaller
                 throw new InvalidDataException("Installer accepts HTTPS GitHub URLs only.");
             if (!string.Equals(uri.Host, "api.github.com", StringComparison.OrdinalIgnoreCase) &&
                 !string.Equals(uri.Host, "github.com", StringComparison.OrdinalIgnoreCase) &&
-                !string.Equals(uri.Host, "objects.githubusercontent.com", StringComparison.OrdinalIgnoreCase))
+                !string.Equals(uri.Host, "objects.githubusercontent.com", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(uri.Host, "release-assets.githubusercontent.com", StringComparison.OrdinalIgnoreCase))
                 throw new InvalidDataException("Installer rejected a non-GitHub download host.");
             return uri;
         }

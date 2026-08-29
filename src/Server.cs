@@ -66,8 +66,10 @@ namespace BlockEngine
             try
             {
                 Uri uri = new Uri(origin);
-                return uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
-                    || uri.Host.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase);
+                bool httpScheme = uri.Scheme.Equals(Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) ||
+                                  uri.Scheme.Equals(Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase);
+                return httpScheme && (uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
+                    || uri.Host.Equals("127.0.0.1", StringComparison.OrdinalIgnoreCase));
             }
             catch { return false; }
         }
@@ -202,12 +204,13 @@ namespace BlockEngine
             listener.Start();
 
             // M7: Fix: Run the accept loop in a proper async fashion
-            var acceptTask = Task.Run(() => AcceptLoopAsync(listener, cfg, scriptPath));
-            acceptTask.ConfigureAwait(false);
+            Task acceptTask = Task.Run(() => AcceptLoopAsync(listener, cfg, scriptPath));
             
             Console.WriteLine("Press Ctrl+C or Enter to stop the server.");
             Console.ReadLine();
             listener.Stop();
+            try { acceptTask.Wait(2000); } catch (AggregateException ex) { Console.Error.WriteLine("[Block Server] Shutdown warning: " + ex.GetBaseException().Message); }
+            listener.Close();
         }
 
         private static async Task AcceptLoopAsync(HttpListener listener, EngineConfig cfg, string scriptPath)
@@ -221,7 +224,12 @@ namespace BlockEngine
                     ObserveBackgroundTask(Task.Run(() => HandleRequestAsync(context, cfg, scriptPath)));
                 }
                 catch (HttpListenerException) { break; }
-                catch { }
+                catch (ObjectDisposedException) { break; }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine("[Block Server] Accept error: " + ex.Message);
+                    Thread.Sleep(100);
+                }
             }
         }
 
@@ -292,7 +300,8 @@ namespace BlockEngine
                         string configuredBase = kvp.Value.TrimStart('/', '\\');
                         string staticBase = Path.GetFullPath(Path.Combine(scriptDir, configuredBase));
                         string sandboxRoot = Path.GetFullPath(cfg.SandboxDir);
-                        if (!IsPathInSandbox(staticBase, sandboxRoot))
+                        string trustedScriptRoot = Path.GetFullPath(Path.GetDirectoryName(scriptPath));
+                        if (!IsPathInSandbox(staticBase, sandboxRoot) && !IsPathInSandbox(staticBase, trustedScriptRoot))
                         {
                             res.StatusCode = 403;
                             res.Close();

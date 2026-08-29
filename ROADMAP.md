@@ -4,7 +4,7 @@ This roadmap is a public planning document, not a promise that an item is alread
 implemented. Shipped behavior belongs in the [README](README.md),
 [changelog](CHANGELOG.md), and release notes.
 
-## Current: v2.2.5 ecosystem and safety foundation
+## Current: v2.2.6 safety foundation
 
 The current release line focuses on making the core workflow usable and reviewable:
 
@@ -12,20 +12,19 @@ The current release line focuses on making the core workflow usable and reviewab
 - Windows installer and stable download aliases;
 - explicit runtime blocks and serializable cross-runtime state;
 - native Block control flow;
-- local imports and the local-first package layout;
+- explicit local imports and project discovery;
 - Plus `fmt`, `check`, `doc`, and local server commands;
 - VS Code and Acode integrations;
 - smoke tests, release verification, checksums, security guidance, and versioned
   documentation.
 - workspace-aware project discovery and deterministic native expression limits.
-- digest-pinned package registry with five official starter packages;
 - read-only `doctor --full` reports and scheduled creator-side health checks;
 - secure GitHub Release bootstrapper with SHA-256 verification and ZIP-slip
   protection; optional host runtimes are detected, never silently installed.
 
-## Next: v2.3.0 ecosystem depth and first-run friction
+## Next: v2.3.0 core stability and first-run friction
 
-These are the highest-value improvements for the next patch release:
+These are the highest-value improvements for the next minor release:
 
 1. Make native logical expressions, loop limits, process timeouts, and state
    transfer failures deterministic and regression-tested.
@@ -49,8 +48,7 @@ These ideas need design discussion and a clear maintenance owner before they bec
 committed milestones:
 
 - capability profiles for file, network, process, and custom-runtime access;
-- a more discoverable package and example index without silently executing remote
-  code;
+- a more discoverable example index without silently executing remote code;
 - richer diagnostics and editor navigation;
 - additional host runtimes where the security and maintenance cost is justified;
 - documentation translations that preserve the tested commands and limitations;
@@ -62,6 +60,9 @@ Block is not intended to replace the languages it coordinates, bundle every host
 runtime, or make arbitrary native code safe merely by placing it inside a Block
 document. Security boundaries, runtime ownership, and explicit state transfer are
 part of the project's design.
+
+Block 2.3 does not include a third-party package loader or marketplace. Reusable
+Block source remains explicit through sandboxed local imports.
 
 ## Ways to help
 
