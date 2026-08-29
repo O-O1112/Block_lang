@@ -6,7 +6,7 @@
 - **Block Standard (`.blk`)** — the recommended general-purpose edition.
 - **Block+ (`.blkp`)** — expanded runtime and tooling support.
 
-The Windows installer is published as [`BlockSetup-v2.2.5.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.5/BlockSetup-v2.2.5.exe)
+The Windows installer is published as [`BlockSetup-v2.2.6.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.6/BlockSetup-v2.2.6.exe)
 on the [download page](../../downloads.html). The secure bootstrapper downloads
 the selected official GitHub asset, verifies SHA-256, and detects optional
 runtimes without invoking Winget or Chocolatey.
@@ -29,7 +29,7 @@ never executes a package manager or a downloaded script.
 
 ## Run without changing directories
 
-For a project created with `block ecosystem init`, Block discovers the nearest
+For a project created with `block project init`, Block discovers the nearest
 `block.project.json` and its `entry` file from child directories:
 
 ```powershell

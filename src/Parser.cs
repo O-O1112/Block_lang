@@ -50,11 +50,14 @@ namespace BlockEngine
 
             int importCount = 0;
             long importBytes = 0;
-            return ParseBlocksInternal(code, currentScriptPath, cfg, visitedFiles, depth, ref importCount, ref importBytes);
+            string trustedImportRoot = GetTrustedImportRoot(currentScriptPath);
+            return ParseBlocksInternal(code, currentScriptPath, cfg, visitedFiles, depth, trustedImportRoot,
+                ref importCount, ref importBytes);
         }
 
         private static List<CodeBlock> ParseBlocksInternal(string code, string currentScriptPath, EngineConfig cfg,
-            HashSet<string> visitedFiles, int depth, ref int importCount, ref long importBytes)
+            HashSet<string> visitedFiles, int depth, string trustedImportRoot,
+            ref int importCount, ref long importBytes)
         {
 
             List<CodeBlock> blocks = new List<CodeBlock>();
@@ -83,7 +86,7 @@ namespace BlockEngine
                         }
                         try
                         {
-                            blocks.AddRange(LoadImportedBlocks(fullImportPath, cfg, visitedFiles, depth,
+                            blocks.AddRange(LoadImportedBlocks(fullImportPath, cfg, visitedFiles, depth, trustedImportRoot,
                                 ref importCount, ref importBytes));
                         }
                         catch (BlockDiagnosticException) { throw; }
@@ -96,30 +99,13 @@ namespace BlockEngine
                         continue;
                     }
 
-                    var useMatch = Regex.Match(line.Trim(), @"^<\s*use\s+package=[""']([^""']+)[""'](?:\s+entry=[""']([^""']+)[""'])?\s*\/?>$", RegexOptions.IgnoreCase);
-                    if (useMatch.Success)
+                    var removedPackageMatch = Regex.Match(line.Trim(), @"^<\s*use\s+package=[""'][^""']+[""'](?:\s+entry=[""'][^""']+[""'])?\s*\/?>$", RegexOptions.IgnoreCase);
+                    if (removedPackageMatch.Success)
                     {
-                        string packageName = useMatch.Groups[1].Value;
-                        string packageEntry = useMatch.Groups[2].Success ? useMatch.Groups[2].Value : null;
-                        if (buffer.Count > 0)
-                        {
-                            blocks.Add(new CodeBlock { Language = currentLang, Code = string.Join("\n", buffer) });
-                            buffer.Clear();
-                        }
-                        try
-                        {
-                            string packagePath = Ecosystem.ResolvePackageEntry(currentScriptPath, packageName, packageEntry, cfg);
-                            blocks.AddRange(LoadImportedBlocks(packagePath, cfg, visitedFiles, depth,
-                                ref importCount, ref importBytes));
-                        }
-                        catch (BlockDiagnosticException) { throw; }
-                        catch (Exception ex)
-                        {
-                            throw new BlockDiagnosticException("BLK1301", "Package reference failed", ex.Message,
-                                currentScriptPath, lineNumber, 1,
-                                "Run 'block pkg info " + packageName + "' and verify that the package is installed in this project.");
-                        }
-                        continue;
+                        throw new BlockDiagnosticException("BLK1301", "Third-party packages are not supported",
+                            "The <use package=\"...\"> directive was removed from Block.",
+                            currentScriptPath, lineNumber, 1,
+                            "Copy reviewed Block source into the project and load it with <import src=\"relative/path.blk\" />.");
                     }
 
 #if BLOCK_PLUS
@@ -202,16 +188,24 @@ namespace BlockEngine
         }
 
         private static List<CodeBlock> LoadImportedBlocks(string fullImportPath, EngineConfig cfg,
-            HashSet<string> visitedFiles, int depth, ref int importCount, ref long importBytes)
+            HashSet<string> visitedFiles, int depth, string trustedImportRoot,
+            ref int importCount, ref long importBytes)
         {
             if (depth >= MaxImportDepth)
                 throw new InvalidOperationException(string.Format("Import depth limit ({0}) exceeded. Possible circular or excessively nested imports.", MaxImportDepth));
 
             string sandboxRoot = Path.GetFullPath(cfg.SandboxDir);
-            if (!IsPathInSandbox(fullImportPath, sandboxRoot))
-                throw new UnauthorizedAccessException(string.Format("Import path '{0}' escapes the allowed sandbox directory '{1}'.", fullImportPath, sandboxRoot));
+            bool insideConfiguredSandbox = IsPathInSandbox(fullImportPath, sandboxRoot);
+            bool insideScriptProject = !string.IsNullOrEmpty(trustedImportRoot) &&
+                                       IsPathInSandbox(fullImportPath, trustedImportRoot);
+            if (!insideConfiguredSandbox && !insideScriptProject)
+                throw new UnauthorizedAccessException(string.Format(
+                    "Import path '{0}' escapes both the script project '{1}' and configured sandbox '{2}'.",
+                    fullImportPath, trustedImportRoot ?? "(none)", sandboxRoot));
             if (!File.Exists(fullImportPath))
                 throw new FileNotFoundException(string.Format("Import file not found: {0}", fullImportPath));
+            if (!IsBlockSourceFile(fullImportPath))
+                throw new InvalidDataException("Imports must reference a Block source file (.blk, .blkl, .blkp, or a documented alias).");
 
             FileInfo importInfo = new FileInfo(fullImportPath);
             if (importCount >= SecurityLimits.MaxImportFiles ||
@@ -227,8 +221,36 @@ namespace BlockEngine
             string importedCode = File.ReadAllText(normalizedPath);
             HashSet<string> childVisited = new HashSet<string>(visitedFiles, StringComparer.OrdinalIgnoreCase);
             childVisited.Add(normalizedPath);
-            return ParseBlocksInternal(importedCode, normalizedPath, cfg, childVisited, depth + 1,
+            return ParseBlocksInternal(importedCode, normalizedPath, cfg, childVisited, depth + 1, trustedImportRoot,
                 ref importCount, ref importBytes);
+        }
+
+        private static string GetTrustedImportRoot(string currentScriptPath)
+        {
+            if (string.IsNullOrWhiteSpace(currentScriptPath))
+                return Path.GetFullPath(Environment.CurrentDirectory);
+
+            string scriptPath = Path.GetFullPath(currentScriptPath);
+            string scriptDirectory = Path.GetDirectoryName(scriptPath);
+            try
+            {
+                string projectRoot = ProjectWorkspace.FindProjectRoot(scriptDirectory);
+                if (File.Exists(Path.Combine(projectRoot, ProjectWorkspace.ProjectManifestName)))
+                    return projectRoot;
+            }
+            catch (Exception) { }
+            return scriptDirectory;
+        }
+
+        private static bool IsBlockSourceFile(string path)
+        {
+            string extension = Path.GetExtension(path);
+            return string.Equals(extension, ".blk", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(extension, ".block", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(extension, ".blkl", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(extension, ".blocklite", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(extension, ".blkp", StringComparison.OrdinalIgnoreCase) ||
+                   string.Equals(extension, ".blockplus", StringComparison.OrdinalIgnoreCase);
         }
 
         // OPTIMIZATION: Merge consecutive blocks of the same language to reduce Process Spawning

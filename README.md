@@ -16,7 +16,7 @@ Maintainers can use the [organic growth playbook](docs/GROWTH.md) to turn demos,
 
 | Item | Details |
 | --- | --- |
-| Current release | `2.2.5` |
+| Current release | `2.2.6` |
 | Primary platform | Windows 10/11 release workflow |
 | Execution model | Parse one document, run native stages in order, transfer serializable state |
 | Editions | Lite (`.blkl`), Standard (`.blk`), Plus (`.blkp`) |
@@ -35,7 +35,7 @@ Maintainers can use the [organic growth playbook](docs/GROWTH.md) to turn demos,
 - [Runtime blocks and syntax](#core-syntax-language-blocks)
 - [Native Block control flow](#native-block-control-flow)
 - [Shared state](#shared-state-the-core-power-of-block)
-- [Imports and packages](#importing-external-block-files)
+- [Imports](#importing-external-block-files)
 - [HTML, JSON, and local servers](#html-and-json-output)
 - [Editor extensions](#editor-extensions)
 - [Security model and limits](#security-model)
@@ -140,8 +140,8 @@ Use Block when you want:
 
 ### Windows installer
 
-The versioned installer is [`BlockSetup-v2.2.5.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.5/BlockSetup-v2.2.5.exe).
-The stable download alias is [`BlockSetup.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.5/BlockSetup.exe).
+The versioned installer is [`BlockSetup-v2.2.6.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.6/BlockSetup-v2.2.6.exe).
+The stable download alias is [`BlockSetup.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.6/BlockSetup.exe).
 The same files are also linked from the [download page](downloads.html).
 
 1. Run the installer.
@@ -183,7 +183,7 @@ runtime.
 
 ### Build from source
 
-The v2.2.5 Windows build uses the .NET Framework C# compiler available at
+The v2.2.6 Windows build uses the .NET Framework C# compiler available at
 `%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\csc.exe`:
 
 ```powershell
@@ -224,7 +224,7 @@ Block detects the `<py>` block and delegates execution to your local Python envi
 | Edition | Extension | Best For |
 | --- | --- | --- |
 | Lite | `.blkl` | Lightweight, local polyglot scripts |
-| Standard | `.blk` | General development, modules, and local packages |
+| Standard | `.blk` | General development, modules, and local projects |
 | Plus | `.blkp` | Standard features plus extra runtimes, servers, formatting, linting, and documentation tools |
 
 Executable commands typically correspond to:
@@ -242,7 +242,7 @@ Available languages and capabilities vary depending on your installed edition, o
 | Edition | Use it when | Advanced features |
 | --- | --- | --- |
 | Lite | You need the smallest local polyglot runner | Basic language blocks and local configuration |
-| Standard | You want the recommended daily-use engine | Imports, local packages, native control flow, and local server support |
+| Standard | You want the recommended daily-use engine | Imports, project discovery, native control flow, and local server support |
 | Plus | You need the broadest runtime and tooling surface | Custom runtime definitions, `fmt`, `check`, `doc`, and extended integrations |
 
 The editions use the same project idea but have different compile-time feature
@@ -258,7 +258,7 @@ communicate which engine is expected.
 ## CLI reference
 
 The executable name depends on the edition. The following commands are available
-in the v2.2.5 Windows build:
+in the v2.2.6 Windows build:
 
 | Command | Lite | Standard | Plus | Purpose |
 | --- |:---:|:---:|:---:| --- |
@@ -277,19 +277,17 @@ in the v2.2.5 Windows build:
 | `<engine> workspace show\|set\|clear` | ✓ | ✓ | ✓ | Configure and inspect a safe workspace root for script discovery |
 | `<engine> find [name]` | ✓ | ✓ | ✓ | Find scripts in the current project and workspace without scanning the drive |
 | `<engine> project root\|run [path]` | ✓ | ✓ | ✓ | Discover a project manifest or run its configured entry file |
+| `<engine> project init\|list [path]` | — | ✓ | ✓ | Create or inspect a local Block project |
 | `<engine> serve [port]` | — | ✓ | ✓ | Start a local HTTP server document |
-| `<engine> ecosystem ...` / `project ...` | — | ✓ | ✓ | Create, add, and list local packages |
-| `<engine> pkg search|info|install|verify|remove ...` | — | ✓ | ✓ | Discover the signed-by-digest registry and manage packages |
 | `block-plus fmt <file>` | — | — | ✓ | Format a Plus document and keep a `.bak` backup |
 | `block-plus doc <file>` | — | — | ✓ | Generate a `.doc.md` block summary |
 
-Aliases `eco` and `pkg` are accepted for `ecosystem`. `run` is an explicit
-execution form; the original `<engine> <file>` form remains supported. Relative
+`run` is an explicit execution form; the original `<engine> <file>` form remains supported. Relative
 script paths are resolved from the current directory, the nearest
 `block.project.json`, and the configured workspace. The resolver never scans an
 entire drive and reports ambiguous matches instead of choosing randomly.
 
-For a project created with `block ecosystem init`, run its entry file from any
+For a project created with `block project init`, run its entry file from any
 child directory:
 
 ```powershell
@@ -597,12 +595,12 @@ Imports are governed by sandboxed directories, file count limits, file size caps
 
 ---
 
-## Block Ecosystem and Packages
+## Block projects
 
 Initialize a project:
 
 ```powershell
-block ecosystem init . my-project
+block project init . my-project
 ```
 
 The generated `block.project.json` makes `main.blk` discoverable from the
@@ -619,74 +617,12 @@ Directory structure created:
 ```text
 my-project/
 ├─ block.project.json
-├─ main.blk
-└─ packages/
+└─ main.blk
 ```
 
-Add a local package:
-
-```powershell
-block ecosystem add .\hello-block .
-block ecosystem list .
-```
-
-Use the package:
-
-```block
-<use package="hello-block" />
-```
-
-Specify a custom entry point:
-
-```block
-<use package="hello-block" entry="src/main.blk" />
-```
-
-Basic `block.package.json`:
-
-```json
-{
-  "name": "hello-block",
-  "version": "1.0.0",
-  "main": "main.blk",
-  "description": "A reusable Block package"
-}
-```
-
-Block ecosystem commands are local-first: adding a package reorganizes local directories without downloading or executing untrusted code. Package contents enter the execution pipeline only when explicitly invoked via script tags.
-
-### Official package registry
-
-The v2.2.5 registry is a reviewable `registry/index.json` file in this
-repository. It currently lists the starter packages `octopus`, `block-web`,
-`gblock-d`, `block-work`, and `drawing`. Each entry declares its license,
-permissions, source files, and SHA-256 digests. Search and inspect before an
-explicit remote install:
-
-```powershell
-block pkg search
-block pkg info drawing
-block pkg install drawing --remote
-block pkg verify .
-```
-
-Remote package installation is restricted to official HTTPS raw GitHub files,
-requires a digest for every file, stages only the manifest and entry document,
-and never executes package code during installation. See the [package
-marketplace](marketplace.html) and [`registry/`](registry/) for the current
-catalog and source. The web marketplace reads this same-origin index at page
-load, so reviewed additions and removals appear without hand-editing HTML. Its
-layout adapts from an empty publishing invitation through single-, two-,
-three-, four-, and larger catalog views.
-
-Maintainers can rebuild the catalog after reviewing a package change. The
-generator hashes each manifest and entry file, rejects reparse points and
-unsafe paths, and the registry workflow fails if the committed index is stale:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\build-registry-index.ps1
-powershell -ExecutionPolicy Bypass -File .\tools\build-registry-index.ps1 -Check -Generated (Get-Content .\registry\index.json -Raw | ConvertFrom-Json).generated
-```
+Third-party package loading and the Block package marketplace have been removed.
+To reuse reviewed local Block code, keep it inside the project and use an
+explicit relative import such as `<import src="modules/common.blk" />`.
 
 ---
 
@@ -753,7 +689,7 @@ Because this spawns external processes, it is subject to security policy checks.
 
 ### VS Code
 
-The repository publishes [`block-language-2.2.5.vsix`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.5/block-language-2.2.5.vsix).
+The repository publishes [`block-language-2.2.6.vsix`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.6/block-language-2.2.6.vsix).
 In VS Code, open **Extensions**, choose **Install from VSIX...**, select the
 package, and reload the window if prompted.
 
@@ -765,7 +701,7 @@ host runtime.
 ### Acode
 
 The mobile editor package is
-[`acode-plugin-block-2.2.5.zip`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.5/acode-plugin-block-2.2.5.zip). Install it through
+[`acode-plugin-block-2.2.6.zip`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.6/acode-plugin-block-2.2.6.zip). Install it through
 Acode's plugin workflow, then configure the local execution command if the device
 or terminal environment uses a non-default path.
 
@@ -789,7 +725,7 @@ Block adopts a local-first, conservative security design:
 
 Security configurations do not replace rigorous code review. Never execute untrusted `.blk`, `.blkl`, or `.blkp` files, as language blocks invoke host runtimes directly.
 
-### Default configuration in v2.2.5
+### Default configuration in v2.2.6
 
 New configurations use conservative defaults:
 
@@ -823,7 +759,7 @@ the artifact against `SHA256SUMS.txt` as well.
 ### Security boundaries to review
 
 - Treat every language block as executable native code.
-- Review imported files and local packages before invoking them.
+- Review imported files before invoking them.
 - Keep API servers on `localhost` unless you have added an appropriate external
   authentication and network policy.
 - Do not commit passwords, API tokens, certificates, private keys, or personal
@@ -1013,7 +949,7 @@ when both host runtimes are available.
 
 ### Package and verify a release
 
-The complete v2.2.5 release flow builds the three engines, creates matching ZIP
+The complete v2.2.6 release flow builds the three engines, creates matching ZIP
 bundles, packages the VS Code and Acode extensions, builds the installer, and
 verifies the published artifacts and hashes:
 
@@ -1035,12 +971,12 @@ published checksum changes.
 
 ---
 
-## v2.2.5 status and known boundaries
+## v2.2.6 status and known boundaries
 
-Version 2.2.5 is the current documented release line. It includes the Lite,
+Version 2.2.6 is the current documented release line. It includes the Lite,
 Standard, and Plus engines, the Windows installer, the VS Code extension, the
 Acode plugin, native control flow, cross-runtime state synchronization, local
-imports and packages, the verified package registry, the Plus
+local imports, project discovery, the Plus
 formatting/check/documentation commands, safe
 workspace/project discovery, deterministic logical short-circuit parsing, and
 explicit range limits.
@@ -1058,7 +994,7 @@ promises:
 - Process timeouts and import limits reduce accidental resource abuse but do not
   turn arbitrary native code into a security sandbox.
 
-See the [changelog](CHANGELOG.md) and [v2.2.5 release notes](docs/RELEASE-2.2.5.md)
+See the [changelog](CHANGELOG.md) and [v2.2.6 release notes](docs/RELEASE-2.2.6.md)
 for the tested changes and release artifact contract. Planned behavior should not
 be read as shipped behavior.
 
@@ -1066,7 +1002,7 @@ be read as shipped behavior.
 
 ## Roadmap
 
-The [public roadmap](ROADMAP.md) separates the v2.2.5 foundation, proposed next
+The [public roadmap](ROADMAP.md) separates the v2.2.6 foundation, proposed next
 steps, and longer-term ideas. If you want to help Block grow, a reproducible
 example, documentation fix, regression test, or real workflow is more useful than
 an unverified benchmark.
@@ -1110,7 +1046,7 @@ makes project growth easy to verify.
 - [Code of Conduct](CODE_OF_CONDUCT.md)
 - [Citation metadata](CITATION.cff)
 - [MIT License](LICENSE)
-- [v2.2.5 release manifest](docs/RELEASE-2.2.5.md)
+- [v2.2.6 release manifest](docs/RELEASE-2.2.6.md)
 
 The visual documentation site is available from [`wiki.html`](wiki.html). The
 Markdown Wiki is the reviewable source for the same installation, syntax,

@@ -47,12 +47,13 @@ if ($headers -match '(?i)img-src[^;\r\n]*https:') {
     throw 'CSP image sources must not allow every HTTPS origin.'
 }
 
-$htmlFiles = Get-ChildItem -LiteralPath $RepositoryRoot -Filter '*.html' -File
+$htmlFiles = Get-ChildItem -LiteralPath $RepositoryRoot -Filter '*.html' -File |
+    Where-Object { $_.Name -notmatch '^google[0-9a-f]+\.html$' }
 foreach ($file in $htmlFiles) {
     $html = Get-Content -LiteralPath $file.FullName -Raw
 
-    if ($html -match '(?i)<script\b' -and $html -notmatch '(?i)<meta\b[^>]+http-equiv\s*=\s*["'']Content-Security-Policy["'']') {
-        throw "HTML page with scripts is missing a CSP meta policy: $($file.Name)."
+    if ($html -notmatch '(?i)<meta\b[^>]+http-equiv\s*=\s*["'']Content-Security-Policy["'']') {
+        throw "HTML page is missing its GitHub-Pages-compatible CSP meta policy: $($file.Name)."
     }
 
     foreach ($meta in [regex]::Matches($html, '<meta\b[^>]+http-equiv\s*=\s*["'']Content-Security-Policy["''][^>]*>', [Text.RegularExpressions.RegexOptions]::IgnoreCase)) {

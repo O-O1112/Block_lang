@@ -252,13 +252,6 @@
     ],
     "description": "Import a local Block module (Standard and Plus)"
   },
-  "use package": {
-    "prefix": ["use", "package", "<use>"],
-    "body": [
-      "<use package=\"${1:package-name}\" entry=\"${2:main.blk}\" />"
-    ],
-    "description": "Load a package from the local Block ecosystem"
-  },
   "del block": {
     "prefix": ["del", "<del>"],
     "body": [

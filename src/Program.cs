@@ -147,9 +147,9 @@ namespace BlockEngine
             }
 
 #if !BLOCK_LITE
-            if (arg0 == "ecosystem" || arg0 == "eco" || arg0 == "pkg" || arg0 == "project")
+            if (arg0 == "project")
             {
-                Ecosystem.RunCli(args);
+                ProjectWorkspace.RunCli(args);
                 return;
             }
 #else
@@ -239,7 +239,7 @@ namespace BlockEngine
             }
         }
 
-        static void ShowAnimationAndUsage(bool infinite = true)
+        static void ShowAnimationAndUsage(bool infinite = false)
         {
             string[] logo = new string[] {
                 "                                                               ",
@@ -263,9 +263,11 @@ namespace BlockEngine
                 "                                                               "
             };
 
+            bool cursorHidden = false;
             try 
             {
                 Console.CursorVisible = false;
+                cursorHidden = true;
                 int startTop = Console.CursorTop;
                 // Ensure there is enough space to print without scrolling
                 if (startTop + logo.Length >= Console.WindowHeight)
@@ -307,8 +309,6 @@ namespace BlockEngine
                         System.Threading.Thread.Sleep(infinite ? 40 : 15);
                     }
                 }
-                Console.ResetColor();
-                Console.CursorVisible = true;
             } 
             catch 
             {
@@ -316,6 +316,14 @@ namespace BlockEngine
                 for (int i = 0; i < logo.Length; i++)
                 {
                     Console.WriteLine(logo[i]);
+                }
+            }
+            finally
+            {
+                try { Console.ResetColor(); } catch { }
+                if (cursorHidden)
+                {
+                    try { Console.CursorVisible = true; } catch { }
                 }
             }
 
@@ -348,8 +356,7 @@ namespace BlockEngine
             Console.WriteLine("       block-plus config");
             Console.WriteLine("       block-plus config show|path");
             Console.WriteLine("       block-plus serve [port]");
-            Console.WriteLine("       block-plus ecosystem|project init|list|add ...");
-            Console.WriteLine("       block-plus pkg search|info|install|verify|remove ...");
+            Console.WriteLine("       block-plus project init|list [path]");
             Console.WriteLine("       block-plus fmt <file.blkp>");
             Console.WriteLine("       block-plus check <file.blkp>");
             Console.WriteLine("       block-plus doc <file.blkp>");
@@ -368,8 +375,7 @@ namespace BlockEngine
             Console.WriteLine("       block config");
             Console.WriteLine("       block config show|path");
             Console.WriteLine("       block serve 8080");
-            Console.WriteLine("       block ecosystem|project init|list|add ...");
-            Console.WriteLine("       block pkg search|info|install|verify|remove ...");
+            Console.WriteLine("       block project init|list [path]");
 #endif
         }
 

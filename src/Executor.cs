@@ -15,6 +15,8 @@ namespace BlockEngine
     {
         // Keep JavaScriptSerializer for .NET Framework 4.x compatibility
         private static readonly JavaScriptSerializer _serializer = new JavaScriptSerializer { MaxJsonLength = (int)SecurityLimits.MaxJsonBytes };
+        private static readonly object _pathNormalizationLock = new object();
+        private static bool _pathEnvironmentNormalized;
 
         public static async Task ExecuteBlocksAsync(List<CodeBlock> blocks, EngineConfig cfg, string scriptPath, Dictionary<string, object> currentState, System.Net.HttpListenerResponse response, Action<string> outputCallback = null)
         {
@@ -47,7 +49,7 @@ namespace BlockEngine
                     {
 #if BLOCK_PLUS
                         CustomLangDef customDef;
-                        if (CustomLangRegistry.TryGet(block.Language, out customDef))
+                        if (cfg.AllowCustomDefinitions && CustomLangRegistry.TryGet(block.Language, out customDef))
                         {
                             await RunCustomLangAsync(block, customDef, scriptPath, currentState, tempDir, cfg.ExecutionTimeoutSeconds, cfg, outputCallback);
                             continue;
@@ -376,29 +378,7 @@ namespace BlockEngine
             }
         }
 
-        private static Dictionary<string, string> wingetPackageMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-        {
-            { "python", "Python.Python.3.10" },
-            { "js", "OpenJS.NodeJS" },
-            { "ts", "OpenJS.NodeJS" },
-            { "typescript", "OpenJS.NodeJS" },
-            { "php", "PHP.PHP" },
-            { "ruby", "RubyInstallerTeam.Ruby" },
-            { "lua", "Lua.Lua" },
-            { "sql", "SQLite.SQLite" },
-            { "go", "GoLang.Go" },
-            { "golang", "GoLang.Go" },
-            { "rust", "Rustlang.Rustup" },
-            { "rs", "Rustlang.Rustup" },
-            { "java", "Oracle.JDK.21" },
-            { "dart", "Dart.Dart" },
-            { "zig", "zig.zig" },
-            { "r", "RProject.R" },
-            { "perl", "StrawberryPerl.StrawberryPerl" },
-            { "pl", "StrawberryPerl.StrawberryPerl" }
-        };
-
-        private static void EnsureLanguageInstalled(string lang)
+        private static void EnsureLanguageAvailable(string lang)
         {
             string exe = GetExecutable(lang);
             if (File.Exists(exe)) return;
@@ -411,41 +391,9 @@ namespace BlockEngine
                 if (File.Exists(testPath)) return;
             }
 
-            if (wingetPackageMap.ContainsKey(lang))
-            {
-                string pkgId = wingetPackageMap[lang];
-                // H2: Fix: Ask for confirmation before auto-installing
-                Console.WriteLine(string.Format("[Block+ Auto-Installer] Runtime for '<{0}>' not detected on system.", lang));
-                Console.Write(string.Format("[Block+ Auto-Installer] Install '{0}' via Winget now? [Y/n]: ", pkgId));
-                string answer = Console.ReadLine();
-                if (!string.Equals((answer ?? "").Trim(), "y", StringComparison.OrdinalIgnoreCase))
-                {
-                    throw new Exception(string.Format("Runtime for '{0}' is not installed. Skipped by user.", lang));
-                }
-                
-                try
-                {
-                    string extraArgs = pkgId == "Rustlang.Rustup" ? "--override \"-y\"" : "";
-                    ProcessStartInfo psi = new ProcessStartInfo
-                    {
-                        FileName = "winget",
-                        Arguments = string.Format("install -e --id {0} --accept-package-agreements --accept-source-agreements --silent {1}", pkgId, extraArgs),
-                        UseShellExecute = false,
-                        CreateNoWindow = true
-                    };
-                    using (Process p = Process.Start(psi))
-                    {
-                        p.WaitForExit();
-                        if (p.ExitCode != 0)
-                            throw new InvalidOperationException(string.Format("Winget exited with code {0} for {1}.", p.ExitCode, pkgId));
-                    }
-                    Console.WriteLine(string.Format("[Block+ Auto-Installer] Package '{0}' installed successfully!", pkgId));
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(string.Format("[Block+ Auto-Installer] Warning: Winget auto-install failed for {0}: {1}", pkgId, ex.Message));
-                }
-            }
+            throw new FileNotFoundException(string.Format(
+                "Runtime for '<{0}>' was not found. Install it from its official publisher, add '{1}' to PATH, then run 'block runtimes'. Block never installs host runtimes automatically.",
+                lang, exe));
         }
 #endif
 
@@ -479,7 +427,7 @@ namespace BlockEngine
         {
             NormalizeWindowsPathEnvironment();
 #if BLOCK_PLUS
-            EnsureLanguageInstalled(block.Language);
+            EnsureLanguageAvailable(block.Language);
 #endif
             string exePath = GetExecutable(block.Language);
             if (string.IsNullOrEmpty(exePath))
@@ -512,6 +460,7 @@ namespace BlockEngine
             psi.FileName = exePath;
             psi.WorkingDirectory = Path.GetDirectoryName(scriptPath);
             psi.UseShellExecute = false;
+            psi.CreateNoWindow = true;
             
             // Set state environment variables
             psi.EnvironmentVariables["BLOCK_STATE_JSON"] = stateJson;
@@ -546,8 +495,6 @@ namespace BlockEngine
 
             using (Process p = new Process { StartInfo = psi })
             {
-                p.EnableRaisingEvents = true;
-
                 StringBuilder outputBuilder = new StringBuilder();
                 StringBuilder errorBuilder = new StringBuilder();
 
@@ -556,10 +503,6 @@ namespace BlockEngine
 
                 p.OutputDataReceived += outHandler;
                 p.ErrorDataReceived += errHandler;
-
-                var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-                EventHandler exitHandler = (s, e) => tcs.TrySetResult(true);
-                p.Exited += exitHandler;
 
                 p.Start();
                 ProcessSandbox processSandbox = ProcessSandbox.Attach(p);
@@ -575,26 +518,19 @@ namespace BlockEngine
                 p.BeginOutputReadLine();
                 p.BeginErrorReadLine();
 
-                if (p.HasExited) tcs.TrySetResult(true);
-
                 int timeoutMs = cfg.ExecutionTimeoutSeconds * 1000;
                 try
                 {
-                    using (var cts = new CancellationTokenSource(timeoutMs))
+                    // Do not rely on Process.Exited here. On .NET Framework it can
+                    // race with short-lived interpreter processes on Windows CI.
+                    // Waiting on the process handle is deterministic and still
+                    // lets us enforce the configured limit and kill descendants.
+                    bool finished = await Task.Run(() => p.WaitForExit(timeoutMs)).ConfigureAwait(false);
+                    if (!finished)
                     {
-                        var timeoutTask = Task.Delay(timeoutMs, cts.Token);
-                        var completedTask = await Task.WhenAny(tcs.Task, timeoutTask).ConfigureAwait(false);
-
-                        if (completedTask == timeoutTask)
-                        {
-                            // H1: Fix: Kill entire process tree
-                            KillProcessTree(p);
-                            throw new Exception(string.Format("[{0}] Process execution timed out ({1}s limit).", block.Language.ToUpper(), cfg.ExecutionTimeoutSeconds));
-                        }
-                        else
-                        {
-                            cts.Cancel();
-                        }
+                        // H1: Fix: Kill entire process tree
+                        KillProcessTree(p);
+                        throw new Exception(string.Format("[{0}] Process execution timed out ({1}s limit).", block.Language.ToUpper(), cfg.ExecutionTimeoutSeconds));
                     }
 
                     // Flush async streams
@@ -603,7 +539,6 @@ namespace BlockEngine
                 finally
                 {
                     processSandbox.Dispose();
-                    p.Exited -= exitHandler;
                     p.OutputDataReceived -= outHandler;
                     p.ErrorDataReceived -= errHandler;
                 }
@@ -626,6 +561,8 @@ namespace BlockEngine
                 {
                     try
                     {
+                        if (new FileInfo(tempStateOut).Length > SecurityLimits.MaxJsonBytes)
+                            throw new InvalidDataException("BLOCK_STATE_OUT exceeds the 4 MiB safety limit.");
                         string fileStateJson = File.ReadAllText(tempStateOut, Encoding.UTF8);
                         if (!string.IsNullOrEmpty(fileStateJson))
                         {
@@ -636,7 +573,10 @@ namespace BlockEngine
                             }
                         }
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        throw new InvalidDataException("Runtime produced an invalid BLOCK_STATE_OUT payload.", ex);
+                    }
                 }
 
                 // 2. Parse clean output and stdout state marker
@@ -660,7 +600,10 @@ namespace BlockEngine
                                     foreach (var kvp in newState) state[kvp.Key] = kvp.Value;
                                 }
                             }
-                            catch { }
+                            catch (Exception ex)
+                            {
+                                throw new InvalidDataException("Runtime produced an invalid inline state payload.", ex);
+                            }
                         }
                     }
                 }
@@ -678,17 +621,22 @@ namespace BlockEngine
         private static void NormalizeWindowsPathEnvironment()
         {
             if (Environment.OSVersion.Platform != PlatformID.Win32NT) return;
-            try
+            lock (_pathNormalizationLock)
             {
-                string path = Environment.GetEnvironmentVariable("Path");
-                if (string.IsNullOrEmpty(path)) path = Environment.GetEnvironmentVariable("PATH");
-                if (!string.IsNullOrEmpty(path))
+                if (_pathEnvironmentNormalized) return;
+                try
                 {
-                    Environment.SetEnvironmentVariable("PATH", null, EnvironmentVariableTarget.Process);
-                    Environment.SetEnvironmentVariable("Path", path, EnvironmentVariableTarget.Process);
+                    string path = Environment.GetEnvironmentVariable("Path");
+                    if (string.IsNullOrEmpty(path)) path = Environment.GetEnvironmentVariable("PATH");
+                    if (!string.IsNullOrEmpty(path))
+                    {
+                        Environment.SetEnvironmentVariable("PATH", null, EnvironmentVariableTarget.Process);
+                        Environment.SetEnvironmentVariable("Path", path, EnvironmentVariableTarget.Process);
+                    }
+                    _pathEnvironmentNormalized = true;
                 }
+                catch { }
             }
-            catch { }
         }
 
         private sealed class ProcessCapture
@@ -835,6 +783,8 @@ namespace BlockEngine
             if (state == null || string.IsNullOrEmpty(stateFile) || !File.Exists(stateFile)) return;
             try
             {
+                if (new FileInfo(stateFile).Length > SecurityLimits.MaxJsonBytes)
+                    throw new InvalidDataException("BLOCK_STATE_OUT exceeds the 4 MiB safety limit.");
                 string json = File.ReadAllText(stateFile, Encoding.UTF8);
                 if (string.IsNullOrWhiteSpace(json)) return;
                 Dictionary<string, object> newState = _serializer.Deserialize<Dictionary<string, object>>(json);
@@ -843,14 +793,16 @@ namespace BlockEngine
             }
             catch (Exception error)
             {
-                Console.Error.WriteLine("[state] ignored invalid BLOCK_STATE_OUT: " + error.Message);
+                throw new InvalidDataException("Runtime produced an invalid BLOCK_STATE_OUT payload.", error);
             }
         }
 
         private static void CheckLanguageEnabled(string lang, EngineConfig cfg)
         {
+            string normalized = (lang ?? "").ToLowerInvariant();
 #if BLOCK_LITE
-            if (lang != "python" && lang != "py" && lang != "js" && lang != "javascript" && lang != "html" && lang != "block")
+            string[] supportedLangs = { "python", "py", "js", "javascript" };
+            if (Array.IndexOf(supportedLangs, normalized) < 0)
             {
                 throw new Exception(string.Format("Language '<{0}>' is not supported in Block Lite. Block Lite supports <py>/<python>, <js>/<javascript>, and <html>.", lang));
             }
@@ -863,6 +815,17 @@ namespace BlockEngine
                     throw new Exception(string.Format("Language '<{0}>' is exclusive to Block+ (Block Plus). Please upgrade to Block+ to execute this block.", lang));
                 }
             }
+            string[] supportedLangs = { "python", "py", "js", "javascript", "php", "ruby", "rb", "lua", "sql", "ps", "powershell" };
+            if (Array.IndexOf(supportedLangs, normalized) < 0)
+                throw new Exception(string.Format("Unknown language tag '<{0}>'. Use a built-in tag or enable and define a reviewed custom runtime in Block+.", lang));
+#else
+            string[] supportedLangs = {
+                "python", "py", "js", "javascript", "php", "ruby", "rb", "lua", "sql", "ps", "powershell",
+                "c", "cpp", "c++", "go", "golang", "rust", "rs", "java", "ts", "typescript", "cs", "csharp",
+                "kotlin", "kt", "dart", "zig", "perl", "pl", "bash", "sh", "r"
+            };
+            if (Array.IndexOf(supportedLangs, normalized) < 0)
+                throw new Exception(string.Format("Unknown language tag '<{0}>'. Enable AllowCustomDefinitions and define a reviewed custom runtime before using it.", lang));
 #endif
             if ((lang == "python" || lang == "py") && !cfg.PythonEnabled) throw new Exception("Security: Python execution is disabled in config.");
             if (lang == "php" && !cfg.PhpEnabled) throw new Exception("Security: PHP execution is disabled in config.");

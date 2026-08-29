@@ -87,8 +87,8 @@
             "patterns": [{"include": "source.block"}]
         },
         {
-            "match": "^\\s*<(import|use|define)\\b.*$",
-            "name": "keyword.control.block.ecosystem"
+            "match": "^\\s*<(import|define)\\b.*$",
+            "name": "keyword.control.block.directive"
         },
         {
             "match": "\\b(if|elif|else|while|for|func|block|print)\\b",

@@ -25,7 +25,7 @@ coordinated disclosure decision is made.
 ## Releases
 
 Release-facing changes should pass the Windows build, smoke tests, and release
-verification documented in `CONTRIBUTING.md` and `docs/RELEASE-2.2.5.md`. Published
+verification documented in `CONTRIBUTING.md` and `docs/RELEASE-2.2.6.md`. Published
 artifacts must retain their documented filenames or provide a compatibility alias.
 
 The changelog is the public record of user-visible changes. Planned features must not

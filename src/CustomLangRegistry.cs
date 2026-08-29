@@ -52,8 +52,11 @@ namespace BlockEngine
                 // L4: Fix: Report error to user instead of silently failing
                 try
                 {
+                    FileInfo registryInfo = new FileInfo(RegistryPath);
+                    if (registryInfo.Length > SecurityLimits.MaxJsonBytes)
+                        throw new InvalidDataException("languages.json exceeds the 4 MiB safety limit.");
                     string json = File.ReadAllText(RegistryPath);
-                    var serializer = new JavaScriptSerializer();
+                    var serializer = new JavaScriptSerializer { MaxJsonLength = (int)SecurityLimits.MaxJsonBytes };
                     _globalCache = serializer.Deserialize<Dictionary<string, CustomLangDef>>(json)
                                    ?? new Dictionary<string, CustomLangDef>(StringComparer.OrdinalIgnoreCase);
                 }

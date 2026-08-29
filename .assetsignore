@@ -28,6 +28,7 @@
 
 # Public release downloads linked by downloads.html.
 !BlockSetup.exe
+!BlockSetup-v2.2.6.exe
 !BlockSetup-v2.2.2.exe
 !BlockSetup-v2.2.0.exe
 !block.exe
@@ -41,7 +42,9 @@
 !block-language-2.1.0.vsix
 !block-language-2.2.0.vsix
 !block-language-2.2.2.vsix
+!block-language-2.2.6.vsix
 !acode-plugin-block.zip
 !acode-plugin-block-2.2.0.zip
 !acode-plugin-block-2.2.2.zip
+!acode-plugin-block-2.2.6.zip
 !SHA256SUMS.txt

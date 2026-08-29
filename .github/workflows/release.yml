@@ -6,7 +6,7 @@ on:
       tag:
         description: Release tag to build and publish
         required: true
-        default: v2.2.5
+        default: v2.2.6
   push:
     tags:
       - 'v*'
@@ -37,16 +37,18 @@ jobs:
           .\tests\Test-BlockEngine.ps1 -EngineDirectory (Join-Path $PWD 'release')
           .\tests\Test-BlockCli.ps1 -EngineDirectory (Join-Path $PWD 'release')
           .\tests\Test-ActionableErrors.ps1 -EngineDirectory (Join-Path $PWD 'release')
-          .\tests\Test-PackageRegistry.ps1 -EngineDirectory (Join-Path $PWD 'release')
+          .\tests\Test-NoThirdPartyPackages.ps1 -EngineDirectory (Join-Path $PWD 'release') -RepositoryRoot $PWD
           .\tests\Test-BlockPaths.ps1 -EngineDirectory (Join-Path $PWD 'release')
           .\tests\Test-NativeLanguage.ps1 -EngineDirectory (Join-Path $PWD 'release')
           .\tests\Test-NativeInterpreter.ps1 -SourcePath (Join-Path $PWD 'src\NativeBlockProgram.cs')
           .\tests\Test-WebsiteLinks.ps1 -RepositoryRoot $PWD
           .\tests\Test-WebsiteSecurity.ps1 -RepositoryRoot $PWD
-          .\tests\Test-MarketplaceLayout.ps1 -RepositoryRoot $PWD
+          .\tests\Test-InstallerTransport.ps1 -RepositoryRoot $PWD
           .\tests\Test-HealthHardening.ps1 -EngineDirectory (Join-Path $PWD 'release') -RepositoryRoot $PWD
           .\tests\Test-ApiServer.ps1 -EngineDirectory (Join-Path $PWD 'release')
           .\tests\Test-CommunityLab.ps1 -EngineDirectory (Join-Path $PWD 'release') -SkipPolyglot
+          .\tests\Test-VersionConsistency.ps1 -RepositoryRoot $PWD
+          .\tests\Test-RepositoryIntegrity.ps1 -RepositoryRoot $PWD
 
       - name: Generate build provenance attestations
         uses: actions/attest@v4
