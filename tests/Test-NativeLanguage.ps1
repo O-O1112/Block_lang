@@ -72,6 +72,13 @@ short_or = true || missing_variable
 short_and = false && missing_variable
 logic_precedence = false || true && true
 
+list_eq_same = [1, 2] == [1, 2]
+list_eq_diff = [1, 2] == [3, 4]
+map_eq_same = {"a": 1} == {"a": 1}
+map_eq_diff = {"a": 1} == {"b": 2}
+nested_contains_pass = contains([[1, 2], [3, 4]], [1, 2])
+nested_contains_fail = contains([[1, 2], [3, 4]], [5, 6])
+
 print(status)
 print(profile["name"])
 print(profile.total)
@@ -81,6 +88,7 @@ print(greet("Block"))
 print(local_scope("local"), outside)
 print(printer)
 print(short_or, short_and, logic_precedence)
+print(list_eq_same, list_eq_diff, map_eq_same, map_eq_diff, nested_contains_pass, nested_contains_fail)
 '@ | Set-Content -LiteralPath $scriptPath -Encoding UTF8
 
     $result = Invoke-Block 'block.exe' @('run', $scriptPath)
@@ -94,6 +102,7 @@ print(short_or, short_and, logic_precedence)
     Assert-Condition ($result.Output -match 'local global') "function scope/global lookup failed: $($result.Output)"
     Assert-Condition ($result.Output -match 'not-a-print-call') "identifier beginning with print was misparsed: $($result.Output)"
     Assert-Condition ($result.Output -match 'true false true') "logical short-circuit or precedence failed: $($result.Output)"
+    Assert-Condition ($result.Output -match 'true false true false true false') "structural equality comparison failed: $($result.Output)"
 
     $limitPath = Join-Path $tempRoot 'range-limit.blk'
     @'

@@ -579,6 +579,39 @@ namespace BlockEngine
         private static bool Equal(object left, object right)
         {
             if (left == null || right == null) return left == null && right == null;
+            if (left is bool || right is bool)
+            {
+                if (left is bool && right is bool) return (bool)left == (bool)right;
+                return false;
+            }
+            IList listA = left as IList;
+            IList listB = right as IList;
+            if (listA != null || listB != null)
+            {
+                if (listA == null || listB == null || listA.Count != listB.Count) return false;
+                for (int i = 0; i < listA.Count; i++)
+                {
+                    if (!Equal(listA[i], listB[i])) return false;
+                }
+                return true;
+            }
+            IDictionary mapA = left as IDictionary;
+            IDictionary mapB = right as IDictionary;
+            if (mapA != null || mapB != null)
+            {
+                if (mapA == null || mapB == null || mapA.Count != mapB.Count) return false;
+                foreach (object key in mapA.Keys)
+                {
+                    if (key == null) continue;
+                    string k = key.ToString();
+                    object valB = null;
+                    if (mapB.Contains(key)) valB = mapB[key];
+                    else if (mapB.Contains(k)) valB = mapB[k];
+                    else return false;
+                    if (!Equal(mapA[key], valB)) return false;
+                }
+                return true;
+            }
             double a, b;
             if (double.TryParse(Convert.ToString(left, CultureInfo.InvariantCulture), NumberStyles.Float, CultureInfo.InvariantCulture, out a) && double.TryParse(Convert.ToString(right, CultureInfo.InvariantCulture), NumberStyles.Float, CultureInfo.InvariantCulture, out b)) return Math.Abs(a - b) < 0.0000000001;
             return string.Equals(left.ToString(), right.ToString(), StringComparison.Ordinal);
