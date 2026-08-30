@@ -2,6 +2,29 @@
 
 This policy defines how Block Language publishes Windows executables.
 
+## SignPath Foundation status
+
+Free code signing provided by SignPath.io, certificate by SignPath Foundation.
+The application is pending review. Until SignPath Foundation approves the
+project, all currently published Windows executables remain unsigned and are
+identified as such in the release documentation.
+
+## Project roles
+
+The current project is maintained by one repository owner. The same person may
+hold more than one role while the project is small:
+
+- Authors and maintainers: `O-O1112`.
+- Reviewers: `O-O1112`; contributions from other people are reviewed through a
+  public pull request before merging.
+- Approver: `O-O1112`; each release must be manually reviewed before signing.
+
+The public source repository is
+[`O-O1112/Block_lang`](https://github.com/O-O1112/Block_lang). Block does not
+transfer information to other networked systems unless specifically requested
+by the user or the person installing or operating it. See the public
+[privacy policy](https://o-o1112.github.io/Block_lang/privacy.html).
+
 ## Scope
 
 The policy applies to the versioned installer, the stable installer alias, and
