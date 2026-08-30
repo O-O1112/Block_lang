@@ -283,26 +283,125 @@ namespace BlockEngine
             return -1;
         }
 
+        private enum TargetAccessorType { Index, Member }
+        private struct TargetAccessor
+        {
+            public TargetAccessorType Type;
+            public string Expression;
+            public string Member;
+        }
+
         private static void AssignTarget(string target, object value, Context context, int lineNumber)
         {
-            Match variable = Regex.Match(target, @"^[A-Za-z_][A-Za-z0-9_]*$");
-            if (variable.Success)
+            target = (target ?? "").Trim();
+            if (target.Length == 0) throw Error(lineNumber, "Empty assignment target.");
+
+            int pos = 0;
+            while (pos < target.Length && char.IsWhiteSpace(target[pos])) pos++;
+            int start = pos;
+            if (pos >= target.Length || !(char.IsLetter(target[pos]) || target[pos] == '_'))
+                throw Error(lineNumber, "Invalid assignment target: " + target);
+            while (pos < target.Length && (char.IsLetterOrDigit(target[pos]) || target[pos] == '_')) pos++;
+            string rootVar = target.Substring(start, pos - start);
+
+            List<TargetAccessor> accessors = new List<TargetAccessor>();
+            while (pos < target.Length)
             {
-                context.SetValue(target, value);
+                while (pos < target.Length && char.IsWhiteSpace(target[pos])) pos++;
+                if (pos >= target.Length) break;
+
+                if (target[pos] == '[')
+                {
+                    pos++;
+                    int exprStart = pos;
+                    int depth = 1;
+                    bool quoted = false;
+                    char quote = '\0';
+                    bool escaped = false;
+                    while (pos < target.Length)
+                    {
+                        char c = target[pos++];
+                        if (escaped) { escaped = false; continue; }
+                        if (quoted)
+                        {
+                            if (c == '\\') { escaped = true; continue; }
+                            if (c == quote) quoted = false;
+                            continue;
+                        }
+                        if (c == '\'' || c == '"') { quoted = true; quote = c; continue; }
+                        if (c == '[') depth++;
+                        else if (c == ']')
+                        {
+                            depth--;
+                            if (depth == 0) break;
+                        }
+                    }
+                    if (depth != 0) throw Error(lineNumber, "Unclosed '[' in assignment target.");
+                    string expr = target.Substring(exprStart, pos - exprStart - 1).Trim();
+                    accessors.Add(new TargetAccessor { Type = TargetAccessorType.Index, Expression = expr });
+                }
+                else if (target[pos] == '.')
+                {
+                    pos++;
+                    while (pos < target.Length && char.IsWhiteSpace(target[pos])) pos++;
+                    int idStart = pos;
+                    if (pos >= target.Length || !(char.IsLetter(target[pos]) || target[pos] == '_'))
+                        throw Error(lineNumber, "Expected member name after '.' in assignment target.");
+                    while (pos < target.Length && (char.IsLetterOrDigit(target[pos]) || target[pos] == '_')) pos++;
+                    string member = target.Substring(idStart, pos - idStart);
+                    accessors.Add(new TargetAccessor { Type = TargetAccessorType.Member, Member = member });
+                }
+                else
+                {
+                    throw Error(lineNumber, "Invalid assignment target syntax at: " + target.Substring(pos));
+                }
+            }
+
+            if (accessors.Count == 0)
+            {
+                context.SetValue(rootVar, value);
                 return;
             }
 
-            Match indexed = Regex.Match(target, @"^([A-Za-z_][A-Za-z0-9_]*)\s*\[([\s\S]*)\]$");
-            if (indexed.Success)
+            object container;
+            if (!context.TryGetValue(rootVar, out container))
+                throw Error(lineNumber, "Unknown variable: " + rootVar);
+
+            for (int i = 0; i < accessors.Count - 1; i++)
             {
-                object container;
-                if (!context.TryGetValue(indexed.Groups[1].Value, out container))
-                    throw Error(lineNumber, "Unknown variable: " + indexed.Groups[1].Value);
-                SetIndex(container, Evaluate(indexed.Groups[2].Value, context, lineNumber), value, lineNumber);
-                return;
+                TargetAccessor acc = accessors[i];
+                if (acc.Type == TargetAccessorType.Index)
+                {
+                    object idx = Evaluate(acc.Expression, context, lineNumber);
+                    container = GetIndex(container, idx, lineNumber);
+                }
+                else
+                {
+                    container = GetMember(container, acc.Member, lineNumber);
+                }
             }
 
-            throw Error(lineNumber, "Invalid assignment target: " + target);
+            TargetAccessor last = accessors[accessors.Count - 1];
+            if (last.Type == TargetAccessorType.Index)
+            {
+                object idx = Evaluate(last.Expression, context, lineNumber);
+                SetIndex(container, idx, value, lineNumber);
+            }
+            else
+            {
+                SetMember(container, last.Member, value, lineNumber);
+            }
+        }
+
+        private static void SetMember(object container, string member, object value, int lineNumber)
+        {
+            IDictionary map = container as IDictionary;
+            if (map != null)
+            {
+                map[member] = value;
+                return;
+            }
+            throw Error(lineNumber, "Value of type " + TypeName(container) + " cannot have member '" + member + "' assigned.");
         }
 
         private static List<string> SplitArguments(string text, int lineNumber)

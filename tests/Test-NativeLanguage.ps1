@@ -79,9 +79,16 @@ map_eq_diff = {"a": 1} == {"b": 2}
 nested_contains_pass = contains([[1, 2], [3, 4]], [1, 2])
 nested_contains_fail = contains([[1, 2], [3, 4]], [5, 6])
 
+nested_matrix = [[1, 2], [3, 4]]
+nested_matrix[0][1] = 99
+profile.meta = {"role": "admin"}
+profile.meta.role = "lead"
+
 print(status)
 print(profile["name"])
 print(profile.total)
+print(profile.meta.role)
+print(nested_matrix[0][1])
 print(items[1], items.length)
 print(sum(items), str(total), type(profile), contains(items, 3))
 print(greet("Block"))
@@ -96,6 +103,8 @@ print(list_eq_same, list_eq_diff, map_eq_same, map_eq_diff, nested_contains_pass
     Assert-Condition ($result.ExitCode -eq 0) "Native language program failed: $($result.Output)"
     Assert-Condition ($result.Output -match 'elif-ok') "elif did not execute: $($result.Output)"
     Assert-Condition ($result.Output -match 'Block Language') "map assignment/member access failed: $($result.Output)"
+    Assert-Condition ($result.Output -match 'lead') "nested member property assignment failed: $($result.Output)"
+    Assert-Condition ($result.Output -match '99') "nested list index assignment failed: $($result.Output)"
     Assert-Condition ($result.Output -match '10') "loop control failed: $($result.Output)"
     Assert-Condition ($result.Output -match '2 4') "list index/length failed: $($result.Output)"
     Assert-Condition ($result.Output -match '10 10 map true') "built-in functions failed: $($result.Output)"
