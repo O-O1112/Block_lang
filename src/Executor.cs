@@ -95,6 +95,21 @@ namespace BlockEngine
                     string outPath = Path.Combine(Path.GetTempPath(), "block_output_" + Guid.NewGuid().ToString("N") + ".html");
                     File.WriteAllText(outPath, output, Encoding.UTF8);
                     outputCallback(string.Format("[HTML] Output written to -> {0}\n", outPath));
+                    try
+                    {
+                        // Clean up old HTML temp output files older than 1 hour to prevent temp accumulation
+                        string tempDir = Path.GetTempPath();
+                        string[] oldHtmlFiles = Directory.GetFiles(tempDir, "block_output_*.html");
+                        DateTime cutoff = DateTime.Now.AddHours(-1);
+                        foreach (string file in oldHtmlFiles)
+                        {
+                            if (file != outPath && File.GetLastWriteTime(file) < cutoff)
+                            {
+                                try { File.Delete(file); } catch { }
+                            }
+                        }
+                    }
+                    catch { }
                 }
                 else
                 {
