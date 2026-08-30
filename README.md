@@ -12,6 +12,13 @@ If you are looking for a polyglot programming language, a multi-language scripti
 
 Maintainers can use the [organic growth playbook](docs/GROWTH.md) to turn demos, releases, and user feedback into a repeatable discovery-to-install funnel.
 
+## Code signing policy
+
+Free code signing provided by SignPath.io, certificate by SignPath Foundation.
+The application is pending review; current Windows releases remain unsigned
+until approval. Read the complete [Code signing policy](docs/CODE-SIGNING-POLICY.md)
+before downloading or verifying a release.
+
 ## At a glance
 
 | Item | Details |
