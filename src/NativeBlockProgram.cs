@@ -626,8 +626,35 @@ namespace BlockEngine
         {
             if (value == null) return "null";
             if (value is bool) return (bool)value ? "true" : "false";
+            if (value is string) return (string)value;
+            IList list = value as IList;
+            if (list != null)
+            {
+                List<string> items = new List<string>();
+                foreach (object item in list) items.Add(FormatElement(item));
+                return "[" + string.Join(", ", items) + "]";
+            }
+            IDictionary map = value as IDictionary;
+            if (map != null)
+            {
+                List<string> entries = new List<string>();
+                foreach (object key in map.Keys)
+                {
+                    if (key == null) continue;
+                    entries.Add(string.Format("\"{0}\": {1}", key, FormatElement(map[key])));
+                }
+                return "{" + string.Join(", ", entries) + "}";
+            }
             IFormattable formattable = value as IFormattable;
             return formattable == null ? value.ToString() : formattable.ToString(null, CultureInfo.InvariantCulture);
+        }
+
+        private static string FormatElement(object value)
+        {
+            if (value == null) return "null";
+            if (value is bool) return (bool)value ? "true" : "false";
+            if (value is string) return "\"" + value + "\"";
+            return FormatValue(value);
         }
         private static InvalidOperationException Error(int line, string message) { return new InvalidOperationException(line > 0 ? string.Format("Native Block error at line {0}: {1}", line, message) : "Native Block error: " + message); }
 

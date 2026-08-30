@@ -88,6 +88,7 @@ print(greet("Block"))
 print(local_scope("local"), outside)
 print(printer)
 print(short_or, short_and, logic_precedence)
+print(items)
 print(list_eq_same, list_eq_diff, map_eq_same, map_eq_diff, nested_contains_pass, nested_contains_fail)
 '@ | Set-Content -LiteralPath $scriptPath -Encoding UTF8
 
@@ -102,6 +103,7 @@ print(list_eq_same, list_eq_diff, map_eq_same, map_eq_diff, nested_contains_pass
     Assert-Condition ($result.Output -match 'local global') "function scope/global lookup failed: $($result.Output)"
     Assert-Condition ($result.Output -match 'not-a-print-call') "identifier beginning with print was misparsed: $($result.Output)"
     Assert-Condition ($result.Output -match 'true false true') "logical short-circuit or precedence failed: $($result.Output)"
+    Assert-Condition ($result.Output -match '\[1, 2, 3, 4\]') "list collection formatting failed: $($result.Output)"
     Assert-Condition ($result.Output -match 'true false true false true false') "structural equality comparison failed: $($result.Output)"
 
     $limitPath = Join-Path $tempRoot 'range-limit.blk'
