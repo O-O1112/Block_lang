@@ -19,8 +19,24 @@ function Invoke-ReleaseStep([string]$Script, [string[]]$Arguments) {
     if ($LASTEXITCODE -ne 0) { throw "Release step failed: $Script" }
 }
 
+$signTool = $null
+if (-not [string]::IsNullOrWhiteSpace($SigningCertificateThumbprint)) {
+    $signTool = Get-Command signtool.exe -ErrorAction SilentlyContinue
+    if (-not $signTool) { throw 'SigningCertificateThumbprint was supplied but signtool.exe was not found.' }
+}
+
+function Sign-ReleaseExecutable([string]$Path) {
+    if (-not $signTool) { return }
+    if (-not (Test-Path -LiteralPath $Path)) { throw "Release executable missing before signing: $Path" }
+    & $signTool.Source sign /sha1 $SigningCertificateThumbprint /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 $Path
+    if ($LASTEXITCODE -ne 0) { throw "Authenticode signing failed: $Path" }
+}
+
 if (-not $SkipEngineBuild) {
     Invoke-ReleaseStep 'build.ps1' @('-OutputDirectory', $ReleaseDirectory, '-SkipHash', '-Version', $Version)
+}
+foreach ($engineName in @('block.exe', 'block-lite.exe', 'block-plus.exe')) {
+    Sign-ReleaseExecutable (Join-Path $ReleaseDirectory $engineName)
 }
 Invoke-ReleaseStep 'package-engine.ps1' @('-EngineDirectory', $ReleaseDirectory, '-OutputDirectory', $ReleaseDirectory)
 Invoke-ReleaseStep 'package-extensions.ps1' @('-OutputDirectory', $ReleaseDirectory, '-Version', $Version)
@@ -47,6 +63,6 @@ $hashText = ($lines -join "`n") + "`n"
 [IO.File]::WriteAllText($hashFile, $hashText, [Text.Encoding]::ASCII)
 $verifyArguments = @('-ReleaseDirectory', $ReleaseDirectory, '-Version', $Version)
 if ($SkipExecutableExecution) { $verifyArguments += '-SkipExecutableExecution' }
-if (-not [string]::IsNullOrWhiteSpace($SigningCertificateThumbprint)) { $verifyArguments += '-RequireSignedInstaller' }
+if (-not [string]::IsNullOrWhiteSpace($SigningCertificateThumbprint)) { $verifyArguments += '-RequireSignedRelease' }
 Invoke-ReleaseStep 'verify-release.ps1' $verifyArguments
 Write-Host "Block Engine v$Version release completed in $ReleaseDirectory"

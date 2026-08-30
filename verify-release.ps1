@@ -2,7 +2,7 @@ param(
     [string]$ReleaseDirectory = $PSScriptRoot,
     [switch]$SkipExecutableExecution,
     [string]$Version = "",
-    [switch]$RequireSignedInstaller
+    [switch]$RequireSignedRelease
 )
 
 $ErrorActionPreference = 'Stop'
@@ -35,7 +35,7 @@ if (-not (Test-Path -LiteralPath $installerSource)) {
     foreach ($marker in @('OfficialApiBase', 'OfficialRepository', 'ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12', 'AllowAutoRedirect = true', 'ValidateReleaseAssetUri', 'ContainsReparsePoint', 'Extracted release executable exceeds', 'SHA-256 verification failed', 'ExtractVerifiedArchive', 'ValidateResponseUri')) {
         if ($installerText -notmatch [regex]::Escape($marker)) { $failures.Add("secure installer marker missing: $marker") }
     }
-    foreach ($forbidden in @('winget', 'choco.exe', 'RunRuntimeInstall', 'GetManifestResourceStream(resourceName)')) {
+    foreach ($forbidden in @('winget', 'choco.exe', 'RunRuntimeInstall', 'Process.Kill(', 'GetManifestResourceStream(')) {
         if ($installerText -match [regex]::Escape($forbidden)) { $failures.Add("unsafe installer behavior remains: $forbidden") }
     }
 }
@@ -69,9 +69,16 @@ foreach ($installerPath in $installerPaths) {
             $failures.Add("wrong installer file version: $($installerVersionInfo.FileVersion)")
         }
     }
-    if ($RequireSignedInstaller) {
-        $signature = Get-AuthenticodeSignature -LiteralPath $installerPath
-        if ($signature.Status -ne 'Valid') { $failures.Add("installer signature is not valid for $([IO.Path]::GetFileName($installerPath)): $($signature.Status)") }
+}
+
+if ($RequireSignedRelease) {
+    foreach ($name in @('block.exe', 'block-lite.exe', 'block-plus.exe', "BlockSetup-v$Version.exe", 'BlockSetup.exe')) {
+        $path = if ($coreNames -contains $name) { Join-Path $bin $name } else { Join-Path $ReleaseDirectory $name }
+        if (-not (Test-Path -LiteralPath $path)) { continue }
+        $signature = Get-AuthenticodeSignature -LiteralPath $path
+        if ($signature.Status -ne 'Valid') {
+            $failures.Add("release signature is not valid for ${name}: $($signature.Status)")
+        }
     }
 }
 

@@ -16,6 +16,9 @@ $requiredLinks = @{
     )
     'downloads.html' = @(
         "$releaseBase" + "BlockSetup-v$version.exe"
+        "$releaseBase" + 'block-lite.zip'
+        "$releaseBase" + 'block.zip'
+        "$releaseBase" + 'block-plus.zip'
         "$releaseBase" + "block-language-$version.vsix"
         "$releaseBase" + "acode-plugin-block-$version.zip"
     )
@@ -47,15 +50,10 @@ foreach ($relativePath in @('index.html', 'downloads.html')) {
     }
 }
 
-$downloadAssets = @('block-lite.zip', 'block.zip', 'block-plus.zip')
 $downloadsPage = Get-Content -LiteralPath (Join-Path $RepositoryRoot 'downloads.html') -Raw
-foreach ($asset in $downloadAssets) {
-    if (-not $downloadsPage.Contains(('href="' + $asset + '"'))) {
-        throw "Missing same-origin engine download link in downloads.html: $asset"
-    }
-
-    if (-not (Test-Path -LiteralPath (Join-Path $RepositoryRoot $asset))) {
-        throw "Engine download asset is missing from repository root: $asset"
+foreach ($asset in @('block-lite.zip', 'block.zip', 'block-plus.zip')) {
+    if ($downloadsPage.Contains(('href="' + $asset + '"'))) {
+        throw "Direct engine package still uses an unversioned Pages download: $asset"
     }
 }
 

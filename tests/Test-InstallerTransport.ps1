@@ -21,13 +21,20 @@ $requiredMarkers = @(
     'release-assets.githubusercontent.com',
     'WebExceptionStatus.SecureChannelFailure',
     'WebExceptionStatus.TrustFailure',
-    'Secure TLS 1.2 connection to '
+    'Secure TLS 1.2 connection to ',
+    'InstallStateRegistryPath',
+    'cbAddToPath',
+    'cbRegisterFileTypes',
+    'if (addToUserPath)',
+    'if (registerFileTypes)',
+    'DeleteInstalledExecutable',
+    'Block Setup never terminates running programs.'
 )
 foreach ($marker in $requiredMarkers) {
     if (-not $source.Contains($marker)) { throw "Installer transport marker is missing: $marker" }
 }
 
-foreach ($forbidden in @('SecurityProtocolType.Ssl3', 'ServerCertificateValidationCallback', 'TrustAllCert', 'Tls | SecurityProtocolType.Tls11')) {
+foreach ($forbidden in @('SecurityProtocolType.Ssl3', 'ServerCertificateValidationCallback', 'TrustAllCert', 'Tls | SecurityProtocolType.Tls11', 'Process.Kill(', 'GetManifestResourceStream(')) {
     if ($source.Contains($forbidden)) { throw "Installer contains an unsafe TLS fallback: $forbidden" }
 }
 
