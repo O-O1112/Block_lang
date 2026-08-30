@@ -10,7 +10,7 @@ for the project publisher and make it available in the Windows certificate store
 Then build with:
 
 ```powershell
-.\build-release.ps1 -Version 2.2.6 -ReleaseDirectory .\release `
+.\build-release.ps1 -Version 2.2.6.5 -ReleaseDirectory .\release `
   -SigningCertificateThumbprint '<certificate thumbprint>'
 ```
 

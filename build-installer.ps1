@@ -9,7 +9,7 @@ $ErrorActionPreference = 'Stop'
 $ReleaseDirectory = [IO.Path]::GetFullPath($ReleaseDirectory)
 $OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
 if ([string]::IsNullOrWhiteSpace($Version)) { $Version = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'VERSION') -Raw).Trim() }
-if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid release version: $Version" }
+if ($Version -notmatch '^\d+\.\d+\.\d+(?:\.\d+)?$') { throw "Invalid release version: $Version" }
 $compilerCandidates = @(
     (Join-Path $env:WINDIR 'Microsoft.NET\Framework\v4.0.30319\csc.exe'),
     (Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe')
@@ -33,7 +33,9 @@ New-Item -ItemType Directory -Force -Path $generatedDirectory | Out-Null
     "namespace BlockInstaller { internal static class InstallerBuildVersion { public const string Value = `"$Version`"; } }",
     (New-Object Text.UTF8Encoding($false))
 )
-$assemblyVersion = $Version + '.0'
+# Windows assembly versions have exactly four numeric components. Keep a supplied
+# fourth release component; add a zero revision only for legacy three-part tags.
+$assemblyVersion = if (($Version -split '\.').Count -eq 3) { $Version + '.0' } else { $Version }
 $assemblyInfo = 'using System.Reflection; ' +
     '[assembly: AssemblyTitle("Block Engine Secure Bootstrapper")] ' +
     '[assembly: AssemblyDescription("Downloads one selected official Block Engine release and verifies its SHA-256 digest before installation")] ' +

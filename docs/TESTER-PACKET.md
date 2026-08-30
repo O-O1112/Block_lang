@@ -6,7 +6,7 @@ Thank you for helping test Block. This is a short, practical test: you do not ne
 
 Block is a local-first polyglot engine. A `.blk` file can combine Block-native control flow with supported runtimes such as Python and Node.js, while passing state through one pipeline.
 
-The current target is the v2.2.6 experience on Windows. Please record the exact edition and version you used; Block Lite, Block, and Block+ may have different capabilities.
+The current target is the v2.2.6.5 experience on Windows. Please record the exact edition and version you used; Block Lite, Block, and Block+ may have different capabilities.
 
 ## Before you start
 

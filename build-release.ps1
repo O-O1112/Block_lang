@@ -10,7 +10,7 @@ $ErrorActionPreference = 'Stop'
 $ReleaseDirectory = [IO.Path]::GetFullPath($ReleaseDirectory)
 $root = [IO.Path]::GetFullPath($PSScriptRoot)
 if ([string]::IsNullOrWhiteSpace($Version)) { $Version = (Get-Content -LiteralPath (Join-Path $root 'VERSION') -Raw).Trim() }
-if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid release version: $Version" }
+if ($Version -notmatch '^\d+\.\d+\.\d+(?:\.\d+)?$') { throw "Invalid release version: $Version" }
 $powershell = (Get-Command powershell.exe -ErrorAction Stop).Source
 New-Item -ItemType Directory -Force -Path $ReleaseDirectory | Out-Null
 

@@ -2,6 +2,22 @@
 
 All notable changes to the Block execution engine will be documented in this file.
 
+## [2.2.6.5] - 2026-08-30
+
+- Added four-component release-version support across the engine build, installer,
+  release verifier, extension packages, GitHub Release workflow, and regression
+  tests.
+- Hardened the Windows installer trust boundary: it no longer terminates running
+  processes, embeds an unused icon resource, changes `PATH`, or registers file
+  associations unless the user explicitly selects the corresponding option.
+- Made install and uninstall state ownership explicit under
+  `HKCU\Software\BlockLanguage\BlockEngine`, with a compatibility read of the
+  previous location for existing users.
+- Added optional Authenticode verification for every Windows executable in a
+  signed release, plus a published code-signing policy and clearer trust guidance.
+- Kept official download links release-bound so web downloads resolve to the
+  exact GitHub Release artifact rather than a mutable site copy.
+
 ## [2.2.6] - 2026-08-29
 
 - Removed the third-party package loader, remote registry, package CLI, starter

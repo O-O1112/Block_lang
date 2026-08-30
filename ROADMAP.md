@@ -4,7 +4,7 @@ This roadmap is a public planning document, not a promise that an item is alread
 implemented. Shipped behavior belongs in the [README](README.md),
 [changelog](CHANGELOG.md), and release notes.
 
-## Current: v2.2.6 safety foundation
+## Current: v2.2.6.5 safety foundation
 
 The current release line focuses on making the core workflow usable and reviewable:
 

@@ -24,7 +24,7 @@ to explain, generate, review, or troubleshoot Block Language.
 4. Run the prompts in `eval-cases.jsonl` against the model and manually review
    the required facts before publishing an answer.
 
-The knowledge pack describes the tested v2.2.6 release. It must be regenerated
+The knowledge pack describes the tested v2.2.6.5 release. It must be regenerated
 or reviewed when the version, syntax, edition behavior, or security model
 changes. It is not a substitute for running the Block test suite.
 

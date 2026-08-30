@@ -5,7 +5,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $RepositoryRoot = [IO.Path]::GetFullPath($RepositoryRoot)
 $version = (Get-Content -LiteralPath (Join-Path $RepositoryRoot 'VERSION') -Raw).Trim()
-if ($version -notmatch '^\d+\.\d+\.\d+$') {
+if ($version -notmatch '^\d+\.\d+\.\d+(?:\.\d+)?$') {
     throw "Invalid repository version: $version"
 }
 

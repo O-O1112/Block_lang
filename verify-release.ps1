@@ -8,7 +8,9 @@ param(
 $ErrorActionPreference = 'Stop'
 $ReleaseDirectory = [IO.Path]::GetFullPath($ReleaseDirectory)
 if ([string]::IsNullOrWhiteSpace($Version)) { $Version = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'VERSION') -Raw).Trim() }
-if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid release version: $Version" }
+if ($Version -notmatch '^\d+\.\d+\.\d+(?:\.\d+)?$') { throw "Invalid release version: $Version" }
+$versionParts = $Version -split '\.'
+$vsCodeExtensionVersion = if ($versionParts.Count -eq 3) { $Version } else { "{0}.{1}.{2}" -f $versionParts[0], $versionParts[1], (([int]$versionParts[2]) + 1) }
 $bin = Join-Path $ReleaseDirectory 'bin'
 if (Test-Path -LiteralPath (Join-Path $ReleaseDirectory 'block.exe')) {
     $bin = $ReleaseDirectory
@@ -65,7 +67,8 @@ foreach ($installerPath in $installerPaths) {
     if (-not (Test-Path -LiteralPath $installerPath)) { continue }
     if ($installerPath -eq $versionedInstaller) {
         $installerVersionInfo = [Diagnostics.FileVersionInfo]::GetVersionInfo($installerPath)
-        if ($installerVersionInfo.FileVersion -ne "$Version.0") {
+        $expectedInstallerVersion = if (($Version -split '\.').Count -eq 3) { "$Version.0" } else { $Version }
+        if ($installerVersionInfo.FileVersion -ne $expectedInstallerVersion) {
             $failures.Add("wrong installer file version: $($installerVersionInfo.FileVersion)")
         }
     }
@@ -139,8 +142,8 @@ try {
     }
 
     $pluginPackages = @(
-        @{ Archive = "block-language-$Version.vsix"; Manifest = 'extension/package.json'; License = 'extension/LICENSE'; VsixManifest = 'extension.vsixmanifest' },
-        @{ Archive = "acode-plugin-block-$Version.zip"; Manifest = 'plugin.json'; License = 'LICENSE'; Main = 'main.js' }
+        @{ Archive = "block-language-$Version.vsix"; Manifest = 'extension/package.json'; License = 'extension/LICENSE'; VsixManifest = 'extension.vsixmanifest'; ExpectedVersion = $vsCodeExtensionVersion },
+        @{ Archive = "acode-plugin-block-$Version.zip"; Manifest = 'plugin.json'; License = 'LICENSE'; Main = 'main.js'; ExpectedVersion = $Version }
     )
     foreach ($package in $pluginPackages) {
         $archive = Join-Path $ReleaseDirectory $package.Archive
@@ -153,7 +156,7 @@ try {
             if (-not (Test-Path -LiteralPath $manifestPath)) { $failures.Add("missing manifest in $($package.Archive)"); continue }
             if (-not (Test-Path -LiteralPath $licensePath)) { $failures.Add("missing LICENSE in $($package.Archive)") }
             $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
-            if ($manifest.version -ne $Version) { $failures.Add("wrong package version in $($package.Archive): $($manifest.version)") }
+            if ($manifest.version -ne $package.ExpectedVersion) { $failures.Add("wrong package version in $($package.Archive): $($manifest.version)") }
             if ($manifest.license -ne 'MIT') { $failures.Add("missing MIT metadata in $($package.Archive)") }
             if ($package.VsixManifest) {
                 $vsixManifestPath = Join-Path $destination $package.VsixManifest
@@ -161,7 +164,7 @@ try {
                     $failures.Add("missing VSIX manifest in $($package.Archive)")
                 } else {
                     [xml]$vsixManifest = Get-Content -LiteralPath $vsixManifestPath -Raw
-                    if ($vsixManifest.PackageManifest.Metadata.Identity.Version -ne $Version) {
+                    if ($vsixManifest.PackageManifest.Metadata.Identity.Version -ne $package.ExpectedVersion) {
                         $failures.Add("wrong VSIX identity version in $($package.Archive): $($vsixManifest.PackageManifest.Metadata.Identity.Version)")
                     }
                 }

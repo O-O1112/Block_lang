@@ -6,7 +6,7 @@
 - **Block Standard (`.blk`)** — the recommended general-purpose edition.
 - **Block+ (`.blkp`)** — expanded runtime and tooling support.
 
-The Windows installer is published as [`BlockSetup-v2.2.6.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.6/BlockSetup-v2.2.6.exe)
+The Windows installer is published as [`BlockSetup-v2.2.6.5.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.6.5/BlockSetup-v2.2.6.5.exe)
 on the [download page](../../downloads.html). The secure bootstrapper downloads
 the selected official GitHub asset, verifies SHA-256, and detects optional
 runtimes without invoking Winget or Chocolatey.

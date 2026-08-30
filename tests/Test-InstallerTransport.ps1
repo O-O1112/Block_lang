@@ -5,7 +5,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $RepositoryRoot = [IO.Path]::GetFullPath($RepositoryRoot)
 $releaseVersion = (Get-Content -LiteralPath (Join-Path $RepositoryRoot 'VERSION') -Raw).Trim()
-if ($releaseVersion -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid repository version: $releaseVersion" }
+if ($releaseVersion -notmatch '^\d+\.\d+\.\d+(?:\.\d+)?$') { throw "Invalid repository version: $releaseVersion" }
+$expectedAssemblyVersion = if (($releaseVersion -split '\.').Count -eq 3) { $releaseVersion + '.0' } else { $releaseVersion }
 $sourcePath = Join-Path $RepositoryRoot 'Installer.cs'
 $buildScript = Join-Path $RepositoryRoot 'build-installer.ps1'
 
@@ -49,7 +50,7 @@ try {
     $installer = Join-Path $tempRoot "BlockSetup-v$releaseVersion.exe"
     if (-not (Test-Path -LiteralPath $installer)) { throw 'TLS-hardened installer artifact is missing.' }
     $version = [Diagnostics.FileVersionInfo]::GetVersionInfo($installer).FileVersion
-    if ($version -ne "$releaseVersion.0") { throw "TLS-hardened installer has the wrong file version: $version" }
+    if ($version -ne $expectedAssemblyVersion) { throw "TLS-hardened installer has the wrong file version: $version" }
 }
 finally {
     if (Test-Path -LiteralPath $tempRoot) { Remove-Item -LiteralPath $tempRoot -Recurse -Force }
