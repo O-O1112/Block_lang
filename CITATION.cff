@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If Block Language contributes to your work, please cite the repository."
 title: "Block Language"
 abstract: "A local-first polyglot programming engine for composing native runtime blocks in one readable program."
-version: "2.2.6"
+version: "2.2.6.5"
 date-released: 2026-08-29
 type: software
 authors:

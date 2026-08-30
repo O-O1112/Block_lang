@@ -4,7 +4,6 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.IO;
 using System.IO.Compression;
-using System.Diagnostics;
 using System.Net;
 using System.Security.Cryptography;
 using System.Text;
@@ -12,7 +11,6 @@ using System.Text.RegularExpressions;
 using System.Web.Script.Serialization;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Reflection;
 using Microsoft.Win32;
 
 namespace BlockInstaller
@@ -32,6 +30,8 @@ namespace BlockInstaller
         private RadioButton rbStandard;
         private RadioButton rbPlus;
         private Label lblVersionDesc;
+        private CheckBox cbAddToPath;
+        private CheckBox cbRegisterFileTypes;
         
         private Color bgColor = Color.FromArgb(3, 3, 4);
         private Color fgColor = Color.White;
@@ -39,15 +39,56 @@ namespace BlockInstaller
         private Color lineColor = Color.FromArgb(34, 34, 38);
         private Color panelColor = Color.FromArgb(9, 9, 11);
 
-        private static bool IsOwnedProcess(Process process, string installDir)
+        private const string InstallStateRegistryPath = @"Software\BlockLanguage\BlockEngine";
+        private const string LegacyInstallStateRegistryPath = @"Software\Classes\block_engine_install";
+
+        private static void DeleteInstalledExecutable(string targetPath)
         {
+            if (!File.Exists(targetPath)) return;
             try
             {
-                string actual = Path.GetFullPath(process.MainModule.FileName);
-                string root = Path.GetFullPath(installDir).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
-                return actual.StartsWith(root, StringComparison.OrdinalIgnoreCase);
+                File.Delete(targetPath);
             }
-            catch { return false; }
+            catch (IOException error)
+            {
+                throw new IOException(
+                    "Could not remove " + Path.GetFileName(targetPath) +
+                    ". Close any program using it, then retry. Block Setup never terminates running programs.",
+                    error);
+            }
+            if (File.Exists(targetPath))
+            {
+                throw new IOException(
+                    "Could not remove " + Path.GetFileName(targetPath) +
+                    ". Close any program using it, then retry. Block Setup never terminates running programs.");
+            }
+        }
+
+        private static string ReadInstallStateString(string name)
+        {
+            foreach (string registryPath in new[] { InstallStateRegistryPath, LegacyInstallStateRegistryPath })
+            {
+                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(registryPath))
+                {
+                    string value = key == null ? null : key.GetValue(name) as string;
+                    if (!string.IsNullOrWhiteSpace(value)) return value;
+                }
+            }
+            return null;
+        }
+
+        private static string ReadRegisteredInstallDirectory()
+        {
+            return ReadInstallStateString("InstallDir");
+        }
+
+        private static bool ReadInstallFlag(string name)
+        {
+            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(InstallStateRegistryPath))
+            {
+                object value = key == null ? null : key.GetValue(name);
+                return value is int && (int)value != 0;
+            }
         }
 
         private static bool ContainsReparsePoint(string path)
@@ -151,7 +192,7 @@ namespace BlockInstaller
         public InstallerForm()
         {
             this.Text = "Block Installer";
-            this.Size = new Size(520, 650);
+            this.Size = new Size(520, 700);
             this.FormBorderStyle = FormBorderStyle.None;
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor = bgColor;
@@ -344,10 +385,34 @@ namespace BlockInstaller
                     e.NewValue = CheckState.Checked;
             };
 
+            cbAddToPath = new CheckBox
+            {
+                Text = "Add the Block command to my user PATH",
+                Font = new Font("Segoe UI", 8),
+                ForeColor = Color.FromArgb(222, 222, 226),
+                BackColor = Color.Transparent,
+                Location = new Point(32, 506),
+                AutoSize = true,
+                Checked = false,
+                UseVisualStyleBackColor = true
+            };
+
+            cbRegisterFileTypes = new CheckBox
+            {
+                Text = "Associate selected Block file types with this engine",
+                Font = new Font("Segoe UI", 8),
+                ForeColor = Color.FromArgb(222, 222, 226),
+                BackColor = Color.Transparent,
+                Location = new Point(32, 528),
+                AutoSize = true,
+                Checked = false,
+                UseVisualStyleBackColor = true
+            };
+
             progress = new ProgressBar
             {
                 Size = new Size(456, 5),
-                Location = new Point(32, 524),
+                Location = new Point(32, 556),
                 Style = ProgressBarStyle.Continuous,
                 Visible = false,
                 ForeColor = Color.White,
@@ -358,7 +423,7 @@ namespace BlockInstaller
             {
                 Text = "Install",
                 Size = new Size(142, 40),
-                Location = new Point(32, 552),
+                Location = new Point(32, 580),
                 FlatStyle = FlatStyle.Flat,
                 Font = new Font("Segoe UI", 9, FontStyle.Bold),
                 ForeColor = bgColor,
@@ -398,6 +463,8 @@ namespace BlockInstaller
             this.Controls.Add(lblVersionDesc);
             this.Controls.Add(lblLang);
             this.Controls.Add(clbLang);
+            this.Controls.Add(cbAddToPath);
+            this.Controls.Add(cbRegisterFileTypes);
             this.Controls.Add(progress);
             this.Controls.Add(btnInstall);
             this.Controls.Add(btnClose);
@@ -409,7 +476,9 @@ namespace BlockInstaller
             rbPlus.Checked = false;
             rbStandard.Checked = true;
 
-            bool isInstalled = Registry.CurrentUser.OpenSubKey(@"Software\Classes\block_engine_install") != null || Registry.CurrentUser.OpenSubKey(@"Software\Classes\block_script") != null;
+            bool isInstalled = Registry.CurrentUser.OpenSubKey(InstallStateRegistryPath) != null ||
+                Registry.CurrentUser.OpenSubKey(LegacyInstallStateRegistryPath) != null ||
+                Registry.CurrentUser.OpenSubKey(@"Software\Classes\block_script") != null;
             if (isInstalled)
             {
                 lblVersion.Visible = false;
@@ -419,6 +488,8 @@ namespace BlockInstaller
                 lblVersionDesc.Visible = false;
                 lblLang.Visible = false;
                 clbLang.Visible = false;
+                cbAddToPath.Visible = false;
+                cbRegisterFileTypes.Visible = false;
                 lblPath.Visible = false;
                 txtPath.Visible = false;
                 btnBrowse.Visible = false;
@@ -436,7 +507,7 @@ namespace BlockInstaller
                 {
                     Text = "Update / Modify",
                     Size = new Size(142, 40),
-                    Location = new Point(190, 552),
+                    Location = new Point(190, 580),
                     FlatStyle = FlatStyle.Flat,
                     Font = new Font("Segoe UI", 9, FontStyle.Bold),
                     ForeColor = Color.White,
@@ -451,7 +522,7 @@ namespace BlockInstaller
                 {
                     Text = "Uninstall",
                     Size = new Size(142, 40),
-                    Location = new Point(346, 552),
+                    Location = new Point(346, 580),
                     FlatStyle = FlatStyle.Flat,
                     Font = new Font("Segoe UI", 9, FontStyle.Bold),
                     ForeColor = Color.FromArgb(226, 106, 106),
@@ -476,6 +547,8 @@ namespace BlockInstaller
                     lblVersionDesc.Visible = true;
                     lblLang.Visible = true;
                     clbLang.Visible = true;
+                    cbAddToPath.Visible = true;
+                    cbRegisterFileTypes.Visible = true;
                     lblPath.Visible = true;
                     txtPath.Visible = true;
                     btnBrowse.Visible = true;
@@ -560,53 +633,43 @@ namespace BlockInstaller
                 progress.Visible = true;
                 progress.Style = ProgressBarStyle.Marquee;
                 
-                string installDir = txtPath.Text;
-                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Software\Classes\block_engine_install"))
+                string installDir = ReadRegisteredInstallDirectory() ?? txtPath.Text;
+                string registeredExecutable = ReadInstallStateString("ExeName");
+                bool installerAddedPath = ReadInstallFlag("AddedToUserPath");
+                bool installerCreatedFileAssociations = ReadInstallFlag("CreatedFileAssociations");
+                using (RegistryKey legacyKey = Registry.CurrentUser.OpenSubKey(LegacyInstallStateRegistryPath))
                 {
-                    string registeredDir = key == null ? null : key.GetValue("InstallDir") as string;
-                    if (!string.IsNullOrWhiteSpace(registeredDir)) installDir = registeredDir;
+                    if (legacyKey != null) installerCreatedFileAssociations = true;
                 }
                 
                 Exception uninstallError = null;
                 await Task.Run(() => {
                     try {
-                        foreach (string pName in new string[] { "block", "block-lite", "block-plus" })
+                        // Remove only the executable recorded for this installation.
+                        // Do this before changing registry state so a locked file leaves
+                        // the installation recoverable and visible to the user.
+                        if (!string.IsNullOrWhiteSpace(registeredExecutable))
+                            DeleteInstalledExecutable(Path.Combine(installDir, registeredExecutable));
+
+                        if (installerCreatedFileAssociations)
                         {
-                            foreach (var process in System.Diagnostics.Process.GetProcessesByName(pName))
-                            {
-                                try { if (IsOwnedProcess(process, installDir)) { process.Kill(); process.WaitForExit(1000); } } catch { }
-                            }
+                            // Only remove associations that still point to Block.
+                            // Users may have reassigned these extensions after installation.
+                            UnregisterExtension(".blk", "block_script");
+                            UnregisterExtension(".block", "block_script");
+                            UnregisterExtension(".blkl", "blocklite_script");
+                            UnregisterExtension(".blocklite", "blocklite_script");
+                            UnregisterExtension(".blkp", "blockplus_script");
+                            UnregisterExtension(".blockplus", "blockplus_script");
                         }
-                        
-                        // Only remove associations that still point to this installer.
-                        // Users may have reassigned these extensions after installation.
-                        UnregisterExtension(".blk", "block_script");
-                        UnregisterExtension(".block", "block_script");
-                        UnregisterExtension(".blkl", "blocklite_script");
-                        UnregisterExtension(".blocklite", "blocklite_script");
-                        UnregisterExtension(".blkp", "blockplus_script");
-                        UnregisterExtension(".blockplus", "blockplus_script");
-                        Registry.CurrentUser.DeleteSubKeyTree(@"Software\Classes\block_engine_install", false);
+                        Registry.CurrentUser.DeleteSubKeyTree(InstallStateRegistryPath, false);
+                        Registry.CurrentUser.DeleteSubKeyTree(LegacyInstallStateRegistryPath, false);
                         Registry.CurrentUser.DeleteSubKeyTree(@"Software\Microsoft\Windows\CurrentVersion\Uninstall\BlockEngine", false);
                         NativeMethods.SHChangeNotify(0x08000000, 0x0000, IntPtr.Zero, IntPtr.Zero);
                         
-                        // Delete only Block Engine created files to avoid deleting user documents if installed in shared folders
+                        // If the default install directory is now empty, clean it up.
                         if (Directory.Exists(installDir))
                         {
-                            string[] filesToDelete = new string[] {
-                                "block.exe", "block-lite.exe", "block-plus.exe", "icon.ico",
-                                "block.zip", "block-lite.zip", "block-plus.zip"
-                            };
-                            foreach (string file in filesToDelete)
-                            {
-                                string target = Path.Combine(installDir, file);
-                                if (File.Exists(target))
-                                {
-                                    try { File.Delete(target); } catch { }
-                                }
-                            }
-
-                            // If installDir is the default .blocklang/bin and is now empty, clean up the empty directory
                             try
                             {
                                 if (Directory.GetFiles(installDir).Length == 0 && Directory.GetDirectories(installDir).Length == 0)
@@ -618,7 +681,7 @@ namespace BlockInstaller
                         }
                         
                         string currentPath = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User) ?? "";
-                        if (PathContainsEntry(currentPath, installDir))
+                        if (installerAddedPath && PathContainsEntry(currentPath, installDir))
                         {
                             currentPath = RemovePathEntry(currentPath, installDir);
                             Environment.SetEnvironmentVariable("PATH", currentPath, EnvironmentVariableTarget.User);
@@ -651,6 +714,8 @@ namespace BlockInstaller
             btnBrowse.Enabled = false;
             txtPath.Enabled = false;
             clbLang.Enabled = false;
+            cbAddToPath.Enabled = false;
+            cbRegisterFileTypes.Enabled = false;
             btnInstall.BackColor = Color.Gray;
             btnInstall.ForeColor = Color.White;
             progress.Visible = true;
@@ -658,6 +723,8 @@ namespace BlockInstaller
 
             string targetDir = txtPath.Text;
             string selectedVersion = rbLite.Checked ? "lite" : rbPlus.Checked ? "plus" : "standard";
+            bool addToUserPath = cbAddToPath.Checked;
+            bool registerFileTypes = cbRegisterFileTypes.Checked;
             string downloadedAsset = null;
             try
             {
@@ -665,7 +732,7 @@ namespace BlockInstaller
                 progress.Style = ProgressBarStyle.Marquee;
                 downloadedAsset = await Task.Run(() => DownloadVerifiedAsset(selectedVersion));
                 lblStatus.Text = "Verified SHA-256; deploying the selected edition...";
-                await Task.Run(() => DeployCoreEngine(targetDir, selectedVersion, downloadedAsset));
+                await Task.Run(() => DeployCoreEngine(targetDir, selectedVersion, downloadedAsset, addToUserPath, registerFileTypes));
                 progress.Style = ProgressBarStyle.Continuous;
 
                 List<string> runtimeWarnings = new List<string>();
@@ -706,6 +773,8 @@ namespace BlockInstaller
                 btnBrowse.Enabled = true;
                 txtPath.Enabled = true;
                 clbLang.Enabled = true;
+                cbAddToPath.Enabled = true;
+                cbRegisterFileTypes.Enabled = true;
                 btnInstall.BackColor = accentColor;
                 btnInstall.ForeColor = bgColor;
             }
@@ -715,7 +784,7 @@ namespace BlockInstaller
             }
         }
 
-        private void DeployCoreEngine(string installDir, string selectedVersion, string packagePath)
+        private void DeployCoreEngine(string installDir, string selectedVersion, string packagePath, bool addToUserPath, bool registerFileTypes)
         {
             if (ContainsReparsePoint(installDir))
                 throw new UnauthorizedAccessException("The selected installation path contains a reparse point and cannot be trusted.");
@@ -745,27 +814,9 @@ namespace BlockInstaller
                 altExt = ".blockplus";
             }
 
-            foreach (var process in System.Diagnostics.Process.GetProcessesByName(Path.GetFileNameWithoutExtension(exeFileName)))
-            {
-                try { if (IsOwnedProcess(process, installDir)) { process.Kill(); process.WaitForExit(1000); } } catch { }
-            }
-
             string exePath = Path.Combine(installDir, exeFileName);
-            string iconPath = Path.Combine(installDir, "icon.ico");
-            if (ContainsReparsePoint(exePath) || ContainsReparsePoint(iconPath))
+            if (ContainsReparsePoint(exePath))
                 throw new UnauthorizedAccessException("The existing installation target contains a reparse point.");
-            
-            // Extract icon from embedded resource
-            using (Stream iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("icon.ico"))
-            {
-                if (iconStream != null)
-                {
-                    using (FileStream fs = new FileStream(iconPath, FileMode.Create))
-                    {
-                        iconStream.CopyTo(fs);
-                    }
-                }
-            }
             
             if (string.IsNullOrWhiteSpace(packagePath) || !File.Exists(packagePath))
                 throw new FileNotFoundException("Verified release package was not downloaded.", packagePath);
@@ -784,53 +835,66 @@ namespace BlockInstaller
             // Keep other Block editions in a shared directory. Installing one edition
             // must not destroy an existing executable belonging to another edition.
 
-            string currentPath = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User) ?? "";
-            if (!PathContainsEntry(currentPath, installDir))
+            bool installerAddedPath = ReadInstallFlag("AddedToUserPath");
+            if (addToUserPath)
             {
-                string updatedPath = string.IsNullOrWhiteSpace(currentPath) ? installDir : currentPath + ";" + installDir;
-                Environment.SetEnvironmentVariable("PATH", updatedPath, EnvironmentVariableTarget.User);
+                string currentPath = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User) ?? "";
+                if (!PathContainsEntry(currentPath, installDir))
+                {
+                    string updatedPath = string.IsNullOrWhiteSpace(currentPath) ? installDir : currentPath + ";" + installDir;
+                    Environment.SetEnvironmentVariable("PATH", updatedPath, EnvironmentVariableTarget.User);
+                }
+                installerAddedPath = true;
             }
 
-            // Unregister unselected version extensions to prevent conflicts
-            if (selectedVersion == "lite")
+            bool installerCreatedFileAssociations = ReadInstallFlag("CreatedFileAssociations");
+            if (registerFileTypes)
             {
-                UnregisterExtension(".blk", "block_script");
-                UnregisterExtension(".block", "block_script");
-                UnregisterExtension(".blkp", "blockplus_script");
-                UnregisterExtension(".blockplus", "blockplus_script");
-            }
-            else if (selectedVersion == "standard")
-            {
-                UnregisterExtension(".blkl", "blocklite_script");
-                UnregisterExtension(".blocklite", "blocklite_script");
-                UnregisterExtension(".blkp", "blockplus_script");
-                UnregisterExtension(".blockplus", "blockplus_script");
-            }
-            else if (selectedVersion == "plus")
-            {
-                UnregisterExtension(".blkl", "blocklite_script");
-                UnregisterExtension(".blocklite", "blocklite_script");
-                UnregisterExtension(".blk", "block_script");
-                UnregisterExtension(".block", "block_script");
+                // Changing associations is explicitly opt-in. Only replace associations
+                // that still point at a Block edition owned by this installer.
+                if (selectedVersion == "lite")
+                {
+                    UnregisterExtension(".blk", "block_script");
+                    UnregisterExtension(".block", "block_script");
+                    UnregisterExtension(".blkp", "blockplus_script");
+                    UnregisterExtension(".blockplus", "blockplus_script");
+                }
+                else if (selectedVersion == "standard")
+                {
+                    UnregisterExtension(".blkl", "blocklite_script");
+                    UnregisterExtension(".blocklite", "blocklite_script");
+                    UnregisterExtension(".blkp", "blockplus_script");
+                    UnregisterExtension(".blockplus", "blockplus_script");
+                }
+                else if (selectedVersion == "plus")
+                {
+                    UnregisterExtension(".blkl", "blocklite_script");
+                    UnregisterExtension(".blocklite", "blocklite_script");
+                    UnregisterExtension(".blk", "block_script");
+                    UnregisterExtension(".block", "block_script");
+                }
+
+                RegisterExtension(mainExt, progId, progDesc);
+                RegisterExtension(altExt, progId, progDesc);
+
+                using (RegistryKey key = Registry.CurrentUser.CreateSubKey(string.Format(@"Software\Classes\{0}\shell\open\command", progId)))
+                {
+                    key.SetValue("", string.Format("\"{0}\" \"%1\"", exePath));
+                }
+                using (RegistryKey key = Registry.CurrentUser.CreateSubKey(string.Format(@"Software\Classes\{0}\DefaultIcon", progId)))
+                {
+                    key.SetValue("", string.Format("\"{0}\",0", exePath));
+                }
+                installerCreatedFileAssociations = true;
             }
 
-            RegisterExtension(mainExt, progId, progDesc);
-            RegisterExtension(altExt, progId, progDesc);
-
-            using (RegistryKey key = Registry.CurrentUser.CreateSubKey(string.Format(@"Software\Classes\{0}\shell\open\command", progId)))
-            {
-                key.SetValue("", string.Format("\"{0}\" \"%1\"", exePath));
-            }
-            using (RegistryKey key = Registry.CurrentUser.CreateSubKey(string.Format(@"Software\Classes\{0}\DefaultIcon", progId)))
-            {
-                key.SetValue("", string.Format("\"{0}\",0", iconPath));
-            }
-
-            using (RegistryKey key = Registry.CurrentUser.CreateSubKey(@"Software\Classes\block_engine_install"))
+            using (RegistryKey key = Registry.CurrentUser.CreateSubKey(InstallStateRegistryPath))
             {
                 key.SetValue("Version", selectedVersion);
                 key.SetValue("InstallDir", installDir);
                 key.SetValue("ExeName", exeFileName);
+                key.SetValue("AddedToUserPath", installerAddedPath ? 1 : 0, RegistryValueKind.DWord);
+                key.SetValue("CreatedFileAssociations", installerCreatedFileAssociations ? 1 : 0, RegistryValueKind.DWord);
             }
 
             // Register Windows Add/Remove Programs (Control Panel & Apps Settings)
@@ -842,7 +906,7 @@ namespace BlockInstaller
                     unkey.SetValue("DisplayVersion", InstallerVersion);
                     unkey.SetValue("Publisher", "Block Language Team");
                     unkey.SetValue("InstallLocation", installDir);
-                    unkey.SetValue("DisplayIcon", iconPath);
+                    unkey.SetValue("DisplayIcon", exePath);
                     unkey.SetValue("UninstallString", string.Format("\"{0}\"", Application.ExecutablePath));
                     unkey.SetValue("NoModify", 1);
                 }
@@ -1136,6 +1200,13 @@ namespace BlockInstaller
                 {
                     File.Move(stagedPath, targetPath);
                 }
+            }
+            catch (IOException error)
+            {
+                throw new IOException(
+                    "Could not replace " + Path.GetFileName(targetPath) +
+                    ". Close any program using it, then retry. Block Setup never terminates running programs.",
+                    error);
             }
             finally
             {

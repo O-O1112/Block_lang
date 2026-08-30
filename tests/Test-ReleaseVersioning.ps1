@@ -1,12 +1,12 @@
 param(
     [string]$RepositoryRoot = (Join-Path $PSScriptRoot '..'),
-    [string]$ProbeVersion = '9.9.9',
+    [string]$ProbeVersion = '9.9.9.9',
     [switch]$SkipExecutableExecution
 )
 
 $ErrorActionPreference = 'Stop'
 $RepositoryRoot = [IO.Path]::GetFullPath($RepositoryRoot)
-if ($ProbeVersion -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid probe version: $ProbeVersion" }
+if ($ProbeVersion -notmatch '^\d+\.\d+\.\d+(?:\.\d+)?$') { throw "Invalid probe version: $ProbeVersion" }
 $release = Join-Path ([IO.Path]::GetTempPath()) ('block-release-version-test-' + [Guid]::NewGuid().ToString('N'))
 
 function Assert-True([bool]$Condition, [string]$Message) {
@@ -42,8 +42,10 @@ try {
     $vsixPackage = Get-Content -LiteralPath (Join-Path $inspect 'vsix\extension\package.json') -Raw | ConvertFrom-Json
     $acodePackage = Get-Content -LiteralPath (Join-Path $inspect 'acode\plugin.json') -Raw | ConvertFrom-Json
     [xml]$vsixManifest = Get-Content -LiteralPath (Join-Path $inspect 'vsix\extension.vsixmanifest') -Raw
-    Assert-True ($vsixPackage.version -eq $ProbeVersion) 'VS Code package.json retained a stale version.'
-    Assert-True ($vsixManifest.PackageManifest.Metadata.Identity.Version -eq $ProbeVersion) 'VSIX identity retained a stale version.'
+    $probeParts = $ProbeVersion -split '\.'
+    $expectedVsixVersion = if ($probeParts.Count -eq 3) { $ProbeVersion } else { "{0}.{1}.{2}" -f $probeParts[0], $probeParts[1], (([int]$probeParts[2]) + 1) }
+    Assert-True ($vsixPackage.version -eq $expectedVsixVersion) 'VS Code package.json retained a stale or invalid version.'
+    Assert-True ($vsixManifest.PackageManifest.Metadata.Identity.Version -eq $expectedVsixVersion) 'VSIX identity retained a stale or invalid version.'
     Assert-True ($acodePackage.version -eq $ProbeVersion) 'Acode plugin manifest retained a stale version.'
 
     if ($SkipExecutableExecution) {

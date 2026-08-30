@@ -9,7 +9,7 @@ $ErrorActionPreference = 'Stop'
 $ReleaseDirectory = [IO.Path]::GetFullPath($ReleaseDirectory)
 $OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
 if ([string]::IsNullOrWhiteSpace($Version)) { $Version = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'VERSION') -Raw).Trim() }
-if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid release version: $Version" }
+if ($Version -notmatch '^\d+\.\d+\.\d+(?:\.\d+)?$') { throw "Invalid release version: $Version" }
 $compilerCandidates = @(
     (Join-Path $env:WINDIR 'Microsoft.NET\Framework\v4.0.30319\csc.exe'),
     (Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319\csc.exe')
@@ -33,10 +33,13 @@ New-Item -ItemType Directory -Force -Path $generatedDirectory | Out-Null
     "namespace BlockInstaller { internal static class InstallerBuildVersion { public const string Value = `"$Version`"; } }",
     (New-Object Text.UTF8Encoding($false))
 )
-$assemblyVersion = $Version + '.0'
+# Windows assembly versions have exactly four numeric components. Keep a supplied
+# fourth release component; add a zero revision only for legacy three-part tags.
+$assemblyVersion = if (($Version -split '\.').Count -eq 3) { $Version + '.0' } else { $Version }
 $assemblyInfo = 'using System.Reflection; ' +
     '[assembly: AssemblyTitle("Block Engine Secure Bootstrapper")] ' +
-    '[assembly: AssemblyDescription("Downloads and verifies official Block Engine releases")] ' +
+    '[assembly: AssemblyDescription("Downloads one selected official Block Engine release and verifies its SHA-256 digest before installation")] ' +
+    '[assembly: AssemblyCompany("Block Language Project")] ' +
     '[assembly: AssemblyVersion("' + $assemblyVersion + '")] ' +
     '[assembly: AssemblyFileVersion("' + $assemblyVersion + '")] ' +
     '[assembly: AssemblyInformationalVersion("' + $Version + '")]'
@@ -51,7 +54,6 @@ $arguments = @(
     '/platform:x86',
     ('/out:' + $primary),
     ('/win32icon:' + $icon),
-    ('/resource:' + $icon + ',icon.ico'),
     '/reference:System.dll',
     '/reference:System.Core.dll',
     '/reference:System.Drawing.dll',
@@ -72,16 +74,15 @@ finally {
     if (Test-Path -LiteralPath $generatedDirectory) { Remove-Item -LiteralPath $generatedDirectory -Recurse -Force }
 }
 
-$stableAlias = Join-Path $OutputDirectory 'BlockSetup.exe'
-Copy-Item -LiteralPath $primary -Destination $stableAlias -Force
-
 if (-not [string]::IsNullOrWhiteSpace($SigningCertificateThumbprint)) {
     $signtool = Get-Command signtool.exe -ErrorAction SilentlyContinue
     if (-not $signtool) { throw 'SigningCertificateThumbprint was supplied but signtool.exe was not found.' }
     & $signtool.Source sign /sha1 $SigningCertificateThumbprint /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 $primary
     if ($LASTEXITCODE -ne 0) { throw 'Authenticode signing failed for the versioned installer.' }
-    & $signtool.Source sign /sha1 $SigningCertificateThumbprint /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 $stableAlias
-    if ($LASTEXITCODE -ne 0) { throw 'Authenticode signing failed for BlockSetup.exe.' }
 }
+$stableAlias = Join-Path $OutputDirectory 'BlockSetup.exe'
+# Copy after signing so both published installer names remain byte-identical and
+# users only need to verify one digest and one Authenticode signature.
+Copy-Item -LiteralPath $primary -Destination $stableAlias -Force
 Write-Host "Created $primary"
 Write-Host "Updated $stableAlias"

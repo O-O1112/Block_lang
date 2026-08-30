@@ -16,7 +16,7 @@ Maintainers can use the [organic growth playbook](docs/GROWTH.md) to turn demos,
 
 | Item | Details |
 | --- | --- |
-| Current release | `2.2.6` |
+| Current release | `2.2.6.5` |
 | Primary platform | Windows 10/11 release workflow |
 | Execution model | Parse one document, run native stages in order, transfer serializable state |
 | Editions | Lite (`.blkl`), Standard (`.blk`), Plus (`.blkp`) |
@@ -140,8 +140,8 @@ Use Block when you want:
 
 ### Windows installer
 
-The versioned installer is [`BlockSetup-v2.2.6.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.6/BlockSetup-v2.2.6.exe).
-The stable download alias is [`BlockSetup.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.6/BlockSetup.exe).
+The versioned installer is [`BlockSetup-v2.2.6.5.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.6.5/BlockSetup-v2.2.6.5.exe).
+The stable download alias is [`BlockSetup.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.6.5/BlockSetup.exe).
 The same files are also linked from the [download page](downloads.html).
 
 1. Run the installer.
@@ -183,7 +183,7 @@ runtime.
 
 ### Build from source
 
-The v2.2.6 Windows build uses the .NET Framework C# compiler available at
+The v2.2.6.5 Windows build uses the .NET Framework C# compiler available at
 `%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\csc.exe`:
 
 ```powershell
@@ -258,7 +258,7 @@ communicate which engine is expected.
 ## CLI reference
 
 The executable name depends on the edition. The following commands are available
-in the v2.2.6 Windows build:
+in the v2.2.6.5 Windows build:
 
 | Command | Lite | Standard | Plus | Purpose |
 | --- |:---:|:---:|:---:| --- |
@@ -689,7 +689,7 @@ Because this spawns external processes, it is subject to security policy checks.
 
 ### VS Code
 
-The repository publishes [`block-language-2.2.6.vsix`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.6/block-language-2.2.6.vsix).
+The repository publishes [`block-language-2.2.6.5.vsix`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.6.5/block-language-2.2.6.5.vsix).
 In VS Code, open **Extensions**, choose **Install from VSIX...**, select the
 package, and reload the window if prompted.
 
@@ -701,7 +701,7 @@ host runtime.
 ### Acode
 
 The mobile editor package is
-[`acode-plugin-block-2.2.6.zip`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.6/acode-plugin-block-2.2.6.zip). Install it through
+[`acode-plugin-block-2.2.6.5.zip`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.6.5/acode-plugin-block-2.2.6.5.zip). Install it through
 Acode's plugin workflow, then configure the local execution command if the device
 or terminal environment uses a non-default path.
 
@@ -725,7 +725,7 @@ Block adopts a local-first, conservative security design:
 
 Security configurations do not replace rigorous code review. Never execute untrusted `.blk`, `.blkl`, or `.blkp` files, as language blocks invoke host runtimes directly.
 
-### Default configuration in v2.2.6
+### Default configuration in v2.2.6.5
 
 New configurations use conservative defaults:
 
@@ -949,7 +949,7 @@ when both host runtimes are available.
 
 ### Package and verify a release
 
-The complete v2.2.6 release flow builds the three engines, creates matching ZIP
+The complete v2.2.6.5 release flow builds the three engines, creates matching ZIP
 bundles, packages the VS Code and Acode extensions, builds the installer, and
 verifies the published artifacts and hashes:
 
@@ -971,9 +971,9 @@ published checksum changes.
 
 ---
 
-## v2.2.6 status and known boundaries
+## v2.2.6.5 status and known boundaries
 
-Version 2.2.6 is the current documented release line. It includes the Lite,
+Version 2.2.6.5 is the current documented release line. It includes the Lite,
 Standard, and Plus engines, the Windows installer, the VS Code extension, the
 Acode plugin, native control flow, cross-runtime state synchronization, local
 local imports, project discovery, the Plus
@@ -994,7 +994,7 @@ promises:
 - Process timeouts and import limits reduce accidental resource abuse but do not
   turn arbitrary native code into a security sandbox.
 
-See the [changelog](CHANGELOG.md) and [v2.2.6 release notes](docs/RELEASE-2.2.6.md)
+See the [changelog](CHANGELOG.md) and [v2.2.6.5 release notes](docs/RELEASE-2.2.6.5.md)
 for the tested changes and release artifact contract. Planned behavior should not
 be read as shipped behavior.
 
@@ -1002,7 +1002,7 @@ be read as shipped behavior.
 
 ## Roadmap
 
-The [public roadmap](ROADMAP.md) separates the v2.2.6 foundation, proposed next
+The [public roadmap](ROADMAP.md) separates the v2.2.6.5 foundation, proposed next
 steps, and longer-term ideas. If you want to help Block grow, a reproducible
 example, documentation fix, regression test, or real workflow is more useful than
 an unverified benchmark.
@@ -1046,7 +1046,7 @@ makes project growth easy to verify.
 - [Code of Conduct](CODE_OF_CONDUCT.md)
 - [Citation metadata](CITATION.cff)
 - [MIT License](LICENSE)
-- [v2.2.6 release manifest](docs/RELEASE-2.2.6.md)
+- [v2.2.6.5 release manifest](docs/RELEASE-2.2.6.5.md)
 
 The visual documentation site is available from [`wiki.html`](wiki.html). The
 Markdown Wiki is the reviewable source for the same installation, syntax,

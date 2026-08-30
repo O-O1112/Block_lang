@@ -7,10 +7,23 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 if ([string]::IsNullOrWhiteSpace($OutputDirectory)) { $OutputDirectory = $root }
 if ([string]::IsNullOrWhiteSpace($Version)) { $Version = (Get-Content -LiteralPath (Join-Path $root 'VERSION') -Raw).Trim() }
-if ($Version -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid release version: $Version" }
+if ($Version -notmatch '^\d+\.\d+\.\d+(?:\.\d+)?$') { throw "Invalid release version: $Version" }
 $OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
 $stage = Join-Path ([IO.Path]::GetTempPath()) ("block-package-" + [Guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Force -Path (Join-Path $stage "extension") | Out-Null
+
+function Get-VsCodeExtensionVersion([string]$ReleaseVersion) {
+    $parts = $ReleaseVersion -split '\.'
+    if ($parts.Count -eq 3) { return $ReleaseVersion }
+
+    # VS Code only accepts major.minor.patch extension versions. A four-part
+    # engine revision therefore maps to the next patch release for the bundled
+    # editor extension, keeping upgrades installable instead of publishing an
+    # invalid VSIX manifest.
+    return ("{0}.{1}.{2}" -f $parts[0], $parts[1], (([int]$parts[2]) + 1))
+}
+
+$vsCodeExtensionVersion = Get-VsCodeExtensionVersion $Version
 
 function Write-JsonNoBom([string]$Path, [object]$Value) {
     $json = $Value | ConvertTo-Json -Depth 20
@@ -33,18 +46,18 @@ try {
     # correctly named packages with stale internal metadata.
     $vsixPackagePath = Join-Path $stage "extension\package.json"
     $vsixPackage = Get-Content -LiteralPath $vsixPackagePath -Raw | ConvertFrom-Json
-    $vsixPackage.version = $Version
+    $vsixPackage.version = $vsCodeExtensionVersion
     if ($vsixPackage.description) {
-        $vsixPackage.description = [regex]::Replace($vsixPackage.description, 'v\d+\.\d+\.\d+', "v$Version")
+        $vsixPackage.description = [regex]::Replace($vsixPackage.description, 'v\d+\.\d+\.\d+(?:\.\d+)?', "v$Version")
     }
     Write-JsonNoBom $vsixPackagePath $vsixPackage
 
     $vsixManifestPath = Join-Path $stage "extension.vsixmanifest"
     [xml]$vsixManifest = Get-Content -LiteralPath $vsixManifestPath -Raw
-    $vsixManifest.PackageManifest.Metadata.Identity.SetAttribute('Version', $Version)
+    $vsixManifest.PackageManifest.Metadata.Identity.SetAttribute('Version', $vsCodeExtensionVersion)
     $vsixManifest.PackageManifest.Metadata.Description.InnerText = [regex]::Replace(
         $vsixManifest.PackageManifest.Metadata.Description.InnerText,
-        'v\d+\.\d+\.\d+',
+        'v\d+\.\d+\.\d+(?:\.\d+)?',
         "v$Version"
     )
     $vsixManifest.Save($vsixManifestPath)
@@ -79,7 +92,7 @@ try {
     $acodeReadmePath = Join-Path $acodeStage 'readme.md'
     if (Test-Path -LiteralPath $acodeReadmePath) {
         $acodeReadme = Get-Content -LiteralPath $acodeReadmePath -Raw
-        $acodeReadme = [regex]::Replace($acodeReadme, 'v\d+\.\d+\.\d+', "v$Version")
+        $acodeReadme = [regex]::Replace($acodeReadme, 'v\d+\.\d+\.\d+(?:\.\d+)?', "v$Version")
         [IO.File]::WriteAllText($acodeReadmePath, $acodeReadme, (New-Object Text.UTF8Encoding($false)))
     }
     Compress-Archive -Path (Join-Path $acodeStage "*") -DestinationPath $acode -CompressionLevel Optimal
