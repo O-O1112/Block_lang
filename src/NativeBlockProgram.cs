@@ -908,7 +908,7 @@ namespace BlockEngine
                         if (suppressEvaluation) { left = null; continue; }
                         double divisor = Number(right);
                         if (Math.Abs(divisor) < double.Epsilon) throw Error(line, "Division by zero.");
-                        left = Number(left) / divisor;
+                        left = NormalizeNumber(Number(left) / divisor);
                     }
                     else if (Match("%")) { object right = ParseUnary(); left = suppressEvaluation ? null : NormalizeNumber(Number(left) % Number(right)); }
                     else return left;
