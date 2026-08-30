@@ -917,7 +917,8 @@ namespace BlockEngine
             private object ParseUnary()
             {
                 if (Match("!")) { object value = ParseUnary(); return suppressEvaluation ? (object)null : (object)!ToBool(value); }
-                if (Match("-")) { object value = ParseUnary(); return suppressEvaluation ? (object)null : (object)-Number(value); }
+                if (Match("+")) { object value = ParseUnary(); return suppressEvaluation ? (object)null : NormalizeNumber(Number(value)); }
+                if (Match("-")) { object value = ParseUnary(); return suppressEvaluation ? (object)null : NormalizeNumber(-Number(value)); }
                 return ParsePrimary();
             }
             private object ParsePrimary()
