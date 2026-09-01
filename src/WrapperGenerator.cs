@@ -47,7 +47,8 @@ namespace BlockEngine
                        "    return _block_reload(module)\n" +
                        "  _block_builtins.__import__=_block_guarded_import\n" +
                        "  _block_importlib.reload=_block_guarded_reload\n" +
-                       "[globals().__setitem__(k,v) for k,v in _st.items() if k.isidentifier()]\n" +
+                       "_block_reserved={'__builtins__','__name__','__doc__','__package__','__loader__','__spec__','__annotations__','__file__','__cached__'}\n" +
+                       "[globals().__setitem__(k,v) for k,v in _st.items() if k.isidentifier() and k not in _block_reserved]\n" +
                        code + "\n" +
                        "_ns={k:v for k,v in globals().items() if not k.startswith('_') and k not in('json','sys','os') and type(v) in(int,float,str,bool,list,dict)}\n" +
                        "_nsj=json.dumps(_ns)\n" +
@@ -110,8 +111,10 @@ namespace BlockEngine
                        "        return _block_original_reload(module)\n" +
                        "    _block_builtins.__import__ = _block_guarded_import\n" +
                        "    _block_importlib.reload = _block_guarded_reload\n" +
+                       "_block_reserved = {'__builtins__', '__name__', '__doc__', '__package__', '__loader__', '__spec__', '__annotations__', '__file__', '__cached__'}\n" +
                        "for k, v in state.items():\n" +
-                       "    if k.isidentifier(): globals()[k] = v\n" +
+                       "    if k.isidentifier() and k not in _block_reserved:\n" +
+                       "        globals()[k] = v\n" +
                        "try:\n" +
                        string.Join("\n", Array.ConvertAll(code.Split('\n'), line => "    " + line)) + "\n" +
                        "except Exception as e:\n" +
