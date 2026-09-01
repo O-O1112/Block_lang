@@ -16,6 +16,10 @@ automation only.
   Deployments there must retain the CSP, frame, MIME, referrer, permissions, and
   transport headers defined in that file.
 
+The legacy `block-io` Worker is intentionally reduced to the version-controlled
+rule in `cloudflare-redirect/_redirects`. It sends a permanent redirect to the
+canonical GitHub Pages origin and does not duplicate or proxy the website.
+
 A meta CSP cannot replace every response header. In particular, frame protection,
 MIME sniffing protection, and HSTS must be verified on the actual public response.
 Do not claim those controls are active on GitHub Pages merely because `_headers`

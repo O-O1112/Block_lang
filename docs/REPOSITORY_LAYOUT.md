@@ -16,6 +16,7 @@ statistics representative while preserving the existing public URLs.
 | `docs/wiki/` | Version-controlled Markdown Wiki source. |
 | `tests/` | Windows PowerShell engine, CLI, and native-language regression tests. |
 | `tools/` | Maintainer automation, including the read-only daily health check. |
+| `cloudflare-redirect/` | Redirect-only asset directory that preserves the legacy `block-io` Worker URL without duplicating the website. |
 
 ## Root-level files
 
@@ -69,6 +70,11 @@ machine-readable security policy, static-host configuration, and website-only
 tests. `_headers` is retained there for deployments that support static header
 rules. GitHub Pages does not apply that file, so every executable HTML page also
 carries a compatible CSP `<meta http-equiv>` policy.
+
+`wrangler.jsonc` remains on `main` only for the connected Cloudflare build. It
+publishes `cloudflare-redirect/_redirects`, which permanently redirects legacy
+Worker traffic to the canonical GitHub Pages URL; it does not publish engine
+source or website implementation files.
 
 ## Maintainer workflow
 
