@@ -72,21 +72,45 @@ short_or = true || missing_variable
 short_and = false && missing_variable
 logic_precedence = false || true && true
 
+list_eq_same = [1, 2] == [1, 2]
+list_eq_diff = [1, 2] == [3, 4]
+map_eq_same = {"a": 1} == {"a": 1}
+map_eq_diff = {"a": 1} == {"b": 2}
+nested_contains_pass = contains([[1, 2], [3, 4]], [1, 2])
+nested_contains_fail = contains([[1, 2], [3, 4]], [5, 6])
+
+nested_matrix = [[1, 2], [3, 4]]
+nested_matrix[0][1] = 99
+profile.meta = {"role": "admin"}
+profile.meta.role = "lead"
+
+unary_pos = +5
+unary_nested = 5 + +5 + -2
+div_result = 10 / 2
+
 print(status)
 print(profile["name"])
 print(profile.total)
+print(profile.meta.role)
+print(nested_matrix[0][1])
+print(unary_pos, unary_nested, div_result)
 print(items[1], items.length)
 print(sum(items), str(total), type(profile), contains(items, 3))
 print(greet("Block"))
 print(local_scope("local"), outside)
 print(printer)
 print(short_or, short_and, logic_precedence)
+print(items)
+print(list_eq_same, list_eq_diff, map_eq_same, map_eq_diff, nested_contains_pass, nested_contains_fail)
 '@ | Set-Content -LiteralPath $scriptPath -Encoding UTF8
 
     $result = Invoke-Block 'block.exe' @('run', $scriptPath)
     Assert-Condition ($result.ExitCode -eq 0) "Native language program failed: $($result.Output)"
     Assert-Condition ($result.Output -match 'elif-ok') "elif did not execute: $($result.Output)"
     Assert-Condition ($result.Output -match 'Block Language') "map assignment/member access failed: $($result.Output)"
+    Assert-Condition ($result.Output -match 'lead') "nested member property assignment failed: $($result.Output)"
+    Assert-Condition ($result.Output -match '99') "nested list index assignment failed: $($result.Output)"
+    Assert-Condition ($result.Output -match '5 8 5') "unary and division normalization failed: $($result.Output)"
     Assert-Condition ($result.Output -match '10') "loop control failed: $($result.Output)"
     Assert-Condition ($result.Output -match '2 4') "list index/length failed: $($result.Output)"
     Assert-Condition ($result.Output -match '10 10 map true') "built-in functions failed: $($result.Output)"
@@ -94,6 +118,8 @@ print(short_or, short_and, logic_precedence)
     Assert-Condition ($result.Output -match 'local global') "function scope/global lookup failed: $($result.Output)"
     Assert-Condition ($result.Output -match 'not-a-print-call') "identifier beginning with print was misparsed: $($result.Output)"
     Assert-Condition ($result.Output -match 'true false true') "logical short-circuit or precedence failed: $($result.Output)"
+    Assert-Condition ($result.Output -match '\[1, 2, 3, 4\]') "list collection formatting failed: $($result.Output)"
+    Assert-Condition ($result.Output -match 'true false true false true false') "structural equality comparison failed: $($result.Output)"
 
     $limitPath = Join-Path $tempRoot 'range-limit.blk'
     @'

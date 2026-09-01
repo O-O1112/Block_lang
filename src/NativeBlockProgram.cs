@@ -283,26 +283,125 @@ namespace BlockEngine
             return -1;
         }
 
+        private enum TargetAccessorType { Index, Member }
+        private struct TargetAccessor
+        {
+            public TargetAccessorType Type;
+            public string Expression;
+            public string Member;
+        }
+
         private static void AssignTarget(string target, object value, Context context, int lineNumber)
         {
-            Match variable = Regex.Match(target, @"^[A-Za-z_][A-Za-z0-9_]*$");
-            if (variable.Success)
+            target = (target ?? "").Trim();
+            if (target.Length == 0) throw Error(lineNumber, "Empty assignment target.");
+
+            int pos = 0;
+            while (pos < target.Length && char.IsWhiteSpace(target[pos])) pos++;
+            int start = pos;
+            if (pos >= target.Length || !(char.IsLetter(target[pos]) || target[pos] == '_'))
+                throw Error(lineNumber, "Invalid assignment target: " + target);
+            while (pos < target.Length && (char.IsLetterOrDigit(target[pos]) || target[pos] == '_')) pos++;
+            string rootVar = target.Substring(start, pos - start);
+
+            List<TargetAccessor> accessors = new List<TargetAccessor>();
+            while (pos < target.Length)
             {
-                context.SetValue(target, value);
+                while (pos < target.Length && char.IsWhiteSpace(target[pos])) pos++;
+                if (pos >= target.Length) break;
+
+                if (target[pos] == '[')
+                {
+                    pos++;
+                    int exprStart = pos;
+                    int depth = 1;
+                    bool quoted = false;
+                    char quote = '\0';
+                    bool escaped = false;
+                    while (pos < target.Length)
+                    {
+                        char c = target[pos++];
+                        if (escaped) { escaped = false; continue; }
+                        if (quoted)
+                        {
+                            if (c == '\\') { escaped = true; continue; }
+                            if (c == quote) quoted = false;
+                            continue;
+                        }
+                        if (c == '\'' || c == '"') { quoted = true; quote = c; continue; }
+                        if (c == '[') depth++;
+                        else if (c == ']')
+                        {
+                            depth--;
+                            if (depth == 0) break;
+                        }
+                    }
+                    if (depth != 0) throw Error(lineNumber, "Unclosed '[' in assignment target.");
+                    string expr = target.Substring(exprStart, pos - exprStart - 1).Trim();
+                    accessors.Add(new TargetAccessor { Type = TargetAccessorType.Index, Expression = expr });
+                }
+                else if (target[pos] == '.')
+                {
+                    pos++;
+                    while (pos < target.Length && char.IsWhiteSpace(target[pos])) pos++;
+                    int idStart = pos;
+                    if (pos >= target.Length || !(char.IsLetter(target[pos]) || target[pos] == '_'))
+                        throw Error(lineNumber, "Expected member name after '.' in assignment target.");
+                    while (pos < target.Length && (char.IsLetterOrDigit(target[pos]) || target[pos] == '_')) pos++;
+                    string member = target.Substring(idStart, pos - idStart);
+                    accessors.Add(new TargetAccessor { Type = TargetAccessorType.Member, Member = member });
+                }
+                else
+                {
+                    throw Error(lineNumber, "Invalid assignment target syntax at: " + target.Substring(pos));
+                }
+            }
+
+            if (accessors.Count == 0)
+            {
+                context.SetValue(rootVar, value);
                 return;
             }
 
-            Match indexed = Regex.Match(target, @"^([A-Za-z_][A-Za-z0-9_]*)\s*\[([\s\S]*)\]$");
-            if (indexed.Success)
+            object container;
+            if (!context.TryGetValue(rootVar, out container))
+                throw Error(lineNumber, "Unknown variable: " + rootVar);
+
+            for (int i = 0; i < accessors.Count - 1; i++)
             {
-                object container;
-                if (!context.TryGetValue(indexed.Groups[1].Value, out container))
-                    throw Error(lineNumber, "Unknown variable: " + indexed.Groups[1].Value);
-                SetIndex(container, Evaluate(indexed.Groups[2].Value, context, lineNumber), value, lineNumber);
-                return;
+                TargetAccessor acc = accessors[i];
+                if (acc.Type == TargetAccessorType.Index)
+                {
+                    object idx = Evaluate(acc.Expression, context, lineNumber);
+                    container = GetIndex(container, idx, lineNumber);
+                }
+                else
+                {
+                    container = GetMember(container, acc.Member, lineNumber);
+                }
             }
 
-            throw Error(lineNumber, "Invalid assignment target: " + target);
+            TargetAccessor last = accessors[accessors.Count - 1];
+            if (last.Type == TargetAccessorType.Index)
+            {
+                object idx = Evaluate(last.Expression, context, lineNumber);
+                SetIndex(container, idx, value, lineNumber);
+            }
+            else
+            {
+                SetMember(container, last.Member, value, lineNumber);
+            }
+        }
+
+        private static void SetMember(object container, string member, object value, int lineNumber)
+        {
+            IDictionary map = container as IDictionary;
+            if (map != null)
+            {
+                map[member] = value;
+                return;
+            }
+            throw Error(lineNumber, "Value of type " + TypeName(container) + " cannot have member '" + member + "' assigned.");
         }
 
         private static List<string> SplitArguments(string text, int lineNumber)
@@ -579,6 +678,39 @@ namespace BlockEngine
         private static bool Equal(object left, object right)
         {
             if (left == null || right == null) return left == null && right == null;
+            if (left is bool || right is bool)
+            {
+                if (left is bool && right is bool) return (bool)left == (bool)right;
+                return false;
+            }
+            IList listA = left as IList;
+            IList listB = right as IList;
+            if (listA != null || listB != null)
+            {
+                if (listA == null || listB == null || listA.Count != listB.Count) return false;
+                for (int i = 0; i < listA.Count; i++)
+                {
+                    if (!Equal(listA[i], listB[i])) return false;
+                }
+                return true;
+            }
+            IDictionary mapA = left as IDictionary;
+            IDictionary mapB = right as IDictionary;
+            if (mapA != null || mapB != null)
+            {
+                if (mapA == null || mapB == null || mapA.Count != mapB.Count) return false;
+                foreach (object key in mapA.Keys)
+                {
+                    if (key == null) continue;
+                    string k = key.ToString();
+                    object valB = null;
+                    if (mapB.Contains(key)) valB = mapB[key];
+                    else if (mapB.Contains(k)) valB = mapB[k];
+                    else return false;
+                    if (!Equal(mapA[key], valB)) return false;
+                }
+                return true;
+            }
             double a, b;
             if (double.TryParse(Convert.ToString(left, CultureInfo.InvariantCulture), NumberStyles.Float, CultureInfo.InvariantCulture, out a) && double.TryParse(Convert.ToString(right, CultureInfo.InvariantCulture), NumberStyles.Float, CultureInfo.InvariantCulture, out b)) return Math.Abs(a - b) < 0.0000000001;
             return string.Equals(left.ToString(), right.ToString(), StringComparison.Ordinal);
@@ -593,8 +725,35 @@ namespace BlockEngine
         {
             if (value == null) return "null";
             if (value is bool) return (bool)value ? "true" : "false";
+            if (value is string) return (string)value;
+            IList list = value as IList;
+            if (list != null)
+            {
+                List<string> items = new List<string>();
+                foreach (object item in list) items.Add(FormatElement(item));
+                return "[" + string.Join(", ", items) + "]";
+            }
+            IDictionary map = value as IDictionary;
+            if (map != null)
+            {
+                List<string> entries = new List<string>();
+                foreach (object key in map.Keys)
+                {
+                    if (key == null) continue;
+                    entries.Add(string.Format("\"{0}\": {1}", key, FormatElement(map[key])));
+                }
+                return "{" + string.Join(", ", entries) + "}";
+            }
             IFormattable formattable = value as IFormattable;
             return formattable == null ? value.ToString() : formattable.ToString(null, CultureInfo.InvariantCulture);
+        }
+
+        private static string FormatElement(object value)
+        {
+            if (value == null) return "null";
+            if (value is bool) return (bool)value ? "true" : "false";
+            if (value is string) return "\"" + value + "\"";
+            return FormatValue(value);
         }
         private static InvalidOperationException Error(int line, string message) { return new InvalidOperationException(line > 0 ? string.Format("Native Block error at line {0}: {1}", line, message) : "Native Block error: " + message); }
 
@@ -749,7 +908,7 @@ namespace BlockEngine
                         if (suppressEvaluation) { left = null; continue; }
                         double divisor = Number(right);
                         if (Math.Abs(divisor) < double.Epsilon) throw Error(line, "Division by zero.");
-                        left = Number(left) / divisor;
+                        left = NormalizeNumber(Number(left) / divisor);
                     }
                     else if (Match("%")) { object right = ParseUnary(); left = suppressEvaluation ? null : NormalizeNumber(Number(left) % Number(right)); }
                     else return left;
@@ -758,7 +917,8 @@ namespace BlockEngine
             private object ParseUnary()
             {
                 if (Match("!")) { object value = ParseUnary(); return suppressEvaluation ? (object)null : (object)!ToBool(value); }
-                if (Match("-")) { object value = ParseUnary(); return suppressEvaluation ? (object)null : (object)-Number(value); }
+                if (Match("+")) { object value = ParseUnary(); return suppressEvaluation ? (object)null : NormalizeNumber(Number(value)); }
+                if (Match("-")) { object value = ParseUnary(); return suppressEvaluation ? (object)null : NormalizeNumber(-Number(value)); }
                 return ParsePrimary();
             }
             private object ParsePrimary()
