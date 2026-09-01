@@ -41,14 +41,6 @@ jobs:
         shell: powershell
         run: .\tests\Test-BlockPaths.ps1 -EngineDirectory (Join-Path $PWD 'ci-release')
 
-      - name: Verify website release links
-        shell: powershell
-        run: .\tests\Test-WebsiteLinks.ps1 -RepositoryRoot $PWD
-
-      - name: Verify website security controls
-        shell: powershell
-        run: .\tests\Test-WebsiteSecurity.ps1 -RepositoryRoot $PWD
-
       - name: Verify installer TLS transport
         shell: powershell
         run: .\tests\Test-InstallerTransport.ps1 -RepositoryRoot $PWD

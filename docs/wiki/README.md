@@ -19,7 +19,7 @@ enabled under GitHub Settings → General → Features → Wikis.
 - [Architecture](Architecture.md) — parser, executor, process lifecycle, and isolation.
 - [Troubleshooting](Troubleshooting.md) — common installation and execution failures.
 
-For the visual version, open the [Block documentation site](../../wiki.html)
-or its focused pages: [installation](../../wiki-install.html),
-[syntax](../../wiki-syntax.html), [polyglot blocks](../../wiki-polyglot.html),
-and [architecture](../../wiki-architecture.html).
+For the visual version, open the [Block documentation site](https://o-o1112.github.io/Block_lang/wiki.html)
+or its focused pages: [installation](https://o-o1112.github.io/Block_lang/wiki-install.html),
+[syntax](https://o-o1112.github.io/Block_lang/wiki-syntax.html), [polyglot blocks](https://o-o1112.github.io/Block_lang/wiki-polyglot.html),
+and [architecture](https://o-o1112.github.io/Block_lang/wiki-architecture.html).

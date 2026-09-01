@@ -4,7 +4,7 @@ These examples are intentionally small and copy-ready. They are useful for evalu
 
 ## Run one in three steps
 
-1. Install [Block Engine](../downloads.html) and the runtimes used by the example.
+1. Install [Block Engine](https://o-o1112.github.io/Block_lang/downloads.html) and the runtimes used by the example.
 2. Open a PowerShell prompt anywhere after installation.
 3. Run the matching command; Block can resolve files from the configured
    workspace or the current project:

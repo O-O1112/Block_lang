@@ -117,7 +117,7 @@ provider key.
 - installer behavior, release archives, and checksums;
 - version pinning and upgrade notes.
 
-**Source:** `docs/RELEASE-2.2.0.md`, `downloads.html`,
+**Source:** `docs/RELEASE-2.2.0.md`, the `gh-pages` website branch,
 `verify-release.ps1`, and the extension READMEs.
 
 **Done when:** a reader can tell whether a failure is caused by the installer, the

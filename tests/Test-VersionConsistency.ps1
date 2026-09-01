@@ -22,8 +22,6 @@ if ($citation -notmatch ('(?m)^version:\s*["'']?' + [regex]::Escape($version) + 
     throw "CITATION.cff does not declare version $version."
 }
 Assert-Contains 'README.md' ('v' + $version)
-Assert-Contains 'downloads.html' ('BlockSetup-v' + $version + '.exe')
-Assert-Contains 'index.html' ('v' + $version)
 Assert-Contains 'block-vscode-extension\extension.vsixmanifest' ('Version="' + $vsCodeExtensionVersion + '"')
 Assert-Contains 'acode-plugin-block\main.js' ("BLOCK_PLUGIN_VERSION = '$version'")
 
