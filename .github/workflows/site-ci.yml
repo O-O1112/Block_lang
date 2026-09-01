@@ -1,0 +1,26 @@
+name: Validate Block website
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [gh-pages]
+  pull_request:
+    branches: [gh-pages]
+
+permissions:
+  contents: read
+
+jobs:
+  website-test:
+    runs-on: windows-latest
+    steps:
+      - name: Check out website branch
+        uses: actions/checkout@v4
+
+      - name: Verify website release links
+        shell: powershell
+        run: .\tests\Test-WebsiteLinks.ps1 -RepositoryRoot $PWD
+
+      - name: Verify website security controls
+        shell: powershell
+        run: .\tests\Test-WebsiteSecurity.ps1 -RepositoryRoot $PWD
