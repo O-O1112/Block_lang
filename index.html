@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Block Language (Block-Lang) — The Single-File Polyglot Programming Engine</title>
+    <meta name="description" content="Block Language (Block-Lang / Block Engine) is the official single-file polyglot programming engine. Write Python, JavaScript, Lua, and PHP in one file with an automatic state pipeline and zero glue code.">
+    <meta name="keywords" content="block lang, block language, block-lang, block engine, block 程式語言, polyglot programming, python javascript lua in one file">
+    <meta name="author" content="O-O1112">
+    <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+    <meta name="application-name" content="Block Language">
+    <meta name="theme-color" content="#050505">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; media-src 'none'; worker-src 'self'; manifest-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://cloudflareinsights.com https://static.cloudflareinsights.com; form-action 'self'; upgrade-insecure-requests">
+    <link rel="canonical" href="https://o-o1112.github.io/Block_lang/">
+
+    <!-- Open Graph / Facebook / Discord SEO -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://o-o1112.github.io/Block_lang/">
+    <meta property="og:site_name" content="Block Engine">
+    <meta property="og:title" content="Block Language (Block-Lang) — Single-File Polyglot Programming">
+    <meta property="og:description" content="One File. Every Runtime. Write Python, JS, Lua, and PHP in one orchestrated file without boilerplate imports or API glue code.">
+    <meta property="og:image" content="https://o-o1112.github.io/Block_lang/demo.gif">
+    <meta property="og:image:alt" content="Block Engine polyglot state pipeline demo">
+
+    <!-- Twitter Card SEO -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Block Language (Block-Lang) — Polyglot Programming Engine">
+    <meta name="twitter:description" content="Chain Python, Node.js, and Lua in a single file with an automatic State Pipeline.">
+    <meta name="twitter:image" content="https://o-o1112.github.io/Block_lang/demo.gif">
+    <meta name="twitter:image:alt" content="Block Engine polyglot state pipeline demo">
+
+    <!-- Google 官方結構化數據 (Schema.org JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Block Language",
+      "alternateName": ["Block Lang", "Block-Lang", "Block Engine", "Block 程式語言"],
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Windows 10 and Windows 11",
+      "url": "https://o-o1112.github.io/Block_lang/",
+      "downloadUrl": "https://o-o1112.github.io/Block_lang/downloads.html",
+"softwareVersion": "2.2.6.5",
+      "license": "https://github.com/O-O1112/Block_lang/blob/main/LICENSE",
+      "codeRepository": "https://github.com/O-O1112/Block_lang",
+      "image": "https://o-o1112.github.io/Block_lang/demo.gif",
+      "isAccessibleForFree": true,
+      "featureList": ["Single-file polyglot execution", "Automatic state pipeline", "Native Python, Node.js, Lua, and PHP runtimes"],
+      "description": "A lightweight polyglot programming engine that allows Python, Node.js, Lua, and PHP to run in a single file and share state automatically without glue code.",
+      "author": {
+        "@type": "Person",
+        "name": "O-O1112",
+        "url": "https://github.com/O-O1112"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Block Language",
+      "alternateName": ["Block Lang", "Block-Lang", "Block Engine"],
+      "url": "https://o-o1112.github.io/Block_lang/",
+      "description": "Official website and documentation for Block Language, a single-file polyglot programming engine.",
+      "inLanguage": "en",
+      "publisher": {
+        "@type": "Person",
+        "name": "O-O1112",
+        "url": "https://github.com/O-O1112"
+      }
+    }
+    </script>
+
+    <!-- Google & Browser Favicon (指定使用原版 icon.ico) -->
+    <link rel="icon" href="icon.ico" type="image/x-icon">
+    <link rel="shortcut icon" href="icon.ico" type="image/x-icon">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="home">
+    <canvas id="bg-canvas" aria-hidden="true"></canvas>
+    <div class="modular-field" aria-hidden="true"></div>
+    <div class="noise" aria-hidden="true"></div>
+    <div id="cursor-aura" aria-hidden="true"></div>
+    <div id="scroll-progress" aria-hidden="true"></div>
+
+    <nav class="navbar" aria-label="Primary navigation">
+        <a href="index.html" class="logo" aria-label="Block home">
+            <img src="logo.svg" alt="" class="logo-img-small">
+            <span class="logo-text">BLOCK</span>
+        </a>
+        <span class="nav-brand-meta" aria-label="Block Engine version and status">
+<span>ENGINE / 2.2.6.5</span>
+            <span class="nav-live"><i></i> READY</span>
+        </span>
+        <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false">
+            <span></span><span></span>
+        </button>
+        <div class="nav-links">
+            <a href="features.html" data-nav="product">Product</a>
+            <a href="#use-cases">Use cases</a>
+            <a href="#workflow">How it works</a>
+            <a href="#editions">Editions</a>
+            <a href="downloads.html">Downloads</a>
+            <a href="https://github.com/O-O1112/Block_lang" class="nav-github" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+            <a href="wiki.html" class="btn-glow">Documentation</a>
+        </div>
+    </nav>
+
+    <main>
+        <header class="hero hero-home">
+            <div class="hero-copy reveal">
+                <p class="eyebrow"><span class="status-dot"></span> Native polyglot orchestration</p>
+                <h1 class="scramble-text" data-text="ONE FILE. EVERY RUNTIME.">ONE FILE. EVERY RUNTIME.</h1>
+                <p class="hero-lede">Block lets you compose Python, JavaScript, PHP, Lua, SQLite and more inside one readable program. Keep every language good at what it does while one lightweight C# engine coordinates execution, state and output.</p>
+                <div class="cta-group">
+                    <a href="features.html" class="btn-primary magnetic">Explore the product <span>&rarr;</span></a>
+<a href="https://github.com/O-O1112/Block_lang/releases/download/v2.2.6.5/BlockSetup-v2.2.6.5.exe" class="btn-secondary magnetic" download>Download for Windows</a>
+                </div>
+                <p class="hero-note">New here? <a href="https://github.com/O-O1112/Block_lang/tree/main/examples" target="_blank" rel="noopener noreferrer">Run a copy-ready example first&nbsp;↗</a></p>
+                <p class="hero-note">Free code signing provided by SignPath.io, certificate by SignPath Foundation. <a href="https://github.com/O-O1112/Block_lang/blob/main/docs/CODE-SIGNING-POLICY.md">Application pending; read the signing policy&nbsp;↗</a></p>
+                <div class="hero-proof" aria-label="Product highlights">
+                    <div><strong data-count="1">1</strong><span>orchestrated file</span></div>
+                    <div><strong data-count="3">3</strong><span>engine editions</span></div>
+                    <div><strong data-count="15" data-suffix="+">15+</strong><span>runtimes in Block+</span></div>
+                </div>
+            </div>
+
+            <div class="hero-visual reveal" aria-label="An animated diagram showing Block language runtimes connected to the engine">
+                <div class="system-caption caption-top"><span></span> EXECUTION MAP / READY</div>
+                <div class="orbit-stage">
+                    <div class="orbit orbit-one"><i></i></div>
+                    <div class="orbit orbit-two"><i></i></div>
+                    <div class="orbit orbit-three"><i></i></div>
+                    <span class="runtime-node node-py">PY</span>
+                    <span class="runtime-node node-js">JS</span>
+                    <span class="runtime-node node-php">PHP</span>
+                    <span class="runtime-node node-sql">SQL</span>
+                    <span class="runtime-node node-lua">LUA</span>
+                    <span class="runtime-node node-rs">RS</span>
+                    <div class="core-halo"></div>
+                    <div class="hero-mark"><img src="logo.svg" alt="Block"></div>
+                </div>
+                <div class="system-caption caption-bottom">SHARED STATE <span></span> NATIVE OUTPUT</div>
+            </div>
+
+            <a class="scroll-cue" href="#use-cases" aria-label="Continue to discover Block">
+                <span>Discover</span><i></i>
+            </a>
+        </header>
+
+        <section class="signal-strip" aria-label="Supported technology">
+            <div class="signal-track">
+                <span>PYTHON 3</span><i></i><span>NODE.JS</span><i></i><span>PHP 8</span><i></i><span>LUA 5.4</span><i></i><span>SQLITE</span><i></i><span>RUST</span><i></i><span>GO</span><i></i><span>POWERSHELL</span><i></i>
+                <span aria-hidden="true">PYTHON 3</span><i aria-hidden="true"></i><span aria-hidden="true">NODE.JS</span><i aria-hidden="true"></i><span aria-hidden="true">PHP 8</span><i aria-hidden="true"></i><span aria-hidden="true">LUA 5.4</span><i aria-hidden="true"></i><span aria-hidden="true">SQLITE</span><i aria-hidden="true"></i><span aria-hidden="true">RUST</span><i aria-hidden="true"></i><span aria-hidden="true">GO</span><i aria-hidden="true"></i><span aria-hidden="true">POWERSHELL</span><i aria-hidden="true"></i>
+            </div>
+        </section>
+
+        <section id="use-cases" class="section-padding capability-section">
+            <div class="section-heading reveal">
+                <p class="eyebrow">What you can do</p>
+                <h2>Use the right language for every part of the job.</h2>
+                <p>Block removes the ceremony around combining runtimes. Build practical tools around the libraries, teams and workflows you already have—without splitting one idea across a collection of services.</p>
+            </div>
+
+            <div class="capability-grid">
+                <article class="capability-card tilt-card reveal">
+                    <span class="card-index">01</span>
+                    <svg class="feature-glyph glyph-pipeline" viewBox="0 0 180 112" aria-hidden="true">
+                        <path class="glyph-grid" d="M1 20H179M1 56H179M1 92H179M30 1V111M90 1V111M150 1V111"/>
+                        <path class="glyph-route" d="M24 27H70C81 27 82 48 93 48H132C143 48 143 84 156 84"/>
+                        <rect class="glyph-node" x="14" y="17" width="20" height="20"/><rect class="glyph-node" x="80" y="38" width="20" height="20"/><rect class="glyph-node" x="146" y="74" width="20" height="20"/>
+                        <circle class="glyph-packet packet-a" cx="0" cy="0" r="3"/><circle class="glyph-packet packet-b" cx="0" cy="0" r="3"/>
+                        <text x="24" y="108">INPUT</text><text x="90" y="108">TRANSFORM</text><text x="156" y="108">OUTPUT</text>
+                    </svg>
+                    <h3>Data pipelines</h3>
+                    <p>Prepare data in Python, query local datasets with SQLite, then format or publish the result with JavaScript—all as one ordered workflow.</p>
+                    <a href="features.html#data-pipelines" class="text-link">Learn the workflow <span>&rarr;</span></a>
+                </article>
+                <article class="capability-card tilt-card reveal">
+                    <span class="card-index">02</span>
+                    <svg class="feature-glyph glyph-automation" viewBox="0 0 180 112" aria-hidden="true">
+                        <circle class="glyph-ring ring-outer" cx="90" cy="55" r="42"/><circle class="glyph-ring ring-inner" cx="90" cy="55" r="24"/>
+                        <path class="glyph-route" d="M90 13A42 42 0 0 1 132 55A42 42 0 0 1 90 97A42 42 0 0 1 48 55A42 42 0 0 1 90 13"/>
+                        <rect class="glyph-node" x="82" y="47" width="16" height="16" transform="rotate(45 90 55)"/>
+                        <circle class="glyph-packet orbit-a" cx="0" cy="0" r="3"/><circle class="glyph-packet orbit-b" cx="0" cy="0" r="3"/>
+                        <path class="glyph-tick" d="M84 55L89 60L99 48"/>
+                        <text x="90" y="108">REPEATABLE FLOW</text>
+                    </svg>
+                    <h3>Local automation</h3>
+                    <p>Combine PowerShell system access, Python packages and small JavaScript transforms to replace fragile chains of separate scripts.</p>
+                    <a href="features.html#automation" class="text-link">Explore automation <span>&rarr;</span></a>
+                </article>
+                <article class="capability-card tilt-card reveal">
+                    <span class="card-index">03</span>
+                    <svg class="feature-glyph glyph-backend" viewBox="0 0 180 112" aria-hidden="true">
+                        <path class="glyph-grid" d="M18 15H162M18 39H162M18 63H162M18 87H162M42 3V99M90 3V99M138 3V99"/>
+                        <rect class="server-frame" x="31" y="17" width="118" height="70"/>
+                        <path class="server-layer layer-one" d="M44 31H136V43H44Z"/><path class="server-layer layer-two" d="M44 49H136V61H44Z"/><path class="server-layer layer-three" d="M44 67H136V79H44Z"/>
+                        <circle class="status-light light-one" cx="52" cy="37" r="2.5"/><circle class="status-light light-two" cx="52" cy="55" r="2.5"/><circle class="status-light light-three" cx="52" cy="73" r="2.5"/>
+                        <path class="request-arrow" d="M2 55H27M22 50L27 55L22 60"/><path class="request-arrow response" d="M153 55H178M158 50L153 55L158 60"/>
+                        <text x="90" y="108">REQUEST / ROUTE / RESPOND</text>
+                    </svg>
+                    <h3>Backend prototypes</h3>
+                    <p>Validate an API or internal service quickly. Reuse familiar parsers, database tools and package ecosystems before committing to a larger architecture.</p>
+                    <a href="features.html#backend" class="text-link">See backend patterns <span>&rarr;</span></a>
+                </article>
+                <article class="capability-card tilt-card reveal">
+                    <span class="card-index">04</span>
+                    <svg class="feature-glyph glyph-ai" viewBox="0 0 180 112" aria-hidden="true">
+                        <path class="neural-link" d="M22 24L68 48M22 56L68 53M22 88L68 58M112 48L158 24M112 53L158 56M112 58L158 88"/>
+                        <circle class="neural-node node-1" cx="22" cy="24" r="6"/><circle class="neural-node node-2" cx="22" cy="56" r="6"/><circle class="neural-node node-3" cx="22" cy="88" r="6"/>
+                        <circle class="neural-node node-4" cx="158" cy="24" r="6"/><circle class="neural-node node-5" cx="158" cy="56" r="6"/><circle class="neural-node node-6" cx="158" cy="88" r="6"/>
+                        <rect class="neural-chip" x="70" y="32" width="40" height="40" transform="rotate(45 90 52)"/>
+                        <path class="chip-mark" d="M82 52H98M90 44V60"/><circle class="glyph-packet brain-pulse" cx="90" cy="52" r="4"/>
+                        <text x="90" y="108">MODEL / INFERENCE / RESULT</text>
+                    </svg>
+                    <h3>AI and model tooling</h3>
+                    <p>Run Python inference or preprocessing, pass structured results forward, and use another runtime for application logic or presentation.</p>
+                    <a href="features.html#ai-tooling" class="text-link">View AI use cases <span>&rarr;</span></a>
+                </article>
+                <article class="capability-card tilt-card reveal">
+                    <span class="card-index">05</span>
+                    <svg class="feature-glyph glyph-cli" viewBox="0 0 180 112" aria-hidden="true">
+                        <rect class="terminal-frame" x="15" y="10" width="150" height="82"/><path class="terminal-bar" d="M15 27H165"/>
+                        <circle cx="27" cy="19" r="2"/><circle cx="36" cy="19" r="2"/><circle cx="45" cy="19" r="2"/>
+                        <path class="prompt-mark" d="M30 45L42 55L30 65M49 65H69"/>
+                        <path class="code-stroke code-one" d="M82 45H145"/><path class="code-stroke code-two" d="M82 56H132"/><path class="code-stroke code-three" d="M82 67H150"/>
+                        <rect class="terminal-cursor" x="73" y="61" width="5" height="8"/><text x="90" y="108">TOOLS THAT SHIP</text>
+                    </svg>
+                    <h3>Developer utilities</h3>
+                    <p>Create focused CLIs, migration helpers and build utilities that call native runtimes directly and remain easy for another developer to inspect.</p>
+                    <a href="features.html#developer-tools" class="text-link">Discover tool building <span>&rarr;</span></a>
+                </article>
+                <article class="capability-card capability-card-cta reveal">
+                    <p class="eyebrow">One engine, more possibilities</p>
+                    <h3>See the complete product story.</h3>
+                    <p>Go deeper into the runtime model, shared state, security boundaries and the differences between Lite, Standard and Block+.</p>
+                    <a href="features.html" class="btn-primary">Explore all capabilities <span>&rarr;</span></a>
+                </article>
+            </div>
+        </section>
+
+        <section class="manifesto-section">
+            <div class="manifesto-grid section-padding">
+                <div class="manifesto-sticky reveal">
+                    <p class="eyebrow">Why Block</p>
+                    <h2>A conductor for your runtimes, not another runtime to learn.</h2>
+                    <a href="features.html#architecture" class="text-link">Read about the architecture <span>&rarr;</span></a>
+                </div>
+                <div class="principle-list">
+                    <article class="principle reveal">
+                        <span>01</span>
+                        <div><h3>Native by design</h3><p>Block delegates work to real interpreters and compilers. Existing modules, standard libraries and runtime behavior remain available instead of being approximated inside a proprietary VM.</p></div>
+                    </article>
+                    <article class="principle reveal">
+                        <span>02</span>
+                        <div><h3>A readable execution order</h3><p>Language blocks run in the order they appear. The file itself becomes the execution map, making a mixed-language process easier to review, teach and maintain.</p></div>
+                    </article>
+                    <article class="principle reveal">
+                        <span>03</span>
+                        <div><h3>State that moves with the program</h3><p>The orchestrator carries compatible values between stages, reducing the glue code normally spent writing temporary files, tiny APIs and manual serialization layers.</p></div>
+                    </article>
+                    <article class="principle reveal">
+                        <span>04</span>
+                        <div><h3>Progressive power</h3><p>Start with Lite for compact web and scripting work, move to Standard for broad polyglot workflows, or choose Block+ when your project needs compiled and systems-language runtimes.</p></div>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section id="workflow" class="section-padding workflow-section">
+            <div class="section-heading reveal">
+                <p class="eyebrow">How it works</p>
+                <h2>Write once. Route intelligently. Run natively.</h2>
+            </div>
+            <div class="workflow-rail reveal">
+                <article><span>01</span><svg class="step-glyph" viewBox="0 0 48 48" aria-hidden="true"><path d="M11 8H31L38 15V40H11Z"/><path d="M31 8V15H38M17 22H32M17 28H29M17 34H25"/></svg><h3>Parse</h3><p>The C# orchestrator reads the `.blk` file and separates each declared language block.</p></article>
+                <article><span>02</span><svg class="step-glyph" viewBox="0 0 48 48" aria-hidden="true"><path d="M10 14H38M14 8V20M34 8V20M14 28H34M18 22V34M30 22V34"/><rect x="19" y="35" width="10" height="7"/></svg><h3>Prepare</h3><p>Values are sanitized, encoded and mapped to the next runtime's compatible scope.</p></article>
+                <article><span>03</span><svg class="step-glyph" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="16"/><path d="M21 17L31 24L21 31Z"/></svg><h3>Execute</h3><p>Each stage runs through its native interpreter with standard input and output under Block's control.</p></article>
+                <article><span>04</span><svg class="step-glyph" viewBox="0 0 48 48" aria-hidden="true"><path d="M9 24H37M29 16L37 24L29 32"/><path d="M13 13V9H39V35H35"/></svg><h3>Continue</h3><p>Results return to the shared pipeline so the next language can continue the same program.</p></article>
+                <div class="workflow-pulse" aria-hidden="true"></div>
+            </div>
+
+            <div class="code-story reveal">
+                <div class="code-window">
+                    <div class="editor-header"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="window-title">customer-report.blk</span></div>
+                    <div class="editor-content" aria-label="Block code example">
+                        <div><span class="keyword">&lt;py&gt;</span></div>
+                        <div class="indent"><span class="comment"># Analyze source records with Python</span></div>
+                        <div class="indent">scores = [<span class="func">model</span>(row) <span class="keyword">for</span> row <span class="keyword">in</span> records]</div>
+                        <div><span class="keyword">&lt;/py&gt;</span></div>
+                        <div class="code-gap"></div>
+                        <div><span class="keyword">&lt;js&gt;</span></div>
+                        <div class="indent"><span class="comment">// Turn the shared result into an application payload</span></div>
+                        <div class="indent">const payload = scores.<span class="func">map</span>((score, id) =&gt; ({ id, score }));</div>
+                        <div><span class="keyword">&lt;/js&gt;</span></div>
+                    </div>
+                </div>
+                <div class="execution-map">
+                    <p class="map-label">LIVE EXECUTION MAP</p>
+                    <div class="map-step active"><span>PY</span><div><strong>Python 3</strong><small>Analysis complete</small></div><i></i></div>
+                    <div class="map-step"><span>↕</span><div><strong>State bridge</strong><small>scores[] synchronized</small></div><i></i></div>
+                    <div class="map-step"><span>JS</span><div><strong>Node.js</strong><small>Payload ready</small></div><i></i></div>
+                    <div class="map-result"><span>STATUS</span><strong>SUCCESS / 00</strong></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="workspace-discovery" class="section-padding workflow-section">
+            <div class="section-heading reveal">
+                <p class="eyebrow">A calmer command line</p>
+                <h2>Run from your project.<br>Not from a special folder.</h2>
+                <p>Block understands project roots and optional workspaces, so relative script names remain useful when you move through a repository.</p>
+            </div>
+            <div class="code-story reveal">
+                <div class="code-window">
+                    <div class="editor-header"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="window-title">terminal / project discovery</span></div>
+                    <div class="editor-content" aria-label="Block workspace commands">
+                        <div><span class="comment"># set once for a folder of projects</span></div>
+                        <div><span class="keyword">block</span> workspace set C:\BlockProjects</div>
+                        <div><span class="keyword">block</span> find analytics</div>
+                        <div><span class="keyword">block</span> project run</div>
+                    </div>
+                </div>
+                <div class="execution-map">
+                    <p class="map-label">SAFE SEARCH ORDER</p>
+                    <div class="map-step active"><span>01</span><div><strong>Current directory</strong><small>Fast and explicit</small></div><i></i></div>
+                    <div class="map-step"><span>02</span><div><strong>Project root</strong><small>Nearest block.project.json</small></div><i></i></div>
+                    <div class="map-step"><span>03</span><div><strong>Workspace</strong><small>No drive-wide scan</small></div><i></i></div>
+                    <div class="map-result"><span>RESULT</span><strong>ONE CLEAR PATH</strong></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="editions" class="edition-section">
+            <div class="section-padding">
+                <div class="section-heading reveal">
+                    <p class="eyebrow">Choose your engine</p>
+                    <h2>Three editions. One orchestration model.</h2>
+                    <p>Begin with the runtime surface your project needs today. Every edition keeps Block's concise file structure and direct execution philosophy.</p>
+                </div>
+                <div class="edition-grid">
+                    <article class="edition-card reveal">
+                        <div class="edition-top"><p>BLOCK LITE</p><span>01</span></div>
+                        <h3>Fast, focused scripting.</h3>
+                        <p>For learning, compact tools and web-oriented experiments where a small runtime footprint matters most.</p>
+                        <div class="runtime-list"><span>Python</span><span>JavaScript</span><span>HTML</span></div>
+                        <ul><li>Minimal installation</li><li>Simple `.blkl` projects</li><li>Ideal first Block experience</li></ul>
+                        <a href="features.html#editions" class="text-link">Compare Lite <span>&rarr;</span></a>
+                    </article>
+                    <article class="edition-card featured reveal">
+                        <div class="edition-top"><p>BLOCK STANDARD</p><span>02</span></div>
+                        <h3>The everyday polyglot engine.</h3>
+                        <p>For data workflows, local services and automation that benefit from several mature scripting ecosystems.</p>
+                        <div class="runtime-list"><span>Python</span><span>JavaScript</span><span>PHP</span><span>Lua</span><span>SQLite</span></div>
+                        <ul><li>Dynamic state propagation</li><li>Broad scripting coverage</li><li>Balanced runtime footprint</li></ul>
+                        <a href="features.html#editions" class="text-link">Compare Standard <span>&rarr;</span></a>
+                    </article>
+                    <article class="edition-card reveal">
+                        <div class="edition-top"><p>BLOCK+</p><span>03</span></div>
+                        <h3>Maximum runtime reach.</h3>
+                        <p>For advanced tooling and ambitious mixed-language systems that need compiled, scripting and shell runtimes together.</p>
+                        <div class="runtime-list"><span>Rust</span><span>Go</span><span>C++</span><span>Zig</span><span>Perl</span><span>15+ total</span></div>
+                        <ul><li>Expanded runtime matrix</li><li>Verified release downloads</li><li>Advanced orchestration features</li></ul>
+                        <a href="features.html#editions" class="text-link">Compare Block+ <span>&rarr;</span></a>
+                    </article>
+                </div>
+            </div>
+        </section>
+
+        <section class="terminal-section section-padding">
+            <div class="terminal-copy reveal">
+                <p class="eyebrow">Execution you can follow</p>
+                <h2>The engine tells you exactly what happens next.</h2>
+                <p>Runtime startup, state transfer and completion remain visible. Block is designed to make a polyglot workflow feel inspectable rather than magical.</p>
+                <a href="features.html#developer-experience" class="text-link">Explore developer experience <span>&rarr;</span></a>
+            </div>
+            <div class="terminal-window reveal">
+                <div class="editor-header"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="window-title">Block Engine / Session 04</span></div>
+                <div class="terminal-body" id="term-typing" aria-live="polite"></div>
+            </div>
+        </section>
+
+        <section class="closing-section">
+            <div class="closing-orbit" aria-hidden="true"><i></i><i></i><i></i></div>
+            <div class="closing-copy reveal">
+                <img src="logo.svg" alt="" width="72" height="72">
+                <p class="eyebrow">Go from idea to orchestration</p>
+                <h2>One program should not require five separate projects.</h2>
+                <p>Discover the full Block architecture, see practical use cases and choose the edition that fits your next build.</p>
+                <div class="cta-group">
+                    <a href="features.html" class="btn-primary magnetic">Learn more about Block <span>&rarr;</span></a>
+                    <a href="downloads.html" class="btn-secondary magnetic">View downloads</a>
+                </div>
+                <p class="hero-note">Prefer to inspect the implementation? <a href="https://github.com/O-O1112/Block_lang" target="_blank" rel="noopener noreferrer">Browse the source on GitHub&nbsp;↗</a></p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-brand"><img src="logo.svg" alt="" width="34" height="34"><strong>BLOCK</strong></div>
+        <p>Native execution, orchestrated.</p>
+        <div class="footer-links"><a href="features.html">Product</a><a href="downloads.html">Downloads</a><a href="wiki.html">Documentation</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="security.html">Security</a></div>
+        <p class="copyright">&copy; 2026 Block Engine.</p>
+    </footer>
+
+    <script src="script.js"></script><!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "12b429e6c7ed419dba2c29a840359c59"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>

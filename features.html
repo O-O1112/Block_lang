@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Explore Block's polyglot orchestration model, use cases, shared state pipeline, security boundaries and engine editions.">
+    <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+    <meta name="application-name" content="Block Language">
+    <meta name="theme-color" content="#000000">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; object-src 'none'; frame-src 'none'; media-src 'none'; worker-src 'self'; manifest-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://cloudflareinsights.com https://static.cloudflareinsights.com; form-action 'self'; upgrade-insecure-requests">
+    <link rel="canonical" href="https://o-o1112.github.io/Block_lang/features.html">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://o-o1112.github.io/Block_lang/features.html">
+    <meta property="og:site_name" content="Block Engine">
+    <meta property="og:title" content="Product — Block Engine">
+    <meta property="og:description" content="Understand Block's polyglot execution model, shared state pipeline, security boundaries and three engine editions.">
+    <meta property="og:image" content="https://o-o1112.github.io/Block_lang/demo.gif">
+    <meta property="og:image:alt" content="Block Engine polyglot state pipeline demo">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Product — Block Engine">
+    <meta name="twitter:description" content="Build across Python, JavaScript, Lua, PHP and more with one readable Block program.">
+    <meta name="twitter:image" content="https://o-o1112.github.io/Block_lang/demo.gif">
+    <meta name="twitter:image:alt" content="Block Engine polyglot state pipeline demo">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Block Language", "item": "https://o-o1112.github.io/Block_lang/"},
+        {"@type": "ListItem", "position": 2, "name": "Product", "item": "https://o-o1112.github.io/Block_lang/features.html"}
+      ]
+    }
+    </script>
+    <title>Product — Block Engine</title>
+    <link rel="icon" href="logo.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="product">
+    <canvas id="bg-canvas" aria-hidden="true"></canvas>
+    <div class="noise" aria-hidden="true"></div>
+    <div id="cursor-aura" aria-hidden="true"></div>
+    <div id="scroll-progress" aria-hidden="true"></div>
+
+    <nav class="navbar" aria-label="Primary navigation">
+        <a href="index.html" class="logo" aria-label="Block home"><img src="logo.svg" alt="" class="logo-img-small"><span class="logo-text">BLOCK</span></a>
+        <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false"><span></span><span></span></button>
+        <div class="nav-links">
+            <a href="features.html" data-nav="product">Product</a>
+            <a href="features.html#capabilities">Capabilities</a>
+            <a href="features.html#architecture">Architecture</a>
+            <a href="features.html#editions">Editions</a>
+            <a href="downloads.html">Downloads</a>
+            <a href="https://github.com/O-O1112/Block_lang" class="nav-github" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+            <a href="wiki.html" class="btn-glow">Documentation</a>
+        </div>
+    </nav>
+
+    <main>
+        <header class="product-hero section-padding">
+            <div class="product-hero-copy reveal">
+                <p class="eyebrow"><span class="status-dot"></span> Product overview</p>
+                <h1>Build across languages.<br><span>Think as one system.</span></h1>
+                <p>Block is a local-first polyglot orchestration engine. It gives one file a clear way to coordinate multiple native runtimes, carry compatible state forward and expose execution as a sequence developers can understand.</p>
+                <div class="cta-group"><a href="#capabilities" class="btn-primary magnetic">Explore capabilities <span>&darr;</span></a><a href="downloads.html" class="btn-secondary magnetic">Get Block</a></div>
+            </div>
+            <div class="product-hero-panel reveal" aria-label="Block engine execution overview">
+                <div class="panel-head"><span>BLOCK / EXECUTION GRAPH</span><span class="live-label">LIVE</span></div>
+                <div class="runtime-graph">
+                    <div class="graph-source"><img src="logo.svg" alt="Block"><span>ORCHESTRATOR</span></div>
+                    <div class="graph-lines" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+                    <div class="graph-runtimes"><span>PYTHON</span><span>NODE.JS</span><span>PHP</span><span>SQLITE</span><span>RUST</span></div>
+                </div>
+                <div class="panel-metrics"><span><small>MODE</small>NATIVE</span><span><small>STATE</small>SYNCED</span><span><small>FLOW</small>SEQUENTIAL</span></div>
+            </div>
+        </header>
+
+        <nav class="chapter-nav" aria-label="On this page">
+            <span>PRODUCT / 01</span>
+            <div><a href="#capabilities">Capabilities</a><a href="#architecture">Architecture</a><a href="#state">Shared state</a><a href="#security">Boundaries</a><a href="#editions">Editions</a></div>
+        </nav>
+
+        <section class="product-intro section-padding">
+            <p class="giant-statement reveal">The best language for a task should be a design choice—not an integration problem.</p>
+            <div class="intro-columns reveal">
+                <p>Software rarely lives inside one ecosystem. A data workflow may begin in Python, a transformation may be easiest in JavaScript, a local database may belong in SQLite, and a systems component may need Rust or Go. Conventional approaches force those choices into separate repositories, services and hand-written bridges.</p>
+                <p>Block treats them as stages of the same program. You describe the language boundaries explicitly; the orchestrator prepares each stage, launches the native runtime and carries compatible values into the next context. The result is a workflow that stays compact without pretending every language is identical.</p>
+            </div>
+        </section>
+
+        <section id="capabilities" class="product-chapter section-padding">
+            <div class="chapter-heading reveal"><span>01 / CAPABILITIES</span><h2>One orchestration layer.<br>Many ways to build.</h2><p>Block is useful wherever a project benefits from more than one runtime but does not benefit from the operational weight of turning every boundary into a service.</p></div>
+
+            <article id="data-pipelines" class="feature-story reveal">
+                <div class="story-copy"><p class="eyebrow">Data pipelines</p><h3>Move from raw input to useful output without leaving the file.</h3><p>Use Python's mature analysis ecosystem to clean and enrich source data. Pass the result to SQLite for local querying or persistence, then let JavaScript shape a report, payload or interactive output. Each stage remains visible and ordered.</p><ul class="check-list"><li>Combine parsing, analysis, storage and formatting</li><li>Reduce temporary export files and one-off bridge scripts</li><li>Keep a reproducible pipeline close to its configuration</li></ul></div>
+                <div class="story-visual pipeline-visual">
+                    <svg class="story-svg pipeline-story-svg" viewBox="0 0 620 460" aria-hidden="true">
+                        <defs><filter id="softGlow"><feGaussianBlur stdDeviation="4" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+                        <path class="blueprint-grid" d="M30 80H590M30 160H590M30 240H590M30 320H590M110 30V410M230 30V410M350 30V410M470 30V410"/>
+                        <path class="story-route" d="M105 225C165 225 160 137 230 137H318C372 137 374 304 432 304H520"/>
+                        <g class="story-station station-one"><rect x="57" y="177" width="96" height="96"/><rect x="70" y="190" width="70" height="70"/><text x="105" y="221">PY</text><text x="105" y="246">PREPARE</text></g>
+                        <g class="story-station station-two"><rect x="262" y="89" width="96" height="96"/><circle cx="310" cy="137" r="34"/><text x="310" y="133">SQL</text><text x="310" y="153">QUERY</text></g>
+                        <g class="story-station station-three"><rect x="472" y="256" width="96" height="96"/><rect x="485" y="269" width="70" height="70" transform="rotate(45 520 304)"/><text x="520" y="301">JS</text><text x="520" y="321">PUBLISH</text></g>
+                        <circle class="story-packet packet-one" cx="0" cy="0" r="5" filter="url(#softGlow)"/><circle class="story-packet packet-two" cx="0" cy="0" r="4" filter="url(#softGlow)"/>
+                        <text class="story-label" x="30" y="438">DATA FLOW / 03 NATIVE STAGES / SHARED RESULT</text>
+                    </svg>
+                </div>
+            </article>
+
+            <article id="automation" class="feature-story reverse reveal">
+                <div class="story-copy"><p class="eyebrow">Automation</p><h3>Turn a chain of scripts into one inspectable operation.</h3><p>System automation often grows from a shell command into a PowerShell script, then gains a Python helper and a JavaScript formatter. Block gives that evolution a shared structure, so the operator runs one entry point while each language still uses its native strengths.</p><ul class="check-list"><li>Coordinate filesystem, network and data tasks</li><li>Make handoffs explicit instead of hiding them in shell pipes</li><li>Use the same file as implementation and execution map</li></ul></div>
+                <div class="story-visual automation-visual">
+                    <svg class="story-svg automation-story-svg" viewBox="0 0 620 460" aria-hidden="true">
+                        <circle class="auto-orbit orbit-alpha" cx="310" cy="220" r="142"/><circle class="auto-orbit orbit-beta" cx="310" cy="220" r="98"/><circle class="auto-orbit orbit-gamma" cx="310" cy="220" r="54"/>
+                        <path class="auto-spoke" d="M310 78V166M452 220H364M310 362V274M168 220H256"/>
+                        <g class="auto-module module-top"><rect x="274" y="42" width="72" height="56"/><text x="310" y="66">FS</text><text x="310" y="83">SCAN</text></g>
+                        <g class="auto-module module-right"><rect x="430" y="192" width="72" height="56"/><text x="466" y="216">PS</text><text x="466" y="233">SYSTEM</text></g>
+                        <g class="auto-module module-bottom"><rect x="274" y="342" width="72" height="56"/><text x="310" y="366">PY</text><text x="310" y="383">PROCESS</text></g>
+                        <g class="auto-module module-left"><rect x="118" y="192" width="72" height="56"/><text x="154" y="216">JS</text><text x="154" y="233">FORMAT</text></g>
+                        <rect class="auto-core" x="274" y="184" width="72" height="72" transform="rotate(45 310 220)"/><path class="auto-check" d="M294 220L306 232L329 202"/>
+                        <circle class="auto-packet auto-packet-a" cx="0" cy="0" r="5"/><circle class="auto-packet auto-packet-b" cx="0" cy="0" r="4"/>
+                        <text class="story-label" x="310" y="438">AUTOMATION LOOP / VERIFIED / REPEATABLE</text>
+                    </svg>
+                </div>
+            </article>
+
+            <article id="backend" class="feature-story reveal">
+                <div class="story-copy"><p class="eyebrow">Backend prototypes</p><h3>Validate the system before multiplying its infrastructure.</h3><p>Prototype internal APIs, import jobs and local services around the packages that solve the problem fastest. A team can test data flow and behavior in one Block program, then decide which boundaries genuinely deserve independent services later.</p><ul class="check-list"><li>Reuse existing language-specific SDKs</li><li>Keep early architecture easy to change</li><li>Expose execution stages for faster debugging</li></ul></div>
+                <div class="story-visual stack-visual">
+                    <svg class="story-svg stack-story-svg" viewBox="0 0 620 460" aria-hidden="true">
+                        <path class="stack-axis" d="M78 70V390M542 70V390"/>
+                        <g class="stack-layer layer-request"><path d="M95 98L310 42L525 98L310 154Z"/><path d="M95 98V140L310 196L525 140V98"/><text x="310" y="115">REQUEST LAYER</text></g>
+                        <g class="stack-layer layer-orchestrate"><path d="M95 210L310 154L525 210L310 266Z"/><path d="M95 210V252L310 308L525 252V210"/><text x="310" y="227">ORCHESTRATION</text></g>
+                        <g class="stack-layer layer-response"><path d="M95 322L310 266L525 322L310 378Z"/><path d="M95 322V364L310 420L525 364V322"/><text x="310" y="339">NATIVE RESPONSE</text></g>
+                        <path class="stack-signal" d="M310 70V390"/><circle class="stack-packet" cx="310" cy="70" r="6"/>
+                    </svg>
+                </div>
+            </article>
+
+            <article id="ai-tooling" class="feature-story reverse reveal">
+                <div class="story-copy"><p class="eyebrow">AI and model tooling</p><h3>Keep model work and application work in their natural ecosystems.</h3><p>Python can own preprocessing and inference while JavaScript, PHP or another runtime owns the surrounding application logic. Block coordinates the stages so experiments can grow into useful local tools without rewriting the model layer.</p><ul class="check-list"><li>Prepare inputs and post-process model output</li><li>Connect local inference to product logic</li><li>Keep runtime responsibilities clear</li></ul></div>
+                <div class="story-visual neural-visual">
+                    <svg class="story-svg neural-story-svg" viewBox="0 0 620 460" aria-hidden="true">
+                        <path class="neural-mesh" d="M90 84L238 164M90 230L238 198M90 376L238 232M382 164L530 84M382 198L530 230M382 232L530 376M90 84L90 230L90 376M530 84L530 230L530 376"/>
+                        <g class="neural-inputs"><circle cx="90" cy="84" r="12"/><circle cx="90" cy="230" r="12"/><circle cx="90" cy="376" r="12"/></g>
+                        <g class="neural-outputs"><circle cx="530" cy="84" r="12"/><circle cx="530" cy="230" r="12"/><circle cx="530" cy="376" r="12"/></g>
+                        <rect class="neural-processor" x="238" y="118" width="144" height="144" transform="rotate(45 310 190)"/><rect class="neural-processor inner" x="265" y="145" width="90" height="90" transform="rotate(45 310 190)"/>
+                        <text class="processor-title" x="310" y="186">MODEL</text><text class="processor-sub" x="310" y="208">INFERENCE</text>
+                        <circle class="neural-packet neural-packet-a" cx="0" cy="0" r="5"/><circle class="neural-packet neural-packet-b" cx="0" cy="0" r="5"/><circle class="neural-packet neural-packet-c" cx="0" cy="0" r="5"/>
+                        <text class="story-label" x="310" y="438">INPUT / INFERENCE / APPLICATION RESULT</text>
+                    </svg>
+                </div>
+            </article>
+
+            <article id="developer-tools" class="feature-story reveal">
+                <div class="story-copy"><p class="eyebrow">Developer tools</p><h3>Build the utility your team actually needs.</h3><p>Create migration assistants, code generators, release helpers and focused command-line tools. Use one runtime for system access, another for parsing and another for output—then distribute the operation as one understandable Block project.</p><ul class="check-list"><li>Compose existing command-line ecosystems</li><li>Replace undocumented script chains</li><li>Keep local tooling approachable for contributors</li></ul></div>
+                <div class="story-visual tool-visual">
+                    <svg class="story-svg tool-story-svg" viewBox="0 0 620 460" aria-hidden="true">
+                        <rect class="tool-terminal" x="74" y="58" width="472" height="324"/><path class="tool-header" d="M74 108H546"/><circle cx="98" cy="83" r="4"/><circle cx="114" cy="83" r="4"/><circle cx="130" cy="83" r="4"/>
+                        <path class="tool-prompt" d="M116 160L145 185L116 210M158 210H205"/>
+                        <g class="tool-code"><path class="tool-code-line line-a" d="M240 156H490"/><path class="tool-code-line line-b" d="M240 186H438"/><path class="tool-code-line line-c" d="M240 216H505"/><path class="tool-code-line line-d" d="M116 270H390"/><path class="tool-code-line line-e" d="M116 300H470"/></g>
+                        <rect class="tool-cursor" x="399" y="262" width="8" height="14"/><path class="tool-status" d="M116 340H504"/><circle class="tool-status-light" cx="493" cy="340" r="5"/>
+                        <text class="story-label" x="310" y="418">BUILD / VERIFY / SHIP</text>
+                    </svg>
+                </div>
+            </article>
+        </section>
+
+        <section id="architecture" class="architecture-deep product-chapter">
+            <div class="section-padding">
+                <div class="chapter-heading reveal"><span>02 / ARCHITECTURE</span><h2>Native execution with a clear control plane.</h2><p>The orchestrator coordinates; it does not attempt to become Python, Node.js or PHP. Each runtime remains responsible for its own semantics and ecosystem.</p></div>
+                <div class="architecture-diagram reveal">
+                    <div class="diagram-file"><span>INPUT</span><strong>PROGRAM.BLK</strong><small>Declared language blocks</small></div>
+                    <div class="diagram-arrow"><i></i><span>PARSE</span></div>
+                    <div class="diagram-core"><img src="logo.svg" alt=""><strong>C# ORCHESTRATOR</strong><small>Routing / lifecycle / state</small></div>
+                    <div class="diagram-arrow"><i></i><span>DISPATCH</span></div>
+                    <div class="diagram-runtime-list"><div><strong>PY</strong><span>python.exe</span></div><div><strong>JS</strong><span>node.exe</span></div><div><strong>PHP</strong><span>php.exe</span></div><div><strong>+</strong><span>edition runtimes</span></div></div>
+                </div>
+                <div class="architecture-notes">
+                    <article class="reveal"><span>01</span><h3>Parse the intent</h3><p>Block reads the source file, identifies the declared runtime for each section and constructs an ordered execution plan.</p></article>
+                    <article class="reveal"><span>02</span><h3>Prepare the boundary</h3><p>Names and compatible values are sanitized and encoded before they move between execution contexts.</p></article>
+                    <article class="reveal"><span>03</span><h3>Launch native tools</h3><p>The engine calls the actual runtime installed for that language, preserving familiar language behavior and library access.</p></article>
+                    <article class="reveal"><span>04</span><h3>Return the result</h3><p>Output and selected state return to the orchestrator, where the next declared stage can continue the program.</p></article>
+                </div>
+            </div>
+        </section>
+
+        <section id="state" class="state-section section-padding">
+            <div class="state-copy reveal"><p class="eyebrow">Shared state</p><h2>Pass the result forward, not the plumbing.</h2><p>Compatible values can move through Block's orchestration pipeline so each language stage can build on what came before. The transfer remains an explicit boundary: the engine prepares names and values for the destination context instead of pretending separate runtimes share one physical memory space.</p><p>This model is particularly useful for arrays, scalar values and structured workflow results. It reduces repetitive glue while preserving a sequential mental model: one stage produces, the orchestrator transfers, the next stage consumes.</p><a href="wiki-polyglot.html" class="text-link">Read the syntax guide <span>&rarr;</span></a></div>
+            <div class="state-machine reveal"><div class="state-header"><span>STATE TRANSFER</span><strong>03 OBJECTS</strong></div><div class="state-row"><span>PY</span><code>scores[]</code><i></i><strong>READY</strong></div><div class="state-row"><span>PY</span><code>summary{}</code><i></i><strong>READY</strong></div><div class="state-row"><span>PY</span><code>elapsed</code><i></i><strong>READY</strong></div><div class="state-bridge"><span>MASK</span><i></i><span>SERIALIZE</span><i></i><span>INJECT</span></div><div class="state-destination"><span>DESTINATION</span><strong>NODE.JS / GLOBAL SCOPE</strong></div></div>
+        </section>
+
+        <section id="security" class="boundary-section">
+            <div class="section-padding">
+                <div class="chapter-heading reveal"><span>03 / BOUNDARIES</span><h2>Designed around explicit runtime transitions.</h2><p>Polyglot execution introduces trust boundaries. Block makes those transitions a first-class part of the engine rather than leaving every project to invent its own string interpolation strategy.</p></div>
+                <div class="boundary-grid">
+                    <article class="reveal"><span class="boundary-number">01</span><svg class="boundary-glyph" viewBox="0 0 72 72" aria-hidden="true"><rect x="12" y="17" width="48" height="38"/><path d="M21 28H51M21 36H43M21 44H47"/><path class="boundary-scan" d="M8 22H64"/></svg><h3>String masking</h3><p>Transferred text is prepared before it reaches a destination runtime, reducing the risk created by unsafe direct interpolation.</p></article>
+                    <article class="reveal"><span class="boundary-number">02</span><svg class="boundary-glyph" viewBox="0 0 72 72" aria-hidden="true"><path d="M12 21H60V51H12Z"/><path d="M22 31L29 36L22 41M34 42H49"/><circle class="boundary-pulse" cx="55" cy="17" r="5"/></svg><h3>Name sanitization</h3><p>Variable identifiers pass through validation so generated destination scope does not become an uncontrolled code surface.</p></article>
+                    <article class="reveal"><span class="boundary-number">03</span><svg class="boundary-glyph" viewBox="0 0 72 72" aria-hidden="true"><path d="M36 8L59 18V34C59 50 49 59 36 64C23 59 13 50 13 34V18Z"/><rect x="27" y="29" width="18" height="16"/><path d="M30 29V24C30 16 42 16 42 24V29"/></svg><h3>Process isolation</h3><p>Each native interpreter runs as its own managed process, giving the orchestrator a clear lifecycle and input/output boundary.</p></article>
+                </div>
+                <p class="boundary-note reveal">Security is a system property. Block's transfer pipeline reduces common cross-runtime hazards, but projects should still validate untrusted inputs, review invoked code and follow the security guidance of every runtime they use.</p>
+            </div>
+        </section>
+
+        <section id="developer-experience" class="developer-section section-padding">
+            <div class="developer-panel reveal">
+                <div><p class="eyebrow">Developer experience</p><h2>A small language surface, backed by familiar ecosystems.</h2><p>Block keeps orchestration syntax intentionally compact. You spend less time learning framework-specific abstractions and more time writing ordinary code inside clear language blocks.</p></div>
+                <div class="developer-features"><p><span>01</span><strong>Readable block delimiters</strong><small>Language boundaries are visible in source.</small></p><p><span>02</span><strong>Editor extensions</strong><small>Syntax support for VS Code and Acode.</small></p><p><span>03</span><strong>Installer-assisted setup</strong><small>Choose an edition and configure the environment.</small></p><p><span>04</span><strong>Observable execution</strong><small>Follow startup, transfer and completion output.</small></p></div>
+            </div>
+        </section>
+
+        <section id="editions" class="comparison-section">
+            <div class="section-padding">
+                <div class="chapter-heading reveal"><span>04 / EDITIONS</span><h2>Choose the runtime surface that matches the work.</h2><p>All editions share Block's file model and orchestration philosophy. The difference is how far the available runtime matrix extends.</p></div>
+                <div class="comparison-table-wrap reveal">
+                    <table class="comparison-table">
+                        <thead><tr><th>Capability</th><th><span>Block Lite</span><small>Compact</small></th><th class="recommended"><span>Block</span><small>Standard</small></th><th><span>Block+</span><small>Expanded</small></th></tr></thead>
+                        <tbody>
+                            <tr><th>Best for</th><td>Learning and lightweight scripting</td><td>Everyday polyglot workflows</td><td>Advanced tooling and systems work</td></tr>
+                            <tr><th>Core runtimes</th><td>Python, JavaScript, HTML</td><td>Python, JS, PHP, Lua, SQLite</td><td>Standard plus Rust, Go, C++, Zig, Perl, PowerShell and more</td></tr>
+                            <tr><th>Shared workflow</th><td><span class="yes">●</span></td><td><span class="yes">●</span></td><td><span class="yes">●</span></td></tr>
+                            <tr><th>Native process execution</th><td><span class="yes">●</span></td><td><span class="yes">●</span></td><td><span class="yes">●</span></td></tr>
+                            <tr><th>Dynamic state propagation</th><td>Essentials</td><td>Full scripting workflow</td><td>Advanced runtime matrix</td></tr>
+                            <tr><th>Installer</th><td>Verified Lite download</td><td>Verified Standard download</td><td>Verified Plus download</td></tr>
+                            <tr><th>File extension</th><td><code>.blkl</code></td><td><code>.blk</code></td><td><code>.blkp</code></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="comparison-actions reveal"><a href="downloads.html" class="btn-primary magnetic">Choose a download <span>&rarr;</span></a><a href="wiki-install.html" class="btn-secondary magnetic">Installation guide</a></div>
+            </div>
+        </section>
+
+        <section class="closing-section compact-closing">
+            <div class="closing-orbit" aria-hidden="true"><i></i><i></i><i></i></div>
+            <div class="closing-copy reveal"><img src="logo.svg" alt="" width="72" height="72"><p class="eyebrow">Start with one file</p><h2>Give every runtime a place in the same idea.</h2><p>Download Block, choose an edition and build your first orchestrated program.</p><div class="cta-group"><a href="downloads.html" class="btn-primary magnetic">Download Block <span>&rarr;</span></a><a href="wiki.html" class="btn-secondary magnetic">Read the docs</a></div></div>
+        </section>
+    </main>
+
+<footer class="site-footer"><div class="footer-brand"><img src="logo.svg" alt="" width="34" height="34"><strong>BLOCK</strong></div><p>Native execution, orchestrated.</p><div class="footer-links"><a href="index.html">Home</a><a href="downloads.html">Downloads</a><a href="wiki.html">Documentation</a><a href="contact.html">Contact</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="security.html">Security</a></div><p class="copyright">&copy; 2026 Block Engine.</p></footer>
+    <script src="script.js"></script><!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "12b429e6c7ed419dba2c29a840359c59"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
