@@ -1,6 +1,7 @@
 # Block Language — Block Engine
 
 [![Build and test](https://github.com/O-O1112/Block_lang/actions/workflows/ci.yml/badge.svg)](https://github.com/O-O1112/Block_lang/actions/workflows/ci.yml)
+[![Website](https://github.com/O-O1112/Block_lang/actions/workflows/site-ci.yml/badge.svg?branch=gh-pages)](https://github.com/O-O1112/Block_lang/actions/workflows/site-ci.yml?query=branch%3Agh-pages)
 [![Latest tag](https://img.shields.io/github/v/tag/O-O1112/Block_lang?sort=semver&label=latest%20tag)](https://github.com/O-O1112/Block_lang/tags)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -8,7 +9,7 @@
 
 If you are looking for a polyglot programming language, a multi-language scripting workflow, a Python-to-JavaScript bridge, or a local-first automation engine built around readable `.blk` files, Block is designed for that use case.
 
-**Start here:** [download the engine](downloads.html) · [read the documentation](wiki.html) · [run the examples](examples/) · [join the Community Lab](docs/COMMUNITY-LAB.md) · [read the book source](docs/book/) · [report an external result](docs/THIRD-PARTY-VALIDATION.md) · [browse the source on GitHub](https://github.com/O-O1112/Block_lang)
+**Start here:** [download the engine](https://o-o1112.github.io/Block_lang/downloads.html) · [read the documentation](https://o-o1112.github.io/Block_lang/wiki.html) · [run the examples](examples/) · [join the Community Lab](docs/COMMUNITY-LAB.md) · [read the book source](docs/book/) · [report an external result](docs/THIRD-PARTY-VALIDATION.md) · [browse the source on GitHub](https://github.com/O-O1112/Block_lang)
 
 Maintainers can use the [organic growth playbook](docs/GROWTH.md) to turn demos, releases, and user feedback into a repeatable discovery-to-install funnel.
 
@@ -166,7 +167,7 @@ Use Block when you want:
 
 The versioned installer is [`BlockSetup-v2.2.6.5.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.6.5/BlockSetup-v2.2.6.5.exe).
 The stable download alias is [`BlockSetup.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.6.5/BlockSetup.exe).
-The same files are also linked from the [download page](downloads.html).
+The same files are also linked from the [official download page](https://o-o1112.github.io/Block_lang/downloads.html).
 
 1. Run the installer.
 2. Choose the installation directory.
@@ -943,10 +944,10 @@ This reflects the core philosophy of Block: write each task in the language best
 
 ## Repository Layout and Release Verification
 
-This GitHub repository also hosts the Block Pages download site. The root
-website files and published download artifacts intentionally keep their stable
-paths; source code and maintainer notes are separated into `src/`, the two
-extension directories, and `docs/`.
+The default branch contains the Block Engine, editor integrations, tests, and
+maintainer documentation. The public website is maintained separately on the
+[`gh-pages`](https://github.com/O-O1112/Block_lang/tree/gh-pages) branch so
+website implementation files do not obscure the engine's language statistics.
 
 For the maintainer build and release checks, run:
 
@@ -1072,7 +1073,7 @@ makes project growth easy to verify.
 - [MIT License](LICENSE)
 - [v2.2.6.5 release manifest](docs/RELEASE-2.2.6.5.md)
 
-The visual documentation site is available from [`wiki.html`](wiki.html). The
+The visual documentation site is available from the [Block documentation site](https://o-o1112.github.io/Block_lang/wiki.html). The
 Markdown Wiki is the reviewable source for the same installation, syntax,
 architecture, and troubleshooting topics.
 

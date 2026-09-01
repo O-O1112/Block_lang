@@ -22,7 +22,7 @@ Avoid promising that Block replaces a mature language or bundles every runtime. 
 | --- | --- | --- | --- |
 | Discovery | “What is this for?” | Homepage headline and use cases | Qualified page visit |
 | Proof | “Can it solve my small problem?” | [`examples/`](../examples/) and the demo GIF | Example opened or copied |
-| Activation | “Can I run it now?” | [Downloads](../downloads.html), installer, and one-minute README | Download plus first run |
+| Activation | “Can I run it now?” | [Downloads](https://o-o1112.github.io/Block_lang/downloads.html), installer, and one-minute README | Download plus first run |
 | Trust | “Is it maintained and safe?” | CI badge, release manifest, security policy, and source | GitHub visit, issue, or star |
 | Retention | “Where do I go next?” | Documentation, changelog, and issue templates | Repeat visit or contribution |
 

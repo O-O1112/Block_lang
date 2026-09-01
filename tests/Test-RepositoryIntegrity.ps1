@@ -10,8 +10,7 @@ $required = @(
     'CITATION.cff', 'Installer.cs', 'build.ps1', 'build-installer.ps1',
     'build-release.ps1', 'verify-release.ps1', 'src\Program.cs',
     'src\Parser.cs', 'src\Executor.cs', 'src\ProjectWorkspace.cs',
-    'docs\DEPLOYMENT-SECURITY.md', 'docs\RELEASE-SIGNING.md',
-    'privacy.html', 'terms.html', 'contact.html', 'security.html'
+    'docs\DEPLOYMENT-SECURITY.md', 'docs\RELEASE-SIGNING.md'
 )
 foreach ($path in $required) {
     if (-not (Test-Path -LiteralPath (Join-Path $RepositoryRoot $path))) {

@@ -24,7 +24,7 @@ endorsements. A failure, limitation, or confusing step is useful evidence.
 
 ## Tester lane: release-first, no build required
 
-1. Download a release from the [official download page](../downloads.html) or
+1. Download a release from the [official download page](https://o-o1112.github.io/Block_lang/downloads.html) or
    the [GitHub Releases page](https://github.com/O-O1112/Block_lang/releases).
 2. Read the [security policy](../SECURITY.md) and run only scripts you trust.
 3. Start with `examples/native-control-flow.blk`, then choose one deeper test

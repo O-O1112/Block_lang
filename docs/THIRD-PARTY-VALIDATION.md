@@ -34,7 +34,7 @@ Do not request or publish passwords, API keys, private source code, personal add
 Send testers this short path:
 
 1. Read the [security policy](../SECURITY.md) and only run scripts they trust.
-2. Download a release from the [download page](../downloads.html) or use the published repository.
+2. Download a release from the [official download page](https://o-o1112.github.io/Block_lang/downloads.html) or use the published repository.
 3. Start with one of the [copy-ready examples](../examples/README.md).
 4. Record the exact edition, runtime versions, command, output, and any failure.
 5. Submit the result through the [validation report form](https://github.com/O-O1112/Block_lang/issues/new?template=validation_report.yml), a GitHub Discussion, or an independent article.

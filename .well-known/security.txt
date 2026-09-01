@@ -1,5 +1,0 @@
-Contact: https://github.com/O-O1112/Block_lang/security/advisories/new
-Policy: https://github.com/O-O1112/Block_lang/blob/main/SECURITY.md
-Canonical: https://o-o1112.github.io/Block_lang/.well-known/security.txt
-Preferred-Languages: en, zh-Hant
-Expires: 2027-08-23T00:00:00.000Z

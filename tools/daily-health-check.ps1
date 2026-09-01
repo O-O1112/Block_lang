@@ -29,8 +29,6 @@ $checks = @(
     @('tests\Test-HealthHardening.ps1', '-EngineDirectory', (Join-Path $OutputDirectory 'bin'), '-RepositoryRoot', $RepositoryRoot),
     @('tests\Test-VersionConsistency.ps1', '-RepositoryRoot', $RepositoryRoot),
     @('tests\Test-RepositoryIntegrity.ps1', '-RepositoryRoot', $RepositoryRoot),
-    @('tests\Test-WebsiteLinks.ps1', '-RepositoryRoot', $RepositoryRoot),
-    @('tests\Test-WebsiteSecurity.ps1', '-RepositoryRoot', $RepositoryRoot),
     @('tests\Test-InstallerTransport.ps1', '-RepositoryRoot', $RepositoryRoot)
 )
 
