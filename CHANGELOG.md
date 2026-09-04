@@ -2,6 +2,27 @@
 
 All notable changes to the Block execution engine will be documented in this file.
 
+## [2.7.0] - 2026-09-04
+
+### Stability and security hardening
+
+- Added Windows Job Object memory limits for child runtimes: 512 MiB per child
+  process and 1 GiB per execution job.
+- Rejected excess local API work before it enters the thread pool, returning HTTP
+  429 instead of allowing unbounded pending requests.
+- Added constant-work API token comparison and regenerated configured tokens that
+  are shorter than 32 characters.
+- Added `nosniff`, `no-store`, and `no-referrer` response headers to local API
+  responses.
+- Expanded health-hardening regression checks for resource limits, token handling,
+  and request admission.
+- Updated active documentation, editor integrations, release metadata, and AI
+  knowledge files to the 2.7.0 release line.
+
+The API server remains loopback-only. `NetworkBlocked` is still an advisory
+runtime guard, not an operating-system sandbox; untrusted code must be isolated
+outside Block.
+
 ## [2.2.6.5] - 2026-08-30
 
 - Added four-component release-version support across the engine build, installer,

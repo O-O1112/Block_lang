@@ -24,7 +24,7 @@ before downloading or verifying a release.
 
 | Item | Details |
 | --- | --- |
-| Current release | `2.2.6.5` |
+| Current release | `2.7.0` |
 | Primary platform | Windows 10/11 release workflow |
 | Execution model | Parse one document, run native stages in order, transfer serializable state |
 | Editions | Lite (`.blkl`), Standard (`.blk`), Plus (`.blkp`) |
@@ -165,8 +165,8 @@ Use Block when you want:
 
 ### Windows installer
 
-The versioned installer is [`BlockSetup-v2.2.6.5.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.6.5/BlockSetup-v2.2.6.5.exe).
-The stable download alias is [`BlockSetup.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.6.5/BlockSetup.exe).
+The versioned installer is [`BlockSetup-v2.7.0.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.7.0/BlockSetup-v2.7.0.exe).
+The stable download alias is [`BlockSetup.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.7.0/BlockSetup.exe).
 The same files are also linked from the [official download page](https://o-o1112.github.io/Block_lang/downloads.html).
 
 1. Run the installer.
@@ -208,7 +208,7 @@ runtime.
 
 ### Build from source
 
-The v2.2.6.5 Windows build uses the .NET Framework C# compiler available at
+The v2.7.0 Windows build uses the .NET Framework C# compiler available at
 `%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\csc.exe`:
 
 ```powershell
@@ -283,7 +283,7 @@ communicate which engine is expected.
 ## CLI reference
 
 The executable name depends on the edition. The following commands are available
-in the v2.2.6.5 Windows build:
+in the v2.7.0 Windows build:
 
 | Command | Lite | Standard | Plus | Purpose |
 | --- |:---:|:---:|:---:| --- |
@@ -714,7 +714,7 @@ Because this spawns external processes, it is subject to security policy checks.
 
 ### VS Code
 
-The repository publishes [`block-language-2.2.6.5.vsix`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.6.5/block-language-2.2.6.5.vsix).
+The repository publishes [`block-language-2.7.0.vsix`](https://github.com/O-O1112/Block_lang/releases/download/v2.7.0/block-language-2.7.0.vsix).
 In VS Code, open **Extensions**, choose **Install from VSIX...**, select the
 package, and reload the window if prompted.
 
@@ -726,7 +726,7 @@ host runtime.
 ### Acode
 
 The mobile editor package is
-[`acode-plugin-block-2.2.6.5.zip`](https://github.com/O-O1112/Block_lang/releases/download/v2.2.6.5/acode-plugin-block-2.2.6.5.zip). Install it through
+[`acode-plugin-block-2.7.0.zip`](https://github.com/O-O1112/Block_lang/releases/download/v2.7.0/acode-plugin-block-2.7.0.zip). Install it through
 Acode's plugin workflow, then configure the local execution command if the device
 or terminal environment uses a non-default path.
 
@@ -750,7 +750,7 @@ Block adopts a local-first, conservative security design:
 
 Security configurations do not replace rigorous code review. Never execute untrusted `.blk`, `.blkl`, or `.blkp` files, as language blocks invoke host runtimes directly.
 
-### Default configuration in v2.2.6.5
+### Default configuration in v2.7.0
 
 New configurations use conservative defaults:
 
@@ -974,7 +974,7 @@ when both host runtimes are available.
 
 ### Package and verify a release
 
-The complete v2.2.6.5 release flow builds the three engines, creates matching ZIP
+The complete v2.7.0 release flow builds the three engines, creates matching ZIP
 bundles, packages the VS Code and Acode extensions, builds the installer, and
 verifies the published artifacts and hashes:
 
@@ -996,9 +996,9 @@ published checksum changes.
 
 ---
 
-## v2.2.6.5 status and known boundaries
+## v2.7.0 status and known boundaries
 
-Version 2.2.6.5 is the current documented release line. It includes the Lite,
+Version 2.7.0 is the current documented release line. It includes the Lite,
 Standard, and Plus engines, the Windows installer, the VS Code extension, the
 Acode plugin, native control flow, cross-runtime state synchronization, local
 local imports, project discovery, the Plus
@@ -1019,7 +1019,7 @@ promises:
 - Process timeouts and import limits reduce accidental resource abuse but do not
   turn arbitrary native code into a security sandbox.
 
-See the [changelog](CHANGELOG.md) and [v2.2.6.5 release notes](docs/RELEASE-2.2.6.5.md)
+See the [changelog](CHANGELOG.md) and [v2.7.0 release notes](docs/RELEASE-2.7.0.md)
 for the tested changes and release artifact contract. Planned behavior should not
 be read as shipped behavior.
 
@@ -1027,7 +1027,7 @@ be read as shipped behavior.
 
 ## Roadmap
 
-The [public roadmap](ROADMAP.md) separates the v2.2.6.5 foundation, proposed next
+The [public roadmap](ROADMAP.md) separates the v2.7.0 foundation, proposed next
 steps, and longer-term ideas. If you want to help Block grow, a reproducible
 example, documentation fix, regression test, or real workflow is more useful than
 an unverified benchmark.
@@ -1071,7 +1071,7 @@ makes project growth easy to verify.
 - [Code of Conduct](CODE_OF_CONDUCT.md)
 - [Citation metadata](CITATION.cff)
 - [MIT License](LICENSE)
-- [v2.2.6.5 release manifest](docs/RELEASE-2.2.6.5.md)
+- [v2.7.0 release manifest](docs/RELEASE-2.7.0.md)
 
 The visual documentation site is available from the [Block documentation site](https://o-o1112.github.io/Block_lang/wiki.html). The
 Markdown Wiki is the reviewable source for the same installation, syntax,
@@ -2017,7 +2017,7 @@ For a release asset, keep these facts together:
 Example checksum verification on Windows:
 
 ```powershell
-Get-FileHash .\BlockSetup-v2.2.6.5.exe -Algorithm SHA256
+Get-FileHash .\BlockSetup-v2.7.0.exe -Algorithm SHA256
 Get-Content .\SHA256SUMS.txt
 ```
 

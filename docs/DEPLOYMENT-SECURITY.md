@@ -29,7 +29,7 @@ exists on the website branch.
 
 1. Check out `gh-pages`; its `site-ci.yml` workflow runs
    `tests/Test-WebsiteLinks.ps1` and `tests/Test-WebsiteSecurity.ps1`.
-2. Confirm downloads point to the matching `v2.2.6.5` GitHub Release or a byte-for-
+2. Confirm downloads point to the matching `v2.7.0` GitHub Release or a byte-for-
    byte identical same-origin artifact.
 3. Inspect public response headers with browser developer tools or `curl -I`.
 4. Verify that no secret, private source map, credential, or local path was

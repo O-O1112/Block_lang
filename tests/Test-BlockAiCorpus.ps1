@@ -49,7 +49,7 @@ foreach ($case in $evalCases) {
 }
 
 $policy = Get-Content -LiteralPath (Join-Path $aiRoot 'SYSTEM-PROMPT.md') -Raw
-foreach ($fact in @('There is no `<block>` tag', 'v2.2.6.5', 'serializable', 'local-first')) {
+foreach ($fact in @('There is no `<block>` tag', 'v2.7.0', 'serializable', 'local-first')) {
     if (-not $policy.Contains($fact)) { throw "AI policy is missing canonical fact: $fact" }
 }
 

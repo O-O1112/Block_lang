@@ -178,7 +178,7 @@ namespace BlockEngine
         private static void StartServer(EngineConfig cfg, string scriptPath)
         {
             Console.WriteLine(string.Format("\n[ BLOCK SERVER IS RUNNING ON HTTP://LOCALHOST:{0} ]\n", serverPort));
-            if (string.IsNullOrEmpty(cfg.ApiToken))
+            if (string.IsNullOrEmpty(cfg.ApiToken) || cfg.ApiToken.Length < SecurityLimits.MinimumApiTokenLength)
                 cfg.ApiToken = Guid.NewGuid().ToString("N");
             Console.WriteLine("=> Server Security Token: " + cfg.ApiToken);
             
@@ -276,7 +276,7 @@ namespace BlockEngine
                 if (!string.IsNullOrEmpty(cfg.ApiToken))
                 {
                     string token = req.Headers["X-Api-Token"];
-                    if (string.IsNullOrEmpty(token) || token != cfg.ApiToken)
+                    if (string.IsNullOrEmpty(token) || !SecurityLimits.SecureEquals(token, cfg.ApiToken))
                     {
                         res.StatusCode = 403;
                         res.Close();

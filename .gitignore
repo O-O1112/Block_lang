@@ -24,8 +24,12 @@
 /block-vscode-extension/*.zip
 /acode-plugin-block/*.zip
 
-# Keep the release files at the repository root tracked: GitHub Pages uses
-# their stable download paths.
+# Release assets are generated in a release directory and published from
+# GitHub Releases. Do not commit generated binaries or checksums to main.
+/*.exe
+/*.zip
+/*.vsix
+/SHA256SUMS.txt
 
 # Keep promotional video and media production files local.
 /media/
