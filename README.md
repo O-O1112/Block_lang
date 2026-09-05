@@ -52,6 +52,10 @@ before downloading or verifying a release.
 - [Roadmap](#roadmap)
 - [Community and discovery](#community-and-discovery)
 - [Documentation and contribution](#documentation-contribution-and-license)
+- [Project story and evolution](#project-story-and-evolution)
+- [Where Block fits](#where-block-fits)
+- [A production-minded workflow](#a-production-minded-workflow)
+- [Keeping projects reproducible](#keeping-projects-reproducible)
 - [A longer first tour](#a-longer-first-tour)
 - [Core concepts](#core-concepts)
 - [A practical learning path](#a-practical-learning-path)
@@ -1094,6 +1098,233 @@ architecture, and troubleshooting topics.
 **Leave the language to the language; let Block handle the flow.**
 
 There is no need to abandon familiar tools to bridge multi-language workflows. Place each task into its respective block and let your data flow forward naturally.
+
+---
+
+## Project story and evolution
+
+Block has grown from a small JavaScript/Node.js-oriented prototype into a
+reviewable local-first engine. The goal has stayed consistent throughout that
+growth: keep the source readable, keep the execution boundary visible, and
+avoid making a user maintain a fragile collection of one-off glue scripts.
+
+The version history is documented in [`CHANGELOG.md`](CHANGELOG.md). The short
+map below is intended as a useful orientation rather than a replacement for
+the release notes:
+
+| Era | Direction | Why it matters |
+| --- | --- | --- |
+| Early JavaScript/Node.js prototypes | Establish the document-and-runtime idea | The original experiments proved that a single readable file could coordinate work across runtime boundaries. |
+| 2.2.x language foundation | Native Block control flow, state transfer, diagnostics, and editor support | Block became useful even when a workflow did not need a second host language for every step. |
+| 2.2.2 workspace improvements | Project roots, workspace discovery, explicit `run`, `check`, and `ast` commands | Users no longer need to keep changing directories or guess which same-named file will run. |
+| 2.2.5 ecosystem experiment | Release packaging, health checks, and a package-registry experiment | The experiment exposed the maintenance and trust costs of remote package loading. |
+| 2.2.6 and 2.2.6.5 trust reset | Remove the third-party package loader, harden downloads, improve diagnostics, and verify artifacts | The project chose a smaller, more inspectable core over a larger but harder-to-trust ecosystem. |
+| 2.7.0 stability line | Admission limits, child-process resource controls, and local API hardening | A local tool still needs predictable failure behavior when inputs or workloads are abnormal. |
+| 2.7.1 maintenance line | Fail-closed process limits, stricter custom-runtime validation, response hardening, and CI timeouts | The current release makes the security and maintenance contract more explicit. |
+
+This history also explains a few apparent absences. The current project does
+not promise a remote package marketplace, browser execution, or automatic
+installation of arbitrary language runtimes. Those ideas may be interesting,
+but they change the trust boundary and the support burden. Block's current
+foundation prioritizes local files, explicit imports, official release assets,
+and evidence that can be checked in CI.
+
+### The design decisions behind the name
+
+The word “Block” describes the unit of composition, not a new replacement
+syntax for every language. A Python block should look like Python. A JavaScript
+block should look like JavaScript. The surrounding document supplies the
+structure that lets those pieces be checked, ordered, and connected.
+
+That gives the project three practical promises:
+
+1. **Readable composition:** a reviewer can see which runtime owns each piece
+   of work.
+2. **Explicit data movement:** values cross a serialization boundary instead
+   of silently sharing process memory.
+3. **Predictable local execution:** project roots, workspaces, imports,
+   timeouts, and diagnostics are governed by documented rules.
+
+It also gives Block three deliberate non-promises:
+
+1. It does not make native Python, Node.js, PHP, or other host code harmless.
+2. It does not remove the need to install the host runtime used by a stage.
+3. It does not turn a Windows executable into a complete operating-system
+   sandbox merely because the file was downloaded from GitHub.
+
+---
+
+## Where Block fits
+
+Block is most valuable in the space between a single-language script and a
+large service platform. It is a good fit when the workflow is local, the steps
+are naturally polyglot, and a person should be able to open the source and
+understand the order of operations.
+
+### Good fits
+
+- **Data preparation:** use Python for parsing or analysis, JavaScript for a
+  Node-based transformation, and JSON for a stable hand-off or report.
+- **Developer automation:** combine a native validation step with a host
+  runtime that already exists on the developer's machine.
+- **Teaching and demonstrations:** show several languages in one document
+  without hiding the boundary between them.
+- **Local tools and prototypes:** expose a small localhost endpoint while the
+  project is being developed and tested.
+- **Reproducible examples:** keep one entry document, a small `modules/`
+  directory, and a documented set of runtime prerequisites in Git.
+
+### Poor fits
+
+- **Untrusted code execution:** use an operating-system sandbox, container, or
+  virtual machine. Block's controls reduce accidental abuse but do not replace
+  isolation.
+- **Public production APIs:** the built-in server is a local development tool;
+  use a properly secured service stack for public traffic.
+- **Dependency distribution at internet scale:** use a package manager or
+  registry designed for that trust and update model. Block intentionally keeps
+  third-party package loading outside the current core.
+- **A workflow that requires identical GUI behavior on every machine:** install
+  and test the host tools explicitly, because GUI and compiler behavior belongs
+  to the operating system and toolchain.
+
+### Block compared with a shell script
+
+Shell scripts remain useful, especially for operating-system tasks. Block is
+not meant to replace them universally. The difference is that Block makes a
+multi-language document's structure and state boundary part of the source
+format. A shell script commonly passes text through commands and inherits
+implicit working-directory behavior; Block can resolve a project, validate its
+stages, and report a structured diagnostic before launching a runtime.
+
+The two tools can coexist. A Block stage may call a carefully reviewed host
+command when the project requires it, while the surrounding document keeps the
+workflow's data contract visible. Treat that host command as executable native
+code and review it accordingly.
+
+---
+
+## A production-minded workflow
+
+Block is local-first, but “local” does not have to mean informal. The following
+workflow keeps experiments easy while preserving habits that scale to a team.
+
+### 1. Start with a small contract
+
+Define the input and output of each stage before filling in implementation
+details. For example:
+
+```text
+input file -> Python normalizes records -> JavaScript enriches records
+           -> native check verifies counts -> JSON renders the result
+```
+
+Write only the fields that downstream stages need. A small contract is easier
+to validate, easier to serialize, and less likely to expose secrets or runtime
+objects by accident.
+
+### 2. Validate before executing
+
+Make `check` and, where useful, `ast` part of the normal edit loop:
+
+```powershell
+block check .\main.blk
+block ast .\main.blk
+```
+
+Use `check` to catch structural problems and `ast` to inspect the parsed shape.
+Neither command executes native host code, and neither is a substitute for a
+security review.
+
+### 3. Run with explicit paths in automation
+
+Interactive use can rely on project discovery. CI and scripts should make the
+entry file clear and should stop when the engine returns a failure:
+
+```powershell
+block project root
+block run .\main.blk
+if ($LASTEXITCODE -ne 0) {
+    throw "Block execution failed"
+}
+```
+
+Do not infer success from a partial log. The process exit code is the contract
+that automation should consume.
+
+### 4. Record the environment
+
+For a workflow that another person must reproduce, record the Block version,
+edition, operating system, runtime versions, entry document, and expected
+output. Keep credentials and private paths out of the record. When a failure
+crosses a process boundary, say which runtime reported it.
+
+### 5. Review the diff, not only the output
+
+The final output can look correct while a source change accidentally broadens
+an import path, increases a timeout, or exports too much state. Review the
+Block file, project manifest, configuration changes, and generated artifacts
+alongside the output they produce.
+
+---
+
+## Keeping projects reproducible
+
+The smallest useful Block project is intentionally boring. Boring projects are
+easy to copy, test, archive, and restore.
+
+```text
+sample-project/
+├─ block.project.json       # entry-point and project metadata
+├─ main.blk                 # the documented entry file
+├─ modules/                 # reviewed local imports
+│  └─ common.blk
+├─ examples/                # small runnable demonstrations
+├─ tests/                   # checks and safe fixtures
+└─ README.md                # prerequisites and expected behavior
+```
+
+### Keep the entry point stable
+
+Choose one entry document and keep its name in the project manifest. This lets
+contributors run the project from a child directory and avoids instructions
+that begin with “change to this exact folder first.” Use `block project root`
+and `block project run` to confirm what the engine will select.
+
+### Keep imports explicit
+
+Prefer a short, reviewed relative import:
+
+```block
+<import src="modules/common.blk" />
+```
+
+Do not construct import paths from uncontrolled input. Do not treat a local
+module as trusted merely because it sits beside the entry file; review it like
+any other executable source.
+
+### Keep generated files out of source review
+
+Build output, temporary state, `.bak` files, local configuration, downloaded
+archives, and private reports should be ignored or stored outside the project
+unless they are intentionally part of a release. A release artifact should be
+recreated by the documented build and verification commands instead of copied
+from an untracked working directory.
+
+### Keep examples honest
+
+Every example should state its required edition and host runtimes. A native
+Block example is the best first test because it does not depend on Python or
+Node.js. A polyglot example should say exactly which commands must exist on
+`PATH` and what output is expected.
+
+### Keep failures useful
+
+When filing an issue, include a minimal safe source file, the exact command,
+the Block version, the edition, and the relevant runtime versions. Remove
+tokens, passwords, certificates, private paths, and personal data. Use the
+private security-reporting path for vulnerabilities rather than publishing an
+exploitable reproduction in a normal issue.
 
 ---
 
