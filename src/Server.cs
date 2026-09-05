@@ -74,6 +74,13 @@ namespace BlockEngine
             catch { return false; }
         }
 
+        private static void AddSecurityHeaders(HttpListenerResponse response)
+        {
+            response.Headers["X-Content-Type-Options"] = "nosniff";
+            response.Headers["Cache-Control"] = "no-store";
+            response.Headers["Referrer-Policy"] = "no-referrer";
+        }
+
         private static async Task<string> ReadBodyAsync(Stream input, Encoding encoding, long maxBytes)
         {
             if (maxBytes <= 0 || maxBytes > SecurityLimits.MaxJsonBytes)
@@ -201,7 +208,22 @@ namespace BlockEngine
             
             HttpListener listener = new HttpListener();
             listener.Prefixes.Add(string.Format("http://localhost:{0}/", serverPort));
-            listener.Start();
+            try
+            {
+                listener.Start();
+            }
+            catch (PlatformNotSupportedException ex)
+            {
+                Console.Error.WriteLine("[ERROR] The local HTTP listener is not supported by this runtime/platform: " + ex.Message);
+                Environment.ExitCode = 1;
+                return;
+            }
+            catch (HttpListenerException ex)
+            {
+                Console.Error.WriteLine("[ERROR] Failed to start Block server: " + ex.Message);
+                Environment.ExitCode = 1;
+                return;
+            }
 
             // M7: Fix: Run the accept loop in a proper async fashion
             Task acceptTask = Task.Run(() => AcceptLoopAsync(listener, cfg, scriptPath));
@@ -250,6 +272,7 @@ namespace BlockEngine
 
             if (!_requestSlots.Wait(0))
             {
+                AddSecurityHeaders(res);
                 res.StatusCode = 429;
                 res.Close();
                 return;
@@ -257,6 +280,7 @@ namespace BlockEngine
             
             try
             {
+                AddSecurityHeaders(res);
                 string origin = req.Headers["Origin"] ?? "";
                 if (IsTrustedOrigin(origin))
                     res.Headers.Add("Access-Control-Allow-Origin", string.IsNullOrEmpty(origin) ? "http://localhost" : origin);

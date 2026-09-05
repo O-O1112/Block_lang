@@ -158,6 +158,22 @@ importlib.reload(_block_socket)
 
     $processSandboxSource = Get-Content -LiteralPath (Join-Path $RepositoryRoot 'src\ProcessSandbox.cs') -Raw
     Assert-True ($processSandboxSource -match 'JobObjectLimitProcessMemory') 'Windows child process memory policy is not enabled.'
+    Assert-True ($processSandboxSource -match 'execution was stopped for safety') 'Windows process sandbox failure does not fail closed.'
+
+    $serverSource = Get-Content -LiteralPath (Join-Path $RepositoryRoot 'src\Server.cs') -Raw
+    Assert-True ($serverSource -match 'X-Content-Type-Options') 'Block server responses are missing content-type hardening.'
+    Assert-True ($serverSource -match 'PlatformNotSupportedException') 'Block server startup does not handle unsupported runtimes.'
+
+    $healthSource = Get-Content -LiteralPath (Join-Path $RepositoryRoot 'src\BlockHealthCheck.cs') -Raw
+    Assert-True ($healthSource -match 'FileAttributes\.ReparsePoint') 'Health scans do not skip linked files.'
+
+    $customRegistryPath = Join-Path $RepositoryRoot 'src\CustomLangRegistry.cs'
+    if (Test-Path -LiteralPath $customRegistryPath) {
+        $customRegistrySource = Get-Content -LiteralPath $customRegistryPath -Raw
+        Assert-True ($customRegistrySource -match 'ReservedLanguageNames') 'Custom runtimes can shadow built-in language names.'
+        Assert-True ($customRegistrySource -match 'ValidateDefinition') 'Custom runtime definitions are not validated before launch.'
+        Assert-True ($customRegistrySource -match 'MaxCustomLanguageDefinitions') 'Custom runtime definition count is unbounded.'
+    }
 
     $programSource = Get-Content -LiteralPath (Join-Path $RepositoryRoot 'src\Program.cs') -Raw
     Assert-True ($programSource -match 'finally[\s\S]*?Console\.CursorVisible = true') 'CLI startup animation can leave the terminal cursor hidden after an error.'

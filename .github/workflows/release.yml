@@ -6,7 +6,7 @@ on:
       tag:
         description: Release tag to build and publish
         required: true
-        default: v2.7.0
+        default: v2.7.1
   push:
     tags:
       - 'v*'
@@ -16,9 +16,14 @@ permissions:
   id-token: write
   attestations: write
 
+concurrency:
+  group: block-release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   publish-release:
     runs-on: windows-latest
+    timeout-minutes: 30
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -43,6 +48,7 @@ jobs:
           .\tests\Test-NativeInterpreter.ps1 -SourcePath (Join-Path $PWD 'src\NativeBlockProgram.cs')
           .\tests\Test-InstallerTransport.ps1 -RepositoryRoot $PWD
           .\tests\Test-HealthHardening.ps1 -EngineDirectory (Join-Path $PWD 'release') -RepositoryRoot $PWD
+          .\tests\Test-CustomRuntimePolicy.ps1 -EngineDirectory (Join-Path $PWD 'release')
           .\tests\Test-ApiServer.ps1 -EngineDirectory (Join-Path $PWD 'release')
           .\tests\Test-CommunityLab.ps1 -EngineDirectory (Join-Path $PWD 'release') -SkipPolyglot
           .\tests\Test-VersionConsistency.ps1 -RepositoryRoot $PWD

@@ -9,7 +9,7 @@ Use these files in this order:
 
 1. `SYSTEM-PROMPT.md` — behavior, terminology, safety boundaries, and response
    rules.
-2. `block-knowledge.md` — canonical v2.7.0 reference facts.
+2. `block-knowledge.md` — canonical v2.7.1 reference facts.
 3. `docs/wiki/` and `examples/` — deeper reference material and copy-ready code.
 4. `training.jsonl` — few-shot or supervised examples, not a replacement for
    the policy.
@@ -32,7 +32,7 @@ If the account or workspace can create a GPT:
 3. Add conversation starters such as:
    - `Explain why <block> is not a valid Block tag.`
    - `Review this .blk file for syntax and state-boundary mistakes.`
-   - `Diagnose this Windows path-discovery error in Block v2.7.0.`
+   - `Diagnose this Windows path-discovery error in Block v2.7.1.`
 4. Test the GPT in Preview with every case in `eval-cases.jsonl`.
 5. Require the assistant to cite the relevant Block file or section when it
    makes a version-sensitive claim.
@@ -51,7 +51,7 @@ not upload private keys, credentials, or unpublished release material.
 
 Use `SYSTEM-PROMPT.md` as the system/developer instruction, index
 `block-knowledge.md` and the maintained wiki as retrieval documents, and run the
-same `eval-cases.jsonl` in CI or a private evaluation job. Keep the v2.7.0
+same `eval-cases.jsonl` in CI or a private evaluation job. Keep the v2.7.1
 version label in the retrieval metadata so a future release can be evaluated
 without silently mixing syntax.
 
@@ -78,7 +78,7 @@ adding files under Knowledge, and previewing before saving:
 Attach `SYSTEM-PROMPT.md` and `block-knowledge.md` to a new chat, then begin
 with this prompt:
 
-> You are learning Block Language v2.7.0. Use the attached policy as behavior
+> You are learning Block Language v2.7.1. Use the attached policy as behavior
 > rules and the attached knowledge file as the canonical reference. Do not
 > invent a `<block>` tag. Before answering code questions, distinguish runtime
 > tags from native Block control flow and state the edition assumptions.
@@ -109,5 +109,5 @@ An assistant is ready to describe Block only when it can:
   drive;
 - state that local language blocks can start native programs and are not a full
   operating-system sandbox;
-- identify v2.7.0 as the knowledge version.
+- identify v2.7.1 as the knowledge version.
 

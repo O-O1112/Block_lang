@@ -37,7 +37,7 @@ install directory selected in the installer.
 
 ## The installer reports optional runtime failures
 
-The engine and optional runtimes are separate. The v2.7.0 secure installer only
+The engine and optional runtimes are separate. The v2.7.1 secure installer only
 detects optional runtimes; it never runs Winget, Chocolatey, PowerShell, or a
 downloaded script. Install a missing runtime from its official source, ensure
 its command is on `PATH`, and reopen the terminal.

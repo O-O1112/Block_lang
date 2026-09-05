@@ -12,7 +12,12 @@ namespace BlockEngine
         internal const long MaxScriptBytes = 32L * 1024L * 1024L;
         internal const long MaxJsonBytes = 4L * 1024L * 1024L;
         internal const int RequestReadTimeoutSeconds = 30;
+        internal const int MaxExecutionTimeoutSeconds = 300;
         internal const int MinimumApiTokenLength = 32;
+        internal const int MaxCustomLanguageDefinitions = 64;
+        internal const int MaxCustomLanguageCommandChars = 256;
+        internal const int MaxCustomLanguageArgsChars = 2048;
+        internal const int MaxCustomLanguageExtensionChars = 32;
         internal const uint ChildProcessMemoryLimitBytes = 512u * 1024u * 1024u;
         internal const uint ChildJobMemoryLimitBytes = 1024u * 1024u * 1024u;
 

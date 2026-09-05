@@ -349,9 +349,10 @@ namespace BlockEngine
                 p.OutputDataReceived += (s, e) => { if (e.Data != null) SecurityLimits.AppendOutput(sb, e.Data + Environment.NewLine); };
                 p.ErrorDataReceived += (s, e) => { if (e.Data != null) SecurityLimits.AppendOutput(sb, e.Data + Environment.NewLine); };
                 p.Start();
-                ProcessSandbox processSandbox = ProcessSandbox.Attach(p);
+                ProcessSandbox processSandbox = null;
                 try
                 {
+                    processSandbox = ProcessSandbox.Attach(p);
                     p.BeginOutputReadLine();
                     p.BeginErrorReadLine();
 
@@ -371,9 +372,14 @@ namespace BlockEngine
                     }
                     outputCallback(string.Format("[{0}] Output:\n{1}", block.Language.ToUpper(), sb.ToString()));
                 }
+                catch
+                {
+                    try { if (!p.HasExited) KillProcessTree(p); } catch { }
+                    throw;
+                }
                 finally
                 {
-                    processSandbox.Dispose();
+                    if (processSandbox != null) processSandbox.Dispose();
                 }
             }
         }
@@ -505,22 +511,23 @@ namespace BlockEngine
                 p.ErrorDataReceived += errHandler;
 
                 p.Start();
-                ProcessSandbox processSandbox = ProcessSandbox.Attach(p);
-
-                // If STDIN is redirected (e.g. API mode), write state and close
-                if (psi.RedirectStandardInput)
-                {
-                    byte[] inputBytes = Encoding.UTF8.GetBytes(stateJson);
-                    await p.StandardInput.BaseStream.WriteAsync(inputBytes, 0, inputBytes.Length).ConfigureAwait(false);
-                    p.StandardInput.Close();
-                }
-
-                p.BeginOutputReadLine();
-                p.BeginErrorReadLine();
-
-                int timeoutMs = cfg.ExecutionTimeoutSeconds * 1000;
+                ProcessSandbox processSandbox = null;
                 try
                 {
+                    processSandbox = ProcessSandbox.Attach(p);
+
+                    // If STDIN is redirected (e.g. API mode), write state and close
+                    if (psi.RedirectStandardInput)
+                    {
+                        byte[] inputBytes = Encoding.UTF8.GetBytes(stateJson);
+                        await p.StandardInput.BaseStream.WriteAsync(inputBytes, 0, inputBytes.Length).ConfigureAwait(false);
+                        p.StandardInput.Close();
+                    }
+
+                    p.BeginOutputReadLine();
+                    p.BeginErrorReadLine();
+
+                    int timeoutMs = cfg.ExecutionTimeoutSeconds * 1000;
                     // Do not rely on Process.Exited here. On .NET Framework it can
                     // race with short-lived interpreter processes on Windows CI.
                     // Waiting on the process handle is deterministic and still
@@ -536,9 +543,14 @@ namespace BlockEngine
                     // Flush async streams
                     await Task.Run(() => p.WaitForExit()).ConfigureAwait(false);
                 }
+                catch
+                {
+                    try { if (!p.HasExited) KillProcessTree(p); } catch { }
+                    throw;
+                }
                 finally
                 {
-                    processSandbox.Dispose();
+                    if (processSandbox != null) processSandbox.Dispose();
                     p.OutputDataReceived -= outHandler;
                     p.ErrorDataReceived -= errHandler;
                 }

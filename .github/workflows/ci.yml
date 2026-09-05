@@ -10,9 +10,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: block-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   windows-build-test:
     runs-on: windows-latest
+    timeout-minutes: 20
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -60,6 +65,10 @@ jobs:
       - name: Run health-hardening regression tests
         shell: powershell
         run: .\tests\Test-HealthHardening.ps1 -EngineDirectory (Join-Path $PWD 'ci-release') -RepositoryRoot $PWD
+
+      - name: Verify custom runtime policy
+        shell: powershell
+        run: .\tests\Test-CustomRuntimePolicy.ps1 -EngineDirectory (Join-Path $PWD 'ci-release')
 
       - name: Run API server integration tests
         shell: powershell

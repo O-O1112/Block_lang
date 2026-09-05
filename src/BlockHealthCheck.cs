@@ -125,6 +125,16 @@ namespace BlockEngine
                 foreach (string file in files)
                 {
                     if (++count > MaxFiles) { AddIssue(errors, "file scan limit exceeded (" + MaxFiles + ")"); yield break; }
+                    try
+                    {
+                        // A linked file can change independently of the selected
+                        // project root. Do not parse reparse-point files during a
+                        // supposedly read-only health scan.
+                        if ((File.GetAttributes(file) & FileAttributes.ReparsePoint) != 0) continue;
+                    }
+                    catch (UnauthorizedAccessException) { AddIssue(errors, "scan: cannot inspect file attributes — " + file); continue; }
+                    catch (FileNotFoundException) { continue; }
+                    catch (DirectoryNotFoundException) { continue; }
                     yield return file;
                 }
                 if (children != null)

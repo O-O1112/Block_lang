@@ -34,7 +34,8 @@ namespace BlockEngine
                 return new ProcessSandbox(IntPtr.Zero, false);
 
             IntPtr handle = CreateJobObject(IntPtr.Zero, null);
-            if (handle == IntPtr.Zero) return new ProcessSandbox(IntPtr.Zero, false);
+            if (handle == IntPtr.Zero)
+                throw new InvalidOperationException("Windows process limits could not be created; execution was stopped for safety.", new Win32Exception(Marshal.GetLastWin32Error()));
 
             JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits = new JOBOBJECT_EXTENDED_LIMIT_INFORMATION();
             limits.BasicLimitInformation.LimitFlags = JobObjectLimitActiveProcess |
@@ -44,17 +45,16 @@ namespace BlockEngine
             limits.JobMemoryLimit = new UIntPtr(SecurityLimits.ChildJobMemoryLimitBytes);
             if (!SetInformationJobObject(handle, JobObjectExtendedLimitInformation, ref limits, (uint)Marshal.SizeOf(typeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION))))
             {
+                int error = Marshal.GetLastWin32Error();
                 CloseHandle(handle);
-                return new ProcessSandbox(IntPtr.Zero, false);
+                throw new InvalidOperationException("Windows process limits could not be configured; execution was stopped for safety.", new Win32Exception(error));
             }
 
-            // A host process may already belong to a restrictive Windows Job.
-            // In that case Windows can reject a nested assignment; retain the
-            // normal process execution path and let the host job enforce policy.
             if (!AssignProcessToJobObject(handle, process.Handle))
             {
+                int error = Marshal.GetLastWin32Error();
                 CloseHandle(handle);
-                return new ProcessSandbox(IntPtr.Zero, false);
+                throw new InvalidOperationException("Windows process limits could not be attached; execution was stopped for safety. Close restrictive parent jobs or retry from a normal terminal.", new Win32Exception(error));
             }
 
             return new ProcessSandbox(handle, true);
