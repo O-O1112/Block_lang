@@ -4,7 +4,7 @@ This roadmap is a public planning document, not a promise that an item is alread
 implemented. Shipped behavior belongs in the [README](README.md),
 [changelog](CHANGELOG.md), and release notes.
 
-## Current: v2.2.6.5 safety foundation
+## Current: v2.7.0 stability and security foundation
 
 The current release line focuses on making the core workflow usable and reviewable:
 
@@ -22,25 +22,20 @@ The current release line focuses on making the core workflow usable and reviewab
 - secure GitHub Release bootstrapper with SHA-256 verification and ZIP-slip
   protection; optional host runtimes are detected, never silently installed.
 
-## Next: v2.3.0 core stability and first-run friction
+## Next: v2.8.0 developer workflow and observability
 
-These are the highest-value improvements for the next minor release:
+These are candidate improvements for the next minor release:
 
-1. Make native logical expressions, loop limits, process timeouts, and state
-   transfer failures deterministic and regression-tested.
-2. Let the CLI resolve scripts through project roots and configured workspaces
-   without requiring repeated directory changes.
-3. Make the first five minutes more reproducible with more copy-ready examples and
-   clearer runtime diagnostics.
-4. Publish every stable build as a GitHub Release with release notes, checksums,
-   installer links, and extension assets.
-5. Improve error messages for missing host runtimes, path quoting, state
+1. Add structured execution traces that redact secrets and local absolute paths.
+2. Improve CLI diagnostics for runtime discovery, path quoting, state
    serialization, and edition mismatches.
-6. Add regression coverage for installer behavior, runtime discovery, imports,
-   and cross-runtime state edge cases.
-7. Keep the README, visual documentation site, Markdown Wiki, installer screen,
-   and release manifest aligned to the same version.
-8. Collect independent validation reports from users running real local workflows.
+3. Add focused conformance tests for parser, native control flow, imports, and
+   cross-runtime state edge cases.
+4. Add explicit capability profiles for file, network, process, and custom-runtime
+   access without claiming to create an OS sandbox.
+5. Keep the README, GitHub Pages site, Markdown Wiki, installer screen, and
+   release manifest aligned to the same version.
+6. Collect independent validation reports from users running real local workflows.
 
 ## Explore: community-driven directions
 
@@ -61,8 +56,8 @@ runtime, or make arbitrary native code safe merely by placing it inside a Block
 document. Security boundaries, runtime ownership, and explicit state transfer are
 part of the project's design.
 
-Block 2.3 does not include a third-party package loader or marketplace. Reusable
-Block source remains explicit through sandboxed local imports.
+The 2.7.0 release does not include a third-party package loader or marketplace.
+Reusable Block source remains explicit through reviewed local imports.
 
 ## Ways to help
 

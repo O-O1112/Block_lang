@@ -148,6 +148,16 @@ importlib.reload(_block_socket)
     $apiSource = Get-Content -LiteralPath (Join-Path $RepositoryRoot 'src\ApiServer.cs') -Raw
     Assert-True ($apiSource -match 'catch \(PlatformNotSupportedException(?:\s+\w+)?\)[\s\S]*?Environment\.ExitCode = 1') 'Unsupported API listener still returns a success exit code.'
     Assert-True ($apiSource -match 'catch \(HttpListenerException ex\)[\s\S]*?Environment\.ExitCode = 1') 'HTTP listener startup failure still returns a success exit code.'
+    Assert-True ($apiSource -match 'MinimumApiTokenLength') 'API server does not reject weak configured session tokens.'
+    Assert-True ($apiSource -match 'SecureEquals\(token, cfg\.ApiToken\)') 'API server token comparison is not constant-work.'
+    Assert-True ($apiSource -match 'if \(!_requestSlots\.Wait\(0\)\)') 'API server does not reject excess work before thread-pool scheduling.'
+
+    $limitsSource = Get-Content -LiteralPath (Join-Path $RepositoryRoot 'src\SecurityLimits.cs') -Raw
+    Assert-True ($limitsSource -match 'ChildProcessMemoryLimitBytes') 'Child process memory limit is missing.'
+    Assert-True ($limitsSource -match 'internal static bool SecureEquals') 'Shared secure token comparison helper is missing.'
+
+    $processSandboxSource = Get-Content -LiteralPath (Join-Path $RepositoryRoot 'src\ProcessSandbox.cs') -Raw
+    Assert-True ($processSandboxSource -match 'JobObjectLimitProcessMemory') 'Windows child process memory policy is not enabled.'
 
     $programSource = Get-Content -LiteralPath (Join-Path $RepositoryRoot 'src\Program.cs') -Raw
     Assert-True ($programSource -match 'finally[\s\S]*?Console\.CursorVisible = true') 'CLI startup animation can leave the terminal cursor hidden after an error.'

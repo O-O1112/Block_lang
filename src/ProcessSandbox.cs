@@ -14,6 +14,8 @@ namespace BlockEngine
         private const uint JobObjectExtendedLimitInformation = 9;
         private const uint JobObjectLimitActiveProcess = 0x00000008;
         private const uint JobObjectLimitKillOnJobClose = 0x00002000;
+        private const uint JobObjectLimitProcessMemory = 0x00000100;
+        private const uint JobObjectLimitJobMemory = 0x00000200;
         private const uint ActiveProcessLimit = 64;
         private IntPtr jobHandle;
 
@@ -35,8 +37,11 @@ namespace BlockEngine
             if (handle == IntPtr.Zero) return new ProcessSandbox(IntPtr.Zero, false);
 
             JOBOBJECT_EXTENDED_LIMIT_INFORMATION limits = new JOBOBJECT_EXTENDED_LIMIT_INFORMATION();
-            limits.BasicLimitInformation.LimitFlags = JobObjectLimitActiveProcess | JobObjectLimitKillOnJobClose;
+            limits.BasicLimitInformation.LimitFlags = JobObjectLimitActiveProcess |
+                JobObjectLimitKillOnJobClose | JobObjectLimitProcessMemory | JobObjectLimitJobMemory;
             limits.BasicLimitInformation.ActiveProcessLimit = ActiveProcessLimit;
+            limits.ProcessMemoryLimit = new UIntPtr(SecurityLimits.ChildProcessMemoryLimitBytes);
+            limits.JobMemoryLimit = new UIntPtr(SecurityLimits.ChildJobMemoryLimitBytes);
             if (!SetInformationJobObject(handle, JobObjectExtendedLimitInformation, ref limits, (uint)Marshal.SizeOf(typeof(JOBOBJECT_EXTENDED_LIMIT_INFORMATION))))
             {
                 CloseHandle(handle);

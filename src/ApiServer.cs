@@ -29,10 +29,18 @@ namespace BlockEngine
 
         private static void WriteJsonError(HttpListenerResponse response, int statusCode, string message)
         {
+            AddSecurityHeaders(response);
             response.StatusCode = statusCode;
             response.ContentType = "application/json; charset=utf-8";
             byte[] payload = Encoding.UTF8.GetBytes(_serializer.Serialize(new Dictionary<string, object> { { "error", message } }));
             response.OutputStream.Write(payload, 0, payload.Length);
+        }
+
+        private static void AddSecurityHeaders(HttpListenerResponse response)
+        {
+            response.Headers["X-Content-Type-Options"] = "nosniff";
+            response.Headers["Cache-Control"] = "no-store";
+            response.Headers["Referrer-Policy"] = "no-referrer";
         }
 
         private static bool ContainsReparsePoint(string path)
@@ -125,7 +133,7 @@ namespace BlockEngine
 
         public static void StartApiServer(EngineConfig cfg, int port)
         {
-            if (string.IsNullOrEmpty(cfg.ApiToken))
+            if (string.IsNullOrEmpty(cfg.ApiToken) || cfg.ApiToken.Length < SecurityLimits.MinimumApiTokenLength)
             {
                 cfg.ApiToken = Guid.NewGuid().ToString("N");
             }
@@ -173,11 +181,22 @@ namespace BlockEngine
             while (true)
             {
                 HttpListenerContext context = listener.GetContext();
+                // Admit work before scheduling it.  Acquiring the semaphore
+                // inside Task.Run allowed an attacker to enqueue an unlimited
+                // number of pending thread-pool tasks even though execution
+                // itself was capped.
+                if (!_requestSlots.Wait(0))
+                {
+                    context.Response.StatusCode = 429;
+                    AddSecurityHeaders(context.Response);
+                    context.Response.Close();
+                    continue;
+                }
                 Task.Run(async () => 
                 {
                     HttpListenerRequest req = context.Request;
                     HttpListenerResponse res = context.Response;
-                    bool slotAcquired = false;
+                    bool slotAcquired = true;
 
                     try
                     {
@@ -204,6 +223,7 @@ namespace BlockEngine
                         {
                             res.Headers.Add("Access-Control-Allow-Origin", origin);
                         }
+                        AddSecurityHeaders(res);
                         res.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
                         res.Headers.Add("Access-Control-Allow-Headers", "Content-Type, X-Api-Token, X-Block-Engine, X-Block-Timeout-Ms, X-Block-Network-Blocked");
                         
@@ -216,7 +236,7 @@ namespace BlockEngine
 
                         // Security Fix: Strict token enforcement across ALL endpoints (including /api/run and /api/status)
                         string token = req.Headers["X-Api-Token"];
-                        if (string.IsNullOrEmpty(token) || token != cfg.ApiToken)
+                        if (string.IsNullOrEmpty(token) || !SecurityLimits.SecureEquals(token, cfg.ApiToken))
                         {
                             WriteJsonError(res, 403, "Forbidden: Invalid or missing API token. Use X-Api-Token header.");
                             res.Close();
@@ -230,15 +250,6 @@ namespace BlockEngine
                             res.Close();
                             return;
                         }
-
-                        // Do not let unauthenticated clients consume execution slots.
-                        if (!_requestSlots.Wait(0))
-                        {
-                            res.StatusCode = 429;
-                            res.Close();
-                            return;
-                        }
-                        slotAcquired = true;
 
                         if (req.HttpMethod == "GET" && req.Url.AbsolutePath == "/api/status")
                         {
