@@ -3,7 +3,7 @@
 ## Supported versions
 
 Security fixes are currently developed against the `main` branch and the
-latest published 2.7.0 release. Older 2.2.x binaries are not supported for
+latest published 2.7.1 release. Older 2.2.x and 2.7.0 binaries are not supported for
 security fixes; upgrade to the latest release before reporting a regression.
 
 ## Reporting a vulnerability
@@ -23,6 +23,16 @@ The engine executes local language runtimes, so reports involving command
 execution, path traversal, process isolation, state injection, installer
 behavior, or secret exposure should include the exact invocation and file
 layout used.
+
+Windows child processes are required to attach to Block's resource-limiting Job
+Object. If that boundary cannot be installed, execution fails closed. This
+controls process lifetime and memory; it does not remove the host runtime's
+normal user permissions.
+
+Custom runtime definitions are an explicit opt-in capability. Definitions must
+use a non-built-in language identifier and are validated for bounded command,
+argument, and extension values before process creation. Treat the registry file
+and every `<define>` directive as executable configuration.
 
 `NetworkBlocked` is a best-effort language-runtime guard, not an operating-
 system security boundary. Never use it as the only isolation layer for

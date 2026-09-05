@@ -8,9 +8,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: block-daily-health
+  cancel-in-progress: false
+
 jobs:
   health:
     runs-on: windows-latest
+    timeout-minutes: 20
     steps:
       - name: Check out repository
         uses: actions/checkout@v4

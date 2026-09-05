@@ -1,4 +1,4 @@
-# Block Language canonical knowledge (v2.7.0)
+# Block Language canonical knowledge (v2.7.1)
 
 ## Product identity
 

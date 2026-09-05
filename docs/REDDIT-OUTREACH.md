@@ -28,7 +28,7 @@ If you try it, please report the edition, Windows/runtime versions, exact comman
 ```text
 I have been building Block, a local-first polyglot engine for people who are tired of stitching small scripts together with temporary files and shell glue.
 
-The current v2.7.0 build lets a .blk document contain separate language blocks and pass serializable state between them. The project has Lite, Standard, and Plus editions, Windows binaries, an installer, examples, and editor plugins.
+The current v2.7.1 build lets a .blk document contain separate language blocks and pass serializable state between them. The project has Lite, Standard, and Plus editions, Windows binaries, an installer, examples, and editor plugins.
 
 The part I am unsure about is the first-run experience. Can a developer understand the editions, install the right package, and run an example without asking me for help?
 

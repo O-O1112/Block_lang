@@ -2,6 +2,24 @@
 
 All notable changes to the Block execution engine will be documented in this file.
 
+## [2.7.1] - 2026-09-05
+
+### Security, maintenance, and developer workflow
+
+- Fail closed when a Windows child process cannot be attached to the resource
+  limiting Job Object; the engine no longer silently runs without the promised
+  process lifetime and memory controls.
+- Reject reserved built-in language names and malformed custom runtime
+  definitions before they can reach process creation.
+- Add shared response hardening to the local Block server and skip reparse-point
+  files during repository health scans.
+- Cap execution budgets consistently and add regression coverage for the new
+  security boundaries.
+- Expand the README, security policy, release notes, AI knowledge pack, tester
+  packet, and contribution workflow with the verified maintenance contract.
+- Add CI job timeouts and a concurrency policy so stalled or superseded checks
+  cannot consume runner capacity indefinitely.
+
 ## [2.7.0] - 2026-09-04
 
 ### Stability and security hardening

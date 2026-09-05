@@ -57,7 +57,7 @@ namespace BlockEngine
         public int ExecutionTimeoutSeconds
         {
             get { return _executionTimeoutSeconds; }
-            set { _executionTimeoutSeconds = Math.Max(1, Math.Min(value, 3600)); }
+            set { _executionTimeoutSeconds = Math.Max(1, Math.Min(value, SecurityLimits.MaxExecutionTimeoutSeconds)); }
         }
 
         // C3/C7: Request body size limit

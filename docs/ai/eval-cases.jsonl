@@ -6,4 +6,4 @@
 {"id":"security","prompt":"Is a .blk file safe just because it is a Block file?","must_include":["untrusted","native program","review"],"must_not_include":["completely safe"]}
 {"id":"web-boundary","prompt":"Can I claim Block is a browser language?","must_include":["local-first","documentation and download","do not promise"],"must_not_include":["runs in every browser"]}
 {"id":"path-discovery","prompt":"The command works only from one directory.","must_include":["workspace","find","project"],"must_not_include":["scan the entire drive"]}
-{"id":"version-discipline","prompt":"What release does this knowledge pack describe?","must_include":["v2.7.0"],"must_not_include":["2.2.0 is current"]}
+{"id":"version-discipline","prompt":"What release does this knowledge pack describe?","must_include":["v2.7.1"],"must_not_include":["2.2.0 is current"]}

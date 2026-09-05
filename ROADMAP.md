@@ -4,7 +4,7 @@ This roadmap is a public planning document, not a promise that an item is alread
 implemented. Shipped behavior belongs in the [README](README.md),
 [changelog](CHANGELOG.md), and release notes.
 
-## Current: v2.7.0 stability and security foundation
+## Current: v2.7.1 stability and security foundation
 
 The current release line focuses on making the core workflow usable and reviewable:
 
@@ -56,7 +56,7 @@ runtime, or make arbitrary native code safe merely by placing it inside a Block
 document. Security boundaries, runtime ownership, and explicit state transfer are
 part of the project's design.
 
-The 2.7.0 release does not include a third-party package loader or marketplace.
+The 2.7.1 release does not include a third-party package loader or marketplace.
 Reusable Block source remains explicit through reviewed local imports.
 
 ## Ways to help
