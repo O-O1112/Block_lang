@@ -2,6 +2,18 @@
 
 All notable changes to the Block execution engine will be documented in this file.
 
+## [2.7.5] - 2026-09-06
+
+### Stability, diagnostics, and developer workflow
+
+- Added the read-only `block plan` preflight command and its versioned JSON
+  `ExecutionPlan` output for editors and CI.
+- Rejected nested language blocks during execution parsing instead of passing
+  inner tags into a host runtime as source text.
+- Added regression coverage for plan output, paths containing spaces, and the
+  nested-tag failure contract across Lite, Standard, and Plus.
+- Synchronized release metadata and active documentation to v2.7.5.
+
 ## [2.7.1] - 2026-09-05
 
 ### Security, maintenance, and developer workflow

@@ -1,4 +1,4 @@
-# Block Language canonical knowledge (v2.7.1)
+# Block Language canonical knowledge (v2.7.5)
 
 ## Product identity
 
@@ -92,7 +92,16 @@ block workspace show
 block find hello
 block project root
 block project run
+block plan .\examples\hello-polyglot.blk
+block plan --json .\examples\hello-polyglot.blk
 ```
+
+`block plan` is a read-only structural preflight. It reports top-level stages,
+line ranges, estimated host runtimes, and diagnostics without executing code,
+loading imports, starting runtimes, or resolving custom commands. The JSON form
+uses `kind: "ExecutionPlan"` and `schemaVersion: 1`; a non-zero exit code means
+the structural diagnostics contain an error. A successful plan does not prove
+that optional runtimes are installed or that a document is safe to execute.
 
 The resolver checks explicit paths, the current project, and the configured
 workspace. It does not scan the entire drive; ambiguous matches should be

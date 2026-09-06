@@ -24,7 +24,7 @@ before downloading or verifying a release.
 
 | Item | Details |
 | --- | --- |
-| Current release | `2.7.1` |
+| Current release | `2.7.5` |
 | Primary platform | Windows 10/11 release workflow |
 | Execution model | Parse one document, run native stages in order, transfer serializable state |
 | Editions | Lite (`.blkl`), Standard (`.blk`), Plus (`.blkp`) |
@@ -169,8 +169,8 @@ Use Block when you want:
 
 ### Windows installer
 
-The versioned installer is [`BlockSetup-v2.7.1.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.7.1/BlockSetup-v2.7.1.exe).
-The stable download alias is [`BlockSetup.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.7.1/BlockSetup.exe).
+The versioned installer is [`BlockSetup-v2.7.5.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.7.5/BlockSetup-v2.7.5.exe).
+The stable download alias is [`BlockSetup.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.7.5/BlockSetup.exe).
 The same files are also linked from the [official download page](https://o-o1112.github.io/Block_lang/downloads.html).
 
 1. Run the installer.
@@ -212,7 +212,7 @@ runtime.
 
 ### Build from source
 
-The v2.7.1 Windows build uses the .NET Framework C# compiler available at
+The v2.7.5 Windows build uses the .NET Framework C# compiler available at
 `%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\csc.exe`:
 
 ```powershell
@@ -287,7 +287,7 @@ communicate which engine is expected.
 ## CLI reference
 
 The executable name depends on the edition. The following commands are available
-in the v2.7.1 Windows build:
+in the v2.7.5 Windows build:
 
 | Command | Lite | Standard | Plus | Purpose |
 | --- |:---:|:---:|:---:| --- |
@@ -299,6 +299,7 @@ in the v2.7.1 Windows build:
 | `<engine> config path` | ✓ | ✓ | ✓ | Print the user configuration file path |
 | `<engine> run <file>` | ✓ | ✓ | ✓ | Explicitly execute a document, including paths containing spaces |
 | `<engine> check <file>` | ✓ | ✓ | ✓ | Parse a document without executing its stages |
+| `<engine> plan [--json] <file>` | ✓ | ✓ | ✓ | Produce a read-only execution plan with stage ranges, runtime needs, and diagnostics |
 | `<engine> ast <file>` | ✓ | ✓ | ✓ | Emit a stable JSON syntax tree and structured diagnostics without executing code |
 | `<engine> info [file]` / `capabilities` | ✓ | ✓ | ✓ | Show engine settings and optionally inspect a document's blocks |
 | `<engine> runtimes` | ✓ | ✓ | ✓ | Detect optional runtimes on the current `PATH` |
@@ -341,6 +342,24 @@ block-plus "C:\Projects\My Block\main.blkp"
 
 Running an engine without a file displays its animated banner and usage text. In
 automation, prefer an explicit file path and check the process exit code.
+
+### Read-only execution plans
+
+Use `plan` before running a document when you want to inspect its composition or
+feed a source-aware result to an editor or CI job:
+
+```powershell
+block plan .\examples\hello-polyglot.blk
+block plan --json .\examples\hello-polyglot.blk | Set-Content plan.json
+```
+
+The command reads the source and uses the stable structural parser only. It does
+not execute native statements, load imports, start runtimes, resolve custom
+commands, install packages, or change configuration. Its JSON output has
+`schemaVersion: 1`, `kind: "ExecutionPlan"`, stage line ranges, normalized
+runtime names, and structural diagnostics. A plan is a preflight description,
+not proof that an optional host runtime is installed; use `block runtimes` for
+PATH discovery and `block check <file>` for the execution-aware parser.
 
 ---
 
@@ -718,7 +737,7 @@ Because this spawns external processes, it is subject to security policy checks.
 
 ### VS Code
 
-The repository publishes [`block-language-2.7.1.vsix`](https://github.com/O-O1112/Block_lang/releases/download/v2.7.1/block-language-2.7.1.vsix).
+The repository publishes [`block-language-2.7.5.vsix`](https://github.com/O-O1112/Block_lang/releases/download/v2.7.5/block-language-2.7.5.vsix).
 In VS Code, open **Extensions**, choose **Install from VSIX...**, select the
 package, and reload the window if prompted.
 
@@ -730,7 +749,7 @@ host runtime.
 ### Acode
 
 The mobile editor package is
-[`acode-plugin-block-2.7.1.zip`](https://github.com/O-O1112/Block_lang/releases/download/v2.7.1/acode-plugin-block-2.7.1.zip). Install it through
+[`acode-plugin-block-2.7.5.zip`](https://github.com/O-O1112/Block_lang/releases/download/v2.7.5/acode-plugin-block-2.7.5.zip). Install it through
 Acode's plugin workflow, then configure the local execution command if the device
 or terminal environment uses a non-default path.
 
@@ -754,7 +773,7 @@ Block adopts a local-first, conservative security design:
 
 Security configurations do not replace rigorous code review. Never execute untrusted `.blk`, `.blkl`, or `.blkp` files, as language blocks invoke host runtimes directly.
 
-### Default configuration in v2.7.1
+### Default configuration in v2.7.5
 
 New configurations use conservative defaults:
 
@@ -988,7 +1007,7 @@ when both host runtimes are available.
 
 ### Package and verify a release
 
-The complete v2.7.1 release flow builds the three engines, creates matching ZIP
+The complete v2.7.5 release flow builds the three engines, creates matching ZIP
 bundles, packages the VS Code and Acode extensions, builds the installer, and
 verifies the published artifacts and hashes:
 
@@ -1010,9 +1029,9 @@ published checksum changes.
 
 ---
 
-## v2.7.1 status and known boundaries
+## v2.7.5 status and known boundaries
 
-Version 2.7.1 is the current documented release line. It includes the Lite,
+Version 2.7.5 is the current documented release line. It includes the Lite,
 Standard, and Plus engines, the Windows installer, the VS Code extension, the
 Acode plugin, native control flow, cross-runtime state synchronization, local
 local imports, project discovery, the Plus
@@ -1033,7 +1052,7 @@ promises:
 - Process timeouts and import limits reduce accidental resource abuse but do not
   turn arbitrary native code into a security sandbox.
 
-See the [changelog](CHANGELOG.md) and [v2.7.1 release notes](docs/RELEASE-2.7.1.md)
+See the [changelog](CHANGELOG.md) and [v2.7.5 release notes](docs/RELEASE-2.7.5.md)
 for the tested changes and release artifact contract. Planned behavior should not
 be read as shipped behavior.
 
@@ -1085,7 +1104,7 @@ makes project growth easy to verify.
 - [Code of Conduct](CODE_OF_CONDUCT.md)
 - [Citation metadata](CITATION.cff)
 - [MIT License](LICENSE)
-- [v2.7.1 release manifest](docs/RELEASE-2.7.1.md)
+- [v2.7.5 release manifest](docs/RELEASE-2.7.5.md)
 
 The visual documentation site is available from the [Block documentation site](https://o-o1112.github.io/Block_lang/wiki.html). The
 Markdown Wiki is the reviewable source for the same installation, syntax,
@@ -1121,6 +1140,7 @@ the release notes:
 | 2.2.6 and 2.2.6.5 trust reset | Remove the third-party package loader, harden downloads, improve diagnostics, and verify artifacts | The project chose a smaller, more inspectable core over a larger but harder-to-trust ecosystem. |
 | 2.7.0 stability line | Admission limits, child-process resource controls, and local API hardening | A local tool still needs predictable failure behavior when inputs or workloads are abnormal. |
 | 2.7.1 maintenance line | Fail-closed process limits, stricter custom-runtime validation, response hardening, and CI timeouts | The current release makes the security and maintenance contract more explicit. |
+| 2.7.5 diagnostics line | Read-only execution plans, machine-readable preflight output, and immediate nested-tag rejection | The current release makes source inspection and parser failures easier to integrate into editors and CI. |
 
 This history also explains a few apparent absences. The current project does
 not promise a remote package marketplace, browser execution, or automatic
@@ -2258,7 +2278,7 @@ For a release asset, keep these facts together:
 Example checksum verification on Windows:
 
 ```powershell
-Get-FileHash .\BlockSetup-v2.7.1.exe -Algorithm SHA256
+Get-FileHash .\BlockSetup-v2.7.5.exe -Algorithm SHA256
 Get-Content .\SHA256SUMS.txt
 ```
 

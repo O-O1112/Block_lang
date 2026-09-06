@@ -3,7 +3,7 @@
 ## Supported versions
 
 Security fixes are currently developed against the `main` branch and the
-latest published 2.7.1 release. Older 2.2.x and 2.7.0 binaries are not supported for
+latest published 2.7.5 release. Older 2.2.x, 2.7.0, and 2.7.1 binaries are not supported for
 security fixes; upgrade to the latest release before reporting a regression.
 
 ## Reporting a vulnerability
