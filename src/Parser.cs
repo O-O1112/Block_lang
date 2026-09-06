@@ -165,6 +165,13 @@ namespace BlockEngine
                             currentLang = lang;
                             blockStartLine = lineNumber;
                         }
+                        else if (!isClosing && currentLang != "block" && IsValidLanguageTag(lang))
+                        {
+                            throw new BlockDiagnosticException("BLK1101", "Nested language block",
+                                string.Format("Found <{0}> inside <{1}>. Language blocks cannot be nested.", lang, currentLang),
+                                currentScriptPath, lineNumber, 1,
+                                string.Format("Close </{0}> before opening <{1}>, or move the inner code into its own top-level block.", currentLang, lang));
+                        }
                         else
                         {
                             buffer.Add(line);

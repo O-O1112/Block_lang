@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Web.Script.Serialization;
 
 namespace BlockEngine
 {
@@ -59,6 +60,164 @@ namespace BlockEngine
             }
         }
 
+        // Build an execution plan without loading imports, runtimes, custom
+        // commands, or packages. This gives editors and CI a safe preflight
+        // view of a document before any code can run.
+        public static void RunPlan(string[] args)
+        {
+            bool json = false;
+            List<string> pathParts = new List<string>();
+            for (int index = 1; index < (args == null ? 0 : args.Length); index++)
+            {
+                string value = args[index] ?? "";
+                if (string.Equals(value, "--json", StringComparison.OrdinalIgnoreCase))
+                    json = true;
+                else
+                    pathParts.Add(value);
+            }
+
+            string filePath = string.Join(" ", pathParts.ToArray());
+            if (pathParts.Count == 0)
+            {
+                CliDiagnostics.ReportUsage("plan", "block plan [--json] <file>",
+                    "Provide a Block source file; quote paths that contain spaces.");
+                return;
+            }
+            try
+            {
+                string path = ResolveExistingFile(filePath, "plan");
+                string code = ReadScriptFile(path);
+                BlockSyntaxTree syntax = BlockSyntax.Parse(code);
+                Dictionary<string, object> plan = BuildExecutionPlan(path, syntax);
+
+                if (json)
+                {
+                    JavaScriptSerializer serializer = new JavaScriptSerializer
+                    {
+                        MaxJsonLength = (int)SecurityLimits.MaxJsonBytes
+                    };
+                    Console.WriteLine(serializer.Serialize(plan));
+                }
+                else
+                {
+                    PrintExecutionPlan(path, syntax, plan);
+                }
+
+                if (syntax.Diagnostics.Exists(delegate(BlockSyntaxDiagnostic diagnostic)
+                    { return string.Equals(diagnostic.Severity, "error", StringComparison.OrdinalIgnoreCase); }))
+                    Environment.ExitCode = 1;
+            }
+            catch (Exception ex)
+            {
+                CliDiagnostics.Report(ex, "plan", filePath,
+                    "The plan command is read-only. Fix the reported source or path, then run 'block plan --json <file>' again.");
+            }
+        }
+
+        private static Dictionary<string, object> BuildExecutionPlan(string path, BlockSyntaxTree syntax)
+        {
+            List<object> entries = new List<object>();
+            HashSet<string> runtimeSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (BlockSyntaxNode node in syntax.Blocks)
+            {
+                string language = node.Language ?? "block";
+                string runtime = GetPlanRuntime(language);
+                bool hostRuntime = !string.Equals(runtime, "Block native", StringComparison.OrdinalIgnoreCase) &&
+                                   !string.Equals(runtime, "HTML/JSON renderer", StringComparison.OrdinalIgnoreCase);
+                if (hostRuntime) runtimeSet.Add(runtime);
+
+                entries.Add(new Dictionary<string, object>
+                {
+                    { "index", entries.Count + 1 },
+                    { "language", language },
+                    { "runtime", runtime },
+                    { "requiresHostRuntime", hostRuntime },
+                    { "startLine", node.StartLine },
+                    { "endLine", node.EndLine },
+                    { "characters", node.Code == null ? 0 : node.Code.Length }
+                });
+            }
+
+            List<string> runtimes = new List<string>(runtimeSet);
+            runtimes.Sort(StringComparer.OrdinalIgnoreCase);
+            List<object> diagnostics = new List<object>();
+            foreach (BlockSyntaxDiagnostic diagnostic in syntax.Diagnostics)
+            {
+                diagnostics.Add(new Dictionary<string, object>
+                {
+                    { "severity", diagnostic.Severity },
+                    { "code", diagnostic.Code },
+                    { "message", diagnostic.Message },
+                    { "line", diagnostic.Line },
+                    { "column", diagnostic.Column }
+                });
+            }
+
+            return new Dictionary<string, object>
+            {
+                { "schemaVersion", 1 },
+                { "kind", "ExecutionPlan" },
+                { "engineVersion", BlockVersion.Value },
+                { "edition", EditionName },
+                { "script", path },
+                { "structuralOnly", true },
+                { "blocks", entries },
+                { "requiredRuntimes", runtimes },
+                { "diagnostics", diagnostics }
+            };
+        }
+
+        private static void PrintExecutionPlan(string path, BlockSyntaxTree syntax, Dictionary<string, object> plan)
+        {
+            Console.WriteLine("Block execution plan (read-only)");
+            Console.WriteLine("  Script: " + path);
+            Console.WriteLine("  Engine: v" + BlockVersion.Value + " (" + EditionName + ")");
+            Console.WriteLine("  Parse mode: structural-only; imports and runtimes are not loaded");
+            Console.WriteLine("  Blocks: " + syntax.Blocks.Count);
+
+            List<string> runtimes = (List<string>)plan["requiredRuntimes"];
+            Console.WriteLine("  Required host runtimes: " + (runtimes.Count == 0 ? "none" : string.Join(", ", runtimes.ToArray())));
+            if (syntax.Diagnostics.Count > 0)
+            {
+                Console.WriteLine("  Diagnostics: " + syntax.Diagnostics.Count);
+                foreach (BlockSyntaxDiagnostic diagnostic in syntax.Diagnostics)
+                    Console.WriteLine(string.Format("    - {0} at {1}:{2}: {3}", diagnostic.Code, diagnostic.Line, diagnostic.Column, diagnostic.Message));
+            }
+
+            Console.WriteLine("  Stages:");
+            int index = 1;
+            foreach (BlockSyntaxNode node in syntax.Blocks)
+            {
+                Console.WriteLine(string.Format("    {0}. <{1}> lines {2}-{3}, {4} characters, {5}",
+                    index++, node.Language, node.StartLine, node.EndLine,
+                    node.Code == null ? 0 : node.Code.Length, GetPlanRuntime(node.Language)));
+            }
+        }
+
+        private static string GetPlanRuntime(string language)
+        {
+            string normalized = (language ?? "block").ToLowerInvariant();
+            if (normalized == "block" || normalized == "del") return "Block native";
+            if (normalized == "html" || normalized == "json") return "HTML/JSON renderer";
+            if (normalized == "py" || normalized == "python") return "Python";
+            if (normalized == "js" || normalized == "javascript" || normalized == "ts" || normalized == "typescript") return "Node.js";
+            if (normalized == "ps" || normalized == "powershell") return "PowerShell";
+            if (normalized == "rb" || normalized == "ruby") return "Ruby";
+            if (normalized == "php") return "PHP";
+            if (normalized == "lua") return "Lua";
+            if (normalized == "sql") return "SQLite";
+            if (normalized == "c" || normalized == "cpp" || normalized == "c++") return "C/C++ toolchain";
+            if (normalized == "go" || normalized == "golang") return "Go toolchain";
+            if (normalized == "rust" || normalized == "rs") return "Rust toolchain";
+            if (normalized == "java" || normalized == "kotlin" || normalized == "kt") return "JVM toolchain";
+            if (normalized == "dart") return "Dart toolchain";
+            if (normalized == "zig") return "Zig toolchain";
+            if (normalized == "perl" || normalized == "pl") return "Perl";
+            if (normalized == "r") return "R";
+            if (normalized == "bash" || normalized == "sh") return "Bash";
+            return "Host runtime";
+        }
+
         public static void RunInfo(string filePath)
         {
             EngineConfig cfg = Config.LoadConfig();
@@ -71,7 +230,7 @@ namespace BlockEngine
             Console.WriteLine("  Timeout: " + cfg.ExecutionTimeoutSeconds + "s");
             Console.WriteLine("  Advisory network guard: " + (cfg.NetworkBlocked ? "on" : "off"));
             Console.WriteLine("  Custom definitions: " + (cfg.AllowCustomDefinitions ? "enabled" : "disabled"));
-            Console.WriteLine("  Commands: run, check, ast, info/capabilities, runtimes, doctor, workspace, find, project, config");
+            Console.WriteLine("  Commands: run, check, plan, ast, info/capabilities, runtimes, doctor, workspace, find, project, config");
 
             if (string.IsNullOrWhiteSpace(filePath)) return;
 
