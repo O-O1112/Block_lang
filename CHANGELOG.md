@@ -2,6 +2,18 @@
 
 All notable changes to the Block execution engine will be documented in this file.
 
+## [Unreleased]
+
+### Diagnostics and supportability
+
+- Added the versioned `BLKxxxx` error catalog and the read-only `block errors`
+  command for listing or explaining diagnostic codes.
+- Added category, plain-language reason, handbook link, and richer repair hints
+  to CLI failures; structural AST and execution-plan diagnostics now carry hints
+  as well.
+- Rejected unknown top-level language tags as `BLK1008` before they can fall
+  through to native Block evaluation.
+
 ## [2.7.5] - 2026-09-06
 
 ### Stability, diagnostics, and developer workflow

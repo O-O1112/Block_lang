@@ -300,6 +300,7 @@ in the v2.7.5 Windows build:
 | `<engine> run <file>` | ✓ | ✓ | ✓ | Explicitly execute a document, including paths containing spaces |
 | `<engine> check <file>` | ✓ | ✓ | ✓ | Parse a document without executing its stages |
 | `<engine> plan [--json] <file>` | ✓ | ✓ | ✓ | Produce a read-only execution plan with stage ranges, runtime needs, and diagnostics |
+| `<engine> errors [BLKxxxx]` | ✓ | ✓ | ✓ | List or explain stable diagnostic codes without executing a document |
 | `<engine> ast <file>` | ✓ | ✓ | ✓ | Emit a stable JSON syntax tree and structured diagnostics without executing code |
 | `<engine> info [file]` / `capabilities` | ✓ | ✓ | ✓ | Show engine settings and optionally inspect a document's blocks |
 | `<engine> runtimes` | ✓ | ✓ | ✓ | Detect optional runtimes on the current `PATH` |
@@ -867,19 +868,29 @@ Executable logic must reside inside explicit tags like `<py>...</py>` or `<js>..
 
 ## Troubleshooting
 
-Block errors now use stable diagnostic codes and show the operation, file,
-source location, and a suggested next action when that information is
-available:
+Block errors use stable diagnostic codes and show the operation, category, file,
+source location, plain-language reason, technical detail, and a suggested next
+action when that information is available. The complete reference is the
+[Block error code catalog](docs/ERROR-CATALOG.md). You can also query it
+without running a document:
+
+```powershell
+block errors
+block errors BLK1101
+```
 
 ```text
 error[BLK1101]: Mismatched closing tag
   operation: check
+  category : Syntax
   file     : C:\Projects\demo.blk
   location : 3:1
+  why      : A Block document has an invalid, mismatched, nested, or unclosed language boundary.
   source   : 3 | </js>
                | ^
   detail   : Expected </py>, but found </js>.
   hint     : Replace </js> with </py>.
+  docs     : docs/ERROR-CATALOG.md#blk1101
 ```
 
 Use the `BLKxxxx` code when searching the documentation or opening an issue.
@@ -917,6 +928,8 @@ block workspace show
 block find hello-polyglot
 block info examples\hello-polyglot.blk
 block check examples\hello-polyglot.blk
+block errors
+block errors BLK1101
 block run examples\hello-polyglot.blk
 ```
 

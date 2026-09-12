@@ -10,6 +10,7 @@ $required = @(
     'CITATION.cff', 'Installer.cs', 'build.ps1', 'build-installer.ps1',
     'build-release.ps1', 'verify-release.ps1', 'src\Program.cs',
     'src\Parser.cs', 'src\Executor.cs', 'src\ProjectWorkspace.cs',
+    'src\BlockErrorCatalog.cs', 'docs\ERROR-CATALOG.md',
     'docs\DEPLOYMENT-SECURITY.md', 'docs\RELEASE-SIGNING.md'
 )
 foreach ($path in $required) {

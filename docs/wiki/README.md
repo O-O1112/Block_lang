@@ -18,6 +18,7 @@ enabled under GitHub Settings → General → Features → Wikis.
 - [Polyglot state](Polyglot-State.md) — how values cross runtime boundaries.
 - [Architecture](Architecture.md) — parser, executor, process lifecycle, and isolation.
 - [Troubleshooting](Troubleshooting.md) — common installation and execution failures.
+- [Error code catalog](../ERROR-CATALOG.md) — complete `BLKxxxx` meanings and repair playbooks.
 
 For the visual version, open the [Block documentation site](https://o-o1112.github.io/Block_lang/wiki.html)
 or its focused pages: [installation](https://o-o1112.github.io/Block_lang/wiki-install.html),

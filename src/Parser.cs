@@ -137,6 +137,18 @@ namespace BlockEngine
                         bool isClosing = match.Groups[1].Value == "/";
                         string lang = match.Groups[2].Value.ToLower();
 
+                        // A tag at the top level is a language boundary, not
+                        // an operating-system command or arbitrary markup.
+                        // Reject unknown openings early so a typo cannot fall
+                        // through into the native Block evaluator.
+                        if (currentLang == "block" && !IsValidLanguageTag(lang))
+                        {
+                            throw new BlockDiagnosticException("BLK1008", "Unknown language tag",
+                                string.Format("The tag <{0}> is not a built-in or approved custom language tag.", lang),
+                                currentScriptPath, lineNumber, 1,
+                                string.Format("Check the tag spelling, or use a language listed by 'block capabilities'."));
+                        }
+
                         if (isClosing && IsValidLanguageTag(lang))
                         {
                             if (currentLang == "block")

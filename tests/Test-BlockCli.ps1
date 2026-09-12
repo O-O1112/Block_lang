@@ -38,6 +38,15 @@ print(message)
 '@ | Set-Content -LiteralPath $nativePath -Encoding UTF8
 
     foreach ($executable in @('block.exe', 'block-lite.exe', 'block-plus.exe')) {
+        $catalog = Invoke-Block $executable @('errors')
+        Assert-Condition ($catalog.ExitCode -eq 0) "$executable errors catalog failed: $($catalog.Output)"
+        Assert-Condition ($catalog.Output -match 'BLK1101') "$executable errors catalog omitted BLK1101: $($catalog.Output)"
+        $explanation = Invoke-Block $executable @('errors', '1101')
+        Assert-Condition ($explanation.ExitCode -eq 0) "$executable errors lookup failed: $($explanation.Output)"
+        Assert-Condition ($explanation.Output -match 'Block diagnostic BLK1101') "$executable errors lookup did not normalize the code: $($explanation.Output)"
+        Assert-Condition ($explanation.Output -match 'Meaning:') "$executable errors lookup omitted the explanation: $($explanation.Output)"
+        Assert-Condition ($explanation.Output -match 'Repair:') "$executable errors lookup omitted the repair guidance: $($explanation.Output)"
+
         $runtimes = Invoke-Block $executable @('runtimes')
         Assert-Condition ($runtimes.ExitCode -eq 0) "$executable runtimes failed: $($runtimes.Output)"
         Assert-Condition ($runtimes.Output -match 'Runtime Diagnostics') "$executable runtimes output was incomplete: $($runtimes.Output)"
