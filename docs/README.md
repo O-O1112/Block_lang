@@ -27,6 +27,7 @@ This directory is the maintained documentation index for Block Language.
 - [Tester recruitment](TESTER-RECRUITMENT.md)
 - [Community Lab](COMMUNITY-LAB.md) — shared tester and contributor entry point
 - [Tooling syntax tree](TOOLING-AST.md) — stable JSON AST and diagnostics contract
+- [Error code catalog](ERROR-CATALOG.md) — complete `BLKxxxx` meanings and repair playbooks
 - [Reddit outreach plan](REDDIT-OUTREACH.md)
 - [DEV.to draft series](devto-drafts/README.md)
 

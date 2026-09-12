@@ -2,6 +2,10 @@
 
 ## Reading Block diagnostics
 
+For the complete, searchable handbook, see the [Block error code catalog](../ERROR-CATALOG.md).
+From a terminal, use `block errors` to list all codes or `block errors BLK1101`
+to explain one code without executing a document.
+
 Command failures use stable `BLKxxxx` codes. A diagnostic can include the
 operation, file, line and column, source excerpt, technical detail, and a
 specific repair hint. For example:
@@ -9,9 +13,12 @@ specific repair hint. For example:
 ```text
 error[BLK1001]: File not found
   operation: run
+  category : Path
   file     : C:\Projects\missing.blk
+  why      : Block could not resolve the requested document in the current project or configured workspace.
   detail   : Could not find the requested Block document.
   hint     : Run 'block find <name>', quote paths that contain spaces, or provide an absolute path.
+  docs     : docs/ERROR-CATALOG.md#blk1001
 ```
 
 Include the diagnostic code when searching or reporting a problem. Internal
@@ -24,9 +31,10 @@ Common groups are:
 | Code range | Meaning |
 | --- | --- |
 | `BLK0001`–`BLK0002` | Invalid command usage or input |
-| `BLK1001`–`BLK1301` | Files, syntax, imports, or package references |
-| `BLK2001`–`BLK2101` | Safety-policy rejection |
-| `BLK4001`–`BLK4002` | Timeout or missing host runtime |
+| `BLK1001`–`BLK1301` | Files, syntax, imports, compatibility, or package references |
+| `BLK2001`–`BLK2102` | Safety-policy rejection or invalid custom runtime definition |
+| `BLK3001`–`BLK3101` | Invalid data, state, output, request, or native Block expression |
+| `BLK4001`–`BLK4004` | Timeout, missing runtime, host failure, or compilation failure |
 | `BLK9001` | Unexpected internal failure |
 
 ## `block` is not recognized

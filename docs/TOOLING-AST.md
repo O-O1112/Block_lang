@@ -20,8 +20,9 @@ The root object contains:
 - `Kind`: `Document`;
 - `Blocks`: top-level language boundaries with `Language`, `StartLine`,
   `EndLine`, and source `Code`;
-- `Diagnostics`: objects containing `Severity`, `Code`, `Message`, `Line`, and
-  `Column`.
+- `Diagnostics`: objects containing `Severity`, `Code`, `Message`, `Line`,
+  `Column`, and an actionable `Hint`. Each diagnostic also maps to the
+  corresponding anchor in [the error catalog](ERROR-CATALOG.md).
 
 The same model is public in the engine assembly through `BlockSyntax.Parse`,
 `BlockSyntaxTree`, `BlockSyntaxNode`, and `BlockSyntaxDiagnostic`. Tooling should

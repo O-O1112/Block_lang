@@ -103,6 +103,12 @@ namespace BlockEngine
                 return;
             }
 
+            if (arg0 == "errors" || arg0 == "error")
+            {
+                CliCommands.RunErrors(args);
+                return;
+            }
+
             if (arg0 == "ast")
             {
                 if (args.Length < 2)
@@ -338,6 +344,7 @@ namespace BlockEngine
             Console.WriteLine("       block-lite run <file.blkl>");
             Console.WriteLine("       block-lite check <file.blkl>");
             Console.WriteLine("       block-lite plan [--json] <file.blkl>");
+            Console.WriteLine("       block-lite errors [BLKxxxx]");
             Console.WriteLine("       block-lite ast <file.blkl>");
             Console.WriteLine("       block-lite info [file.blkl]");
             Console.WriteLine("       block-lite capabilities");
@@ -353,6 +360,7 @@ namespace BlockEngine
             Console.WriteLine("       block-plus run <file.blkp>");
             Console.WriteLine("       block-plus check <file.blkp>");
             Console.WriteLine("       block-plus plan [--json] <file.blkp>");
+            Console.WriteLine("       block-plus errors [BLKxxxx]");
             Console.WriteLine("       block-plus ast <file.blkp>");
             Console.WriteLine("       block-plus info [file.blkp]");
             Console.WriteLine("       block-plus capabilities");
@@ -373,6 +381,7 @@ namespace BlockEngine
             Console.WriteLine("       block run <file.blk>");
             Console.WriteLine("       block check <file.blk>");
             Console.WriteLine("       block plan [--json] <file.blk>");
+            Console.WriteLine("       block errors [BLKxxxx]");
             Console.WriteLine("       block ast <file.blk>");
             Console.WriteLine("       block info [file.blk]");
             Console.WriteLine("       block capabilities");

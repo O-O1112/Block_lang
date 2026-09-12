@@ -114,6 +114,39 @@ namespace BlockEngine
             }
         }
 
+        // Explain one public diagnostic code, or list the complete catalog.
+        // This command is intentionally read-only and does not inspect or run
+        // the user's source file.
+        public static void RunErrors(string[] args)
+        {
+            string requested = args != null && args.Length > 1 ? args[1] : null;
+            if (string.IsNullOrWhiteSpace(requested))
+            {
+                Console.WriteLine("Block diagnostic catalog");
+                Console.WriteLine("  Use: block errors <BLKxxxx>");
+                Console.WriteLine("  Handbook: " + BlockErrorCatalog.DocumentationPath);
+                foreach (BlockDiagnosticDefinition definition in BlockErrorCatalog.GetAll())
+                    Console.WriteLine(string.Format("  {0} [{1}] {2}", definition.Code, definition.Category, definition.Title));
+                return;
+            }
+
+            string code = BlockErrorCatalog.NormalizeCode(requested);
+            BlockDiagnosticDefinition selected;
+            if (!BlockErrorCatalog.TryGet(code, out selected))
+            {
+                CliDiagnostics.Report(new ArgumentException("Unknown diagnostic code '" + requested + "'."), "errors",
+                    null, "Run 'block errors' to list supported codes.");
+                return;
+            }
+
+            Console.WriteLine("Block diagnostic " + selected.Code);
+            Console.WriteLine("  Category: " + selected.Category);
+            Console.WriteLine("  Title: " + selected.Title);
+            Console.WriteLine("  Meaning: " + selected.Explanation);
+            Console.WriteLine("  Repair: " + selected.DefaultHint);
+            Console.WriteLine("  Handbook: " + BlockErrorCatalog.DocumentationPath + "#" + selected.Code.ToLowerInvariant());
+        }
+
         private static Dictionary<string, object> BuildExecutionPlan(string path, BlockSyntaxTree syntax)
         {
             List<object> entries = new List<object>();
@@ -149,7 +182,9 @@ namespace BlockEngine
                     { "code", diagnostic.Code },
                     { "message", diagnostic.Message },
                     { "line", diagnostic.Line },
-                    { "column", diagnostic.Column }
+                    { "column", diagnostic.Column },
+                    { "hint", diagnostic.Hint },
+                    { "docs", BlockErrorCatalog.DocumentationPath + "#" + diagnostic.Code.ToLowerInvariant() }
                 });
             }
 
@@ -181,7 +216,12 @@ namespace BlockEngine
             {
                 Console.WriteLine("  Diagnostics: " + syntax.Diagnostics.Count);
                 foreach (BlockSyntaxDiagnostic diagnostic in syntax.Diagnostics)
+                {
                     Console.WriteLine(string.Format("    - {0} at {1}:{2}: {3}", diagnostic.Code, diagnostic.Line, diagnostic.Column, diagnostic.Message));
+                    if (!string.IsNullOrWhiteSpace(diagnostic.Hint))
+                        Console.WriteLine("      Hint: " + diagnostic.Hint);
+                    Console.WriteLine("      Docs: " + BlockErrorCatalog.DocumentationPath + "#" + diagnostic.Code.ToLowerInvariant());
+                }
             }
 
             Console.WriteLine("  Stages:");

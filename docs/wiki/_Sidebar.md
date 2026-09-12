@@ -7,6 +7,7 @@
 - [Polyglot state](Polyglot-State)
 - [Architecture](Architecture)
 - [Troubleshooting](Troubleshooting)
+- [Error code catalog](../ERROR-CATALOG)
 
 ---
 

@@ -29,6 +29,7 @@ namespace BlockEngine
         public string Message { get; set; }
         public int Line { get; set; }
         public int Column { get; set; }
+        public string Hint { get; set; }
     }
 
     // Stable, execution-free document API for editors and third-party tools.
@@ -86,7 +87,8 @@ namespace BlockEngine
                 {
                     if (!string.Equals(currentLanguage, language, StringComparison.OrdinalIgnoreCase))
                     {
-                        AddDiagnostic(tree, "BLK1002", "Mismatched closing tag </" + language + ">; expected </" + currentLanguage + ">.", lineNumber);
+                        AddDiagnostic(tree, "BLK1002", "Mismatched closing tag </" + language + ">; expected </" + currentLanguage + ">.", lineNumber,
+                            "Replace the closing tag with </" + currentLanguage + ">, or close the outer block before starting another language block.");
                         buffer.Add(lines[index]);
                         continue;
                     }
@@ -99,14 +101,17 @@ namespace BlockEngine
                 }
 
                 if (closing)
-                    AddDiagnostic(tree, "BLK1001", "Unmatched closing tag </" + language + ">.", lineNumber);
+                    AddDiagnostic(tree, "BLK1001", "Unmatched closing tag </" + language + ">.", lineNumber,
+                        "Remove this closing tag or add a matching opening <" + language + "> tag before it.");
                 else
-                    AddDiagnostic(tree, "BLK1003", "Nested language tag <" + language + "> inside <" + currentLanguage + "> is not supported.", lineNumber);
+                    AddDiagnostic(tree, "BLK1003", "Nested language tag <" + language + "> inside <" + currentLanguage + "> is not supported.", lineNumber,
+                        "Close </" + currentLanguage + "> before opening <" + language + ">, or move the inner code to a separate top-level block.");
                 buffer.Add(lines[index]);
             }
 
             if (currentLanguage != "block")
-                AddDiagnostic(tree, "BLK1004", "Unclosed language block <" + currentLanguage + ">.", Math.Max(1, contentStart - 1));
+                AddDiagnostic(tree, "BLK1004", "Unclosed language block <" + currentLanguage + ">.", Math.Max(1, contentStart - 1),
+                    "Add </" + currentLanguage + "> after the final line of this block.");
 
             AddNode(tree.Blocks, currentLanguage, contentStart, lines.Length, buffer);
             return tree;
@@ -133,7 +138,7 @@ namespace BlockEngine
             });
         }
 
-        private static void AddDiagnostic(BlockSyntaxTree tree, string code, string message, int line)
+        private static void AddDiagnostic(BlockSyntaxTree tree, string code, string message, int line, string hint)
         {
             tree.Diagnostics.Add(new BlockSyntaxDiagnostic
             {
@@ -141,7 +146,8 @@ namespace BlockEngine
                 Code = code,
                 Message = message,
                 Line = line,
-                Column = 1
+                Column = 1,
+                Hint = hint
             });
         }
     }
