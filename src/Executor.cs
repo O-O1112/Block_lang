@@ -568,59 +568,58 @@ namespace BlockEngine
                 if (!string.IsNullOrEmpty(stderr))
                     outputCallback(stderr);
 
-                // 1. Read state from output state file
-                if (File.Exists(tempStateOut))
-                {
-                    try
-                    {
-                        if (new FileInfo(tempStateOut).Length > SecurityLimits.MaxJsonBytes)
-                            throw new InvalidDataException("BLOCK_STATE_OUT exceeds the 4 MiB safety limit.");
-                        string fileStateJson = File.ReadAllText(tempStateOut, Encoding.UTF8);
-                        if (!string.IsNullOrEmpty(fileStateJson))
-                        {
-                            var newState = _serializer.Deserialize<Dictionary<string, object>>(fileStateJson);
-                            if (newState != null)
-                            {
-                                foreach (var kvp in newState) state[kvp.Key] = kvp.Value;
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new InvalidDataException("Runtime produced an invalid BLOCK_STATE_OUT payload.", ex);
-                    }
-                }
-
-                // 2. Parse clean output and stdout state marker
+                // Wrapped runtimes emit an inline state marker as their primary
+                // result and also write BLOCK_STATE_OUT as an auxiliary file.
+                // Prefer the inline marker: a short-lived process can leave the
+                // auxiliary file empty/partial even after producing a valid
+                // state marker. Compiled runtimes do not emit a marker and use
+                // the state file below as their primary state channel.
                 string stateMarker = "__BLOCK_STATE__:";
                 int markerIndex = stdout.LastIndexOf(stateMarker);
                 if (markerIndex >= 0)
                 {
                     string cleanOutput = stdout.Substring(0, markerIndex);
                     if (!string.IsNullOrWhiteSpace(cleanOutput)) outputCallback(cleanOutput);
-                    
-                    if (!File.Exists(tempStateOut))
+                    string newStateJson = stdout.Substring(markerIndex + stateMarker.Length).Trim();
+                    if (!string.IsNullOrEmpty(newStateJson))
                     {
-                        string newStateJson = stdout.Substring(markerIndex + stateMarker.Length).Trim();
-                        if (!string.IsNullOrEmpty(newStateJson))
+                        try
                         {
-                            try
+                            var newState = _serializer.Deserialize<Dictionary<string, object>>(newStateJson);
+                            if (newState != null)
                             {
-                                var newState = _serializer.Deserialize<Dictionary<string, object>>(newStateJson);
-                                if (newState != null)
-                                {
-                                    foreach (var kvp in newState) state[kvp.Key] = kvp.Value;
-                                }
+                                foreach (var kvp in newState) state[kvp.Key] = kvp.Value;
                             }
-                            catch (Exception ex)
-                            {
-                                throw new InvalidDataException("Runtime produced an invalid inline state payload.", ex);
-                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new InvalidDataException("Runtime produced an invalid inline state payload.", ex);
                         }
                     }
                 }
                 else
                 {
+                    if (File.Exists(tempStateOut))
+                    {
+                        try
+                        {
+                            if (new FileInfo(tempStateOut).Length > SecurityLimits.MaxJsonBytes)
+                                throw new InvalidDataException("BLOCK_STATE_OUT exceeds the 4 MiB safety limit.");
+                            string fileStateJson = File.ReadAllText(tempStateOut, Encoding.UTF8);
+                            if (!string.IsNullOrWhiteSpace(fileStateJson))
+                            {
+                                var newState = _serializer.Deserialize<Dictionary<string, object>>(fileStateJson);
+                                if (newState != null)
+                                {
+                                    foreach (var kvp in newState) state[kvp.Key] = kvp.Value;
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new InvalidDataException("Runtime produced an invalid BLOCK_STATE_OUT payload.", ex);
+                        }
+                    }
                     if (!string.IsNullOrWhiteSpace(stdout)) outputCallback(stdout);
                 }
             }

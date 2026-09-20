@@ -177,7 +177,9 @@ The same files are also linked from the [official download page](https://o-o1112
 2. Choose the installation directory.
 3. Select Lite, Standard, or Plus. Standard is the recommended general-purpose
    edition.
-4. Select the runtimes you want the installer to check.
+4. Select the runtimes you want the installer to check or install. Missing
+   selections are offered through a confirmation dialog and the Windows
+   Package Manager (WinGet); uncheck them if you only want the Block core.
 5. Open a new PowerShell or Command Prompt window so the updated `PATH` is
    loaded.
 6. Verify the installed engine:
@@ -189,9 +191,11 @@ The same files are also linked from the [official download page](https://o-o1112
 
 The secure installer downloads only the selected official GitHub Release asset,
 checks its SHA-256 value against `SHA256SUMS.txt`, rejects unsafe ZIP paths, and
-then installs the executable atomically. It never invokes Winget, Chocolatey,
-PowerShell, or a downloaded script. Optional runtimes are detected only; install
-them from their official sources and reopen the terminal afterward.
+then installs the executable atomically. Optional runtime installation is
+explicit and opt-in: it uses only a fixed allowlist of WinGet package IDs after
+you confirm the list. It does not run Chocolatey, PowerShell download scripts,
+arbitrary commands, or commands from a Block document. Review the publisher
+shown by WinGet and cancel if a package is not expected.
 
 ### Runtime prerequisites
 
@@ -206,9 +210,9 @@ lua -v
 ruby --version
 ```
 
-The exact command may differ by distribution. Block cannot make a missing host
-runtime available, and a runtime's own modules or packages remain managed by that
-runtime.
+The exact command may differ by distribution. The installer can offer the base
+host runtime, but it does not install that runtime's own modules or packages;
+those remain managed by the host runtime.
 
 ### Build from source
 

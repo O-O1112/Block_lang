@@ -45,10 +45,11 @@ install directory selected in the installer.
 
 ## The installer reports optional runtime failures
 
-The engine and optional runtimes are separate. The v2.7.5 secure installer only
-detects optional runtimes; it never runs Winget, Chocolatey, PowerShell, or a
-downloaded script. Install a missing runtime from its official source, ensure
-its command is on `PATH`, and reopen the terminal.
+The engine and optional runtimes are separate. The v2.7.5 secure installer can
+offer missing runtimes through WinGet, but installation remains user-confirmed
+and package IDs are fixed in the installer. If WinGet is unavailable or a
+package fails, install it from its official source, ensure its command is on
+`PATH`, and reopen the terminal.
 
 ## `Script file not found`
 

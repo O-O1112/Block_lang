@@ -91,6 +91,20 @@ console.log(answer + 1)
         $polyglot = Invoke-Block 'block.exe' @($polyglotPath)
         Assert-Condition ($polyglot.ExitCode -eq 0) "polyglot state smoke test failed: $($polyglot.Output)"
         Assert-Condition ($polyglot.Output -match '42') "polyglot state smoke test did not print 42: $($polyglot.Output)"
+
+        $statelessPath = Join-Path $tempRoot 'stateless-polyglot.blk'
+        @'
+<py>
+print("python-only")
+</py>
+<js>
+console.log("javascript-only")
+</js>
+'@ | Set-Content -LiteralPath $statelessPath -Encoding UTF8
+        $stateless = Invoke-Block 'block-plus.exe' @($statelessPath)
+        Assert-Condition ($stateless.ExitCode -eq 0) "stateless polyglot smoke test failed: $($stateless.Output)"
+        Assert-Condition ($stateless.Output -match 'python-only') "stateless polyglot test omitted Python output: $($stateless.Output)"
+        Assert-Condition ($stateless.Output -match 'javascript-only') "stateless polyglot test omitted JavaScript output: $($stateless.Output)"
     } else {
         Write-Warning 'Skipping Python-to-Node state smoke test because Python or Node.js is unavailable.'
     }

@@ -6,6 +6,17 @@ All notable changes to the Block execution engine will be documented in this fil
 
 ### Diagnostics and supportability
 
+- Restored optional host-runtime installation through an explicit WinGet
+  confirmation flow with fixed package IDs for the supported language list.
+- Kept runtime installation separate from core deployment; missing WinGet or a
+  failed runtime package now produces a clear warning instead of blocking the
+  verified Block engine installation.
+- Fixed wrapped-runtime state handling so a valid inline state result is not
+  rejected because an auxiliary `BLOCK_STATE_OUT` file was empty or partial.
+- Added a regression test for Python and JavaScript stages that only produce
+  output and do not share variables.
+- Added a structural preflight check for the 15-language showcase and stopped
+  CI from unconditionally skipping the Python-to-Node state bridge test.
 - Added the versioned `BLKxxxx` error catalog and the read-only `block errors`
   command for listing or explaining diagnostic codes.
 - Added category, plain-language reason, handbook link, and richer repair hints

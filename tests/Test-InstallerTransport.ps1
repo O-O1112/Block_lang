@@ -29,13 +29,20 @@ $requiredMarkers = @(
     'if (addToUserPath)',
     'if (registerFileTypes)',
     'DeleteInstalledExecutable',
-    'Block Setup never terminates running programs.'
+    'Block Setup never terminates running programs.',
+    'RuntimePackageIds',
+    'InstallRuntimes',
+    'FindExecutableOnPath("winget.exe")',
+    '--exact --accept-source-agreements --accept-package-agreements',
+    'Python.Python.3.13',
+    'OpenJS.NodeJS.LTS',
+    'MessageBoxButtons.YesNo'
 )
 foreach ($marker in $requiredMarkers) {
     if (-not $source.Contains($marker)) { throw "Installer transport marker is missing: $marker" }
 }
 
-foreach ($forbidden in @('SecurityProtocolType.Ssl3', 'ServerCertificateValidationCallback', 'TrustAllCert', 'Tls | SecurityProtocolType.Tls11', 'Process.Kill(', 'GetManifestResourceStream(')) {
+foreach ($forbidden in @('SecurityProtocolType.Ssl3', 'ServerCertificateValidationCallback', 'TrustAllCert', 'Tls | SecurityProtocolType.Tls11', 'Process.Kill(', 'GetManifestResourceStream(', 'cmd.exe', 'powershell.exe', '-EncodedCommand', 'Invoke-WebRequest')) {
     if ($source.Contains($forbidden)) { throw "Installer contains an unsafe TLS fallback: $forbidden" }
 }
 
