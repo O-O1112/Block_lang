@@ -166,7 +166,10 @@ namespace BlockInstaller
         {
             { "Python", "Python.Python.3.13" },
             { "NodeJS (JS/TS)", "OpenJS.NodeJS.LTS" },
-            { "PHP", "PHP.PHP" },
+            // Block invokes PHP from the CLI, so use the maintained non-thread-safe
+            // CLI build instead of the namespace-only alias (PHP.PHP), which is not
+            // an installable package ID in current WinGet sources.
+            { "PHP", "PHP.PHP.NTS.8.4" },
             { "Ruby", "RubyInstallerTeam.RubyWithDevKit.3.3" },
             { "Lua", "Lua.Lua" },
             { "SQLite", "SQLite.SQLite" },
@@ -1378,6 +1381,13 @@ namespace BlockInstaller
                 return failures;
             }
 
+            // Refresh only the reviewed community source before resolving fixed IDs.
+            // A stale source is otherwise reported by WinGet as "no applications
+            // found", which is especially confusing for packages that do exist.
+            string sourceUpdateFailure = UpdateWingetSource(wingetPath);
+            if (!string.IsNullOrEmpty(sourceUpdateFailure))
+                failures.Add(sourceUpdateFailure);
+
             foreach (string runtimeName in runtimeNames)
             {
                 string packageId;
@@ -1390,11 +1400,13 @@ namespace BlockInstaller
                 ProcessStartInfo startInfo = new ProcessStartInfo
                 {
                     FileName = wingetPath,
-                    Arguments = "install --id " + packageId + " --exact --accept-source-agreements --accept-package-agreements",
+                    Arguments = "install --id " + packageId + " --exact --source winget --accept-source-agreements --accept-package-agreements",
                     UseShellExecute = false,
                     CreateNoWindow = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
+                    StandardOutputEncoding = Encoding.UTF8,
+                    StandardErrorEncoding = Encoding.UTF8,
                     WorkingDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
                 };
 
@@ -1414,11 +1426,7 @@ namespace BlockInstaller
                         Task.WaitAll(outputTask, errorTask);
                         if (process.ExitCode != 0)
                         {
-                            string detail = string.IsNullOrWhiteSpace(errorTask.Result) ? outputTask.Result : errorTask.Result;
-                            detail = detail == null ? "" : detail.Trim();
-                            if (detail.Length > 400) detail = detail.Substring(0, 400);
-                            failures.Add(runtimeName + ": WinGet failed (exit " + process.ExitCode + ")" +
-                                (string.IsNullOrEmpty(detail) ? "" : ": " + detail));
+                            failures.Add(runtimeName + ": " + DescribeWingetFailure(process.ExitCode, packageId));
                         }
                     }
                 }
@@ -1428,6 +1436,62 @@ namespace BlockInstaller
                 }
             }
             return failures;
+        }
+
+        private static string UpdateWingetSource(string wingetPath)
+        {
+            ProcessStartInfo startInfo = new ProcessStartInfo
+            {
+                FileName = wingetPath,
+                Arguments = "source update --name winget",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8,
+                WorkingDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
+            };
+
+            try
+            {
+                using (Process process = new Process { StartInfo = startInfo })
+                {
+                    process.Start();
+                    Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+                    Task<string> errorTask = process.StandardError.ReadToEndAsync();
+                    if (!process.WaitForExit(120000))
+                    {
+                        try { process.CloseMainWindow(); } catch { }
+                        return "WinGet source update timed out; the selected runtimes were still attempted.";
+                    }
+                    Task.WaitAll(outputTask, errorTask);
+                    if (process.ExitCode != 0)
+                        return "WinGet source update failed (" + FormatWingetExitCode(process.ExitCode) + "); the selected runtimes were still attempted.";
+                }
+            }
+            catch (Exception ex)
+            {
+                return "WinGet source update could not run: " + ex.Message;
+            }
+            return null;
+        }
+
+        private static string DescribeWingetFailure(int exitCode, string packageId)
+        {
+            string code = FormatWingetExitCode(exitCode);
+            if (exitCode == -1978335212)
+                return "WinGet could not find package " + packageId + " (" + code + "). Refresh WinGet sources or install it manually from the publisher.";
+            if (exitCode == -1978335228)
+                return "WinGet could not open the package manifest " + packageId + " (" + code + "). Update App Installer and retry.";
+            if (exitCode == -1978335216)
+                return "WinGet has no installer compatible with this Windows system for " + packageId + " (" + code + ").";
+            return "WinGet failed for " + packageId + " (" + code + "). Check WinGet/App Installer and retry.";
+        }
+
+        private static string FormatWingetExitCode(int exitCode)
+        {
+            return "0x" + unchecked((uint)exitCode).ToString("X8");
         }
 
         private void RegisterExtension(string ext, string progId, string description)

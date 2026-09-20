@@ -32,8 +32,9 @@ $requiredMarkers = @(
     'Block Setup never terminates running programs.',
     'RuntimePackageIds',
     'InstallRuntimes',
+    'UpdateWingetSource',
     'FindExecutableOnPath("winget.exe")',
-    '--exact --accept-source-agreements --accept-package-agreements',
+    '--exact --source winget --accept-source-agreements --accept-package-agreements',
     'Python.Python.3.13',
     'OpenJS.NodeJS.LTS',
     'MessageBoxButtons.YesNo'
