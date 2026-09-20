@@ -1,0 +1,102 @@
+<py>
+print("[01/15] Python: data preparation")
+</py>
+
+<js>
+console.log("[02/15] JavaScript: orchestration")
+</js>
+
+<php>
+echo "[03/15] PHP: web-compatible utility\n";
+</php>
+
+<ruby>
+puts "[04/15] Ruby: expressive scripting"
+</ruby>
+
+<lua>
+print("[05/15] Lua: embedded automation")
+</lua>
+
+<ps>
+Write-Output "[06/15] PowerShell: Windows integration"
+</ps>
+
+<sql>
+SELECT '[07/15] SQL: relational query' AS language;
+</sql>
+
+<cpp>
+#include <iostream>
+
+int main() {
+    std::cout << "[08/15] C++: compiled systems code" << std::endl;
+    return 0;
+}
+</cpp>
+
+<go>
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("[09/15] Go: concurrent service layer")
+}
+</go>
+
+<rust>
+fn main() {
+    println!("[10/15] Rust: memory-safe systems code");
+}
+</rust>
+
+<dart>
+void main() {
+  print('[11/15] Dart: cross-platform application layer');
+}
+</dart>
+
+<zig>
+const std = @import("std");
+
+pub fn main() !void {
+    try std.io.getStdOut().writer().print("[12/15] Zig: explicit systems tooling\n", .{});
+}
+</zig>
+
+<perl>
+print "[13/15] Perl: text and integration tooling\n";
+</perl>
+
+<bash>
+printf '%s\n' '[14/15] Bash: shell automation'
+</bash>
+
+<r>
+cat('[15/15] R: statistical analysis\n')
+</r>
+
+<html>
+<main>
+  <h1>Block 15-Language Showcase</h1>
+  <p>This document demonstrates one Block file coordinating fifteen native language stages.</p>
+  <ol>
+    <li>Python</li>
+    <li>JavaScript</li>
+    <li>PHP</li>
+    <li>Ruby</li>
+    <li>Lua</li>
+    <li>PowerShell</li>
+    <li>SQL</li>
+    <li>C++</li>
+    <li>Go</li>
+    <li>Rust</li>
+    <li>Dart</li>
+    <li>Zig</li>
+    <li>Perl</li>
+    <li>Bash</li>
+    <li>R</li>
+  </ol>
+</main>
+</html>

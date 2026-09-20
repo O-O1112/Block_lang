@@ -8,14 +8,16 @@
 
 The Windows installer is published as [`BlockSetup-v2.7.5.exe`](https://github.com/O-O1112/Block_lang/releases/download/v2.7.5/BlockSetup-v2.7.5.exe)
 on the [official download page](https://o-o1112.github.io/Block_lang/downloads.html). The secure bootstrapper downloads
-the selected official GitHub asset, verifies SHA-256, and detects optional
-runtimes without invoking Winget or Chocolatey.
+the selected official GitHub asset, verifies SHA-256, and can offer selected
+optional runtimes through an explicit, fixed WinGet allowlist.
 
 ## Install and verify
 
 1. Run the installer and choose an install directory.
 2. Select an engine edition. Standard is the recommended default.
-3. Select optional runtimes required by your scripts.
+3. Select optional runtimes required by your scripts. Missing selections are
+   shown for confirmation before WinGet is called; uncheck them for a core-only
+   installation.
 4. Open a new PowerShell or Command Prompt window.
 5. Verify the installation:
 
@@ -24,8 +26,9 @@ runtimes without invoking Winget or Chocolatey.
    ```
 
 The core engine can complete installation even when an optional runtime is not
-present. Install missing runtimes from their official sources; the installer
-never executes a package manager or a downloaded script.
+present. Runtime installation is limited to the package IDs displayed in the
+confirmation dialog. The installer never executes a downloaded script,
+Chocolatey command, or command supplied by a Block document.
 
 ## Run without changing directories
 

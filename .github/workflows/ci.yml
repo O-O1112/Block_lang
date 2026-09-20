@@ -76,7 +76,7 @@ jobs:
 
       - name: Run Community Lab harness
         shell: powershell
-        run: .\tests\Test-CommunityLab.ps1 -EngineDirectory (Join-Path $PWD 'ci-release') -SkipPolyglot
+        run: .\tests\Test-CommunityLab.ps1 -EngineDirectory (Join-Path $PWD 'ci-release')
 
       - name: Verify release version injection
         shell: powershell

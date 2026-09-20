@@ -34,10 +34,10 @@ if (-not (Test-Path -LiteralPath $installerSource)) {
     $failures.Add('missing installer source')
 } else {
     $installerText = Get-Content -LiteralPath $installerSource -Raw
-    foreach ($marker in @('OfficialApiBase', 'OfficialRepository', 'ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12', 'AllowAutoRedirect = true', 'ValidateReleaseAssetUri', 'ContainsReparsePoint', 'Extracted release executable exceeds', 'SHA-256 verification failed', 'ExtractVerifiedArchive', 'ValidateResponseUri')) {
+    foreach ($marker in @('OfficialApiBase', 'OfficialRepository', 'ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12', 'AllowAutoRedirect = true', 'ValidateReleaseAssetUri', 'ContainsReparsePoint', 'Extracted release executable exceeds', 'SHA-256 verification failed', 'ExtractVerifiedArchive', 'ValidateResponseUri', 'RuntimePackageIds', 'InstallRuntimes', 'MessageBoxButtons.YesNo', '--exact --accept-source-agreements --accept-package-agreements')) {
         if ($installerText -notmatch [regex]::Escape($marker)) { $failures.Add("secure installer marker missing: $marker") }
     }
-    foreach ($forbidden in @('winget', 'choco.exe', 'RunRuntimeInstall', 'Process.Kill(', 'GetManifestResourceStream(')) {
+    foreach ($forbidden in @('choco.exe', 'RunRuntimeInstall', 'Process.Kill(', 'GetManifestResourceStream(', 'cmd.exe', 'powershell.exe', '-EncodedCommand', 'Invoke-WebRequest')) {
         if ($installerText -match [regex]::Escape($forbidden)) { $failures.Add("unsafe installer behavior remains: $forbidden") }
     }
 }

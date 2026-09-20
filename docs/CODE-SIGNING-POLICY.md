@@ -49,10 +49,13 @@ checksum manifest.
 ## Installer behaviour
 
 Block Setup downloads only the package matching its own version tag from the
-official GitHub Release and verifies its SHA-256 digest before extraction. It
-does not run package managers, command shells, or runtime installers. Adding
-the Block command to the user `PATH` and changing file associations are
-explicit user choices. It never terminates running programs.
+official GitHub Release and verifies its SHA-256 digest before extraction.
+Optional host-runtime installation is a separate, explicit user-confirmed
+action using only fixed WinGet package IDs compiled into the installer. It does
+not run Chocolatey, command shells, downloaded scripts, or commands supplied
+by a Block document. Adding the Block command to the user `PATH` and changing
+file associations are explicit user choices. It never terminates running
+programs.
 
 ## Verification
 

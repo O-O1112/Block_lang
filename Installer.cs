@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
@@ -156,6 +157,29 @@ namespace BlockInstaller
             "Go (Block+ Only)", "Rust (Block+ Only)", "Java JDK (Block+ Only)",
             "Dart (Block+ Only)", "Zig (Block+ Only)", "Perl (Block+ Only)", "R (Block+ Only)"
         };
+
+        // Runtime installation is deliberately limited to reviewed WinGet IDs.
+        // The installer never accepts a command, URL, package name, or script
+        // from the Block document or from an untrusted UI field.
+        private static readonly Dictionary<string, string> RuntimePackageIds =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Python", "Python.Python.3.13" },
+            { "NodeJS (JS/TS)", "OpenJS.NodeJS.LTS" },
+            { "PHP", "PHP.PHP" },
+            { "Ruby", "RubyInstallerTeam.RubyWithDevKit.3.3" },
+            { "Lua", "Lua.Lua" },
+            { "SQLite", "SQLite.SQLite" },
+            { "Go (Block+ Only)", "GoLang.Go" },
+            { "Rust (Block+ Only)", "Rustlang.Rustup" },
+            { "Java JDK (Block+ Only)", "Oracle.JDK.21" },
+            { "Dart (Block+ Only)", "Google.DartSDK" },
+            { "Zig (Block+ Only)", "zig.zig" },
+            { "Perl (Block+ Only)", "StrawberryPerl.StrawberryPerl" },
+            { "R (Block+ Only)", "RProject.R" }
+        };
+
+        private const int RuntimeInstallTimeoutMilliseconds = 30 * 60 * 1000;
 
         private Dictionary<string, string[]> runtimeExecutables = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
         {
@@ -710,6 +734,36 @@ namespace BlockInstaller
 
         private async void BtnInstall_Click(object sender, EventArgs e)
         {
+            List<string> selectedRuntimes = GetSelectedRuntimeNames();
+            List<string> missingRuntimes = new List<string>();
+            foreach (string runtimeName in selectedRuntimes)
+            {
+                if (!IsRuntimeAvailable(runtimeName)) missingRuntimes.Add(runtimeName);
+            }
+
+            bool installMissingRuntimes = false;
+            string wingetPath = FindExecutableOnPath("winget.exe");
+            if (missingRuntimes.Count > 0 && !string.IsNullOrEmpty(wingetPath))
+            {
+                List<string> packageLines = new List<string>();
+                foreach (string runtimeName in missingRuntimes)
+                {
+                    string packageId;
+                    if (RuntimePackageIds.TryGetValue(runtimeName, out packageId))
+                        packageLines.Add(runtimeName + "  (" + packageId + ")");
+                }
+
+                DialogResult installChoice = MessageBox.Show(
+                    "The following optional runtimes are not installed:\n\n" +
+                    string.Join("\n", packageLines.ToArray()) +
+                    "\n\nBlock Setup will call WinGet with these fixed package IDs. " +
+                    "Windows or the runtime installer may request permission. Continue?",
+                    "Install optional runtimes",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+                installMissingRuntimes = installChoice == DialogResult.Yes;
+            }
+
             btnInstall.Enabled = false;
             btnBrowse.Enabled = false;
             txtPath.Enabled = false;
@@ -736,19 +790,26 @@ namespace BlockInstaller
                 progress.Style = ProgressBarStyle.Continuous;
 
                 List<string> runtimeWarnings = new List<string>();
-                for (int i = 1; i < clbLang.Items.Count; i++)
+                if (installMissingRuntimes)
                 {
-                    if (!clbLang.GetItemChecked(i)) continue;
-                    string langName = clbLang.Items[i].ToString().Replace(" Runtime", "");
-                    if (!IsRuntimeAvailable(langName))
-                        runtimeWarnings.Add(langName + ": not found on PATH (not installed by Block Setup)");
+                    lblStatus.Text = "Installing selected runtimes through WinGet...";
+                    progress.Style = ProgressBarStyle.Marquee;
+                    List<string> installFailures = await Task.Run(() => InstallRuntimes(missingRuntimes, wingetPath));
+                    RefreshProcessPath();
+                    foreach (string failure in installFailures) runtimeWarnings.Add(failure);
+                }
+
+                foreach (string runtimeName in selectedRuntimes)
+                {
+                    if (!IsRuntimeAvailable(runtimeName))
+                        runtimeWarnings.Add(runtimeName + ": not found on PATH after installation");
                 }
 
                 if (runtimeWarnings.Count > 0)
                 {
                     lblStatus.Text = string.Format("Core installed; {0} optional runtime(s) need manual setup.", runtimeWarnings.Count);
                     MessageBox.Show(
-                        "Block Engine core installation completed. Optional runtimes are detected only; this secure installer never runs package managers or arbitrary commands.\n\n" +
+                        "Block Engine core installation completed, but some selected runtimes still need attention.\n\n" +
                         string.Join("\n", runtimeWarnings.ToArray()) +
                         "\n\nInstall runtimes from their official sources, then open a new terminal.",
                         "Optional runtime notice", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -1244,7 +1305,8 @@ namespace BlockInstaller
             List<string> pathEntries = new List<string>();
             string processPath = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.Process);
             string userPath = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User);
-            foreach (string value in new[] { processPath, userPath })
+            string machinePath = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.Machine);
+            foreach (string value in new[] { processPath, userPath, machinePath })
             {
                 if (string.IsNullOrWhiteSpace(value)) continue;
                 pathEntries.AddRange(value.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
@@ -1262,6 +1324,110 @@ namespace BlockInstaller
                 }
             }
             return false;
+        }
+
+        private List<string> GetSelectedRuntimeNames()
+        {
+            List<string> selected = new List<string>();
+            for (int i = 1; i < clbLang.Items.Count; i++)
+            {
+                if (clbLang.GetItemChecked(i))
+                    selected.Add(clbLang.Items[i].ToString().Replace(" Runtime", ""));
+            }
+            return selected;
+        }
+
+        private static string FindExecutableOnPath(string executableName)
+        {
+            string processPath = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.Process);
+            string userPath = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User);
+            string machinePath = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.Machine);
+            foreach (string value in new[] { processPath, userPath, machinePath })
+            {
+                if (string.IsNullOrWhiteSpace(value)) continue;
+                foreach (string directory in value.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    try
+                    {
+                        string candidate = Path.Combine(directory.Trim().Trim('"'), executableName);
+                        if (File.Exists(candidate)) return candidate;
+                    }
+                    catch { }
+                }
+            }
+            return null;
+        }
+
+        private static void RefreshProcessPath()
+        {
+            string userPath = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User);
+            string machinePath = Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.Machine);
+            if (string.IsNullOrWhiteSpace(userPath) && string.IsNullOrWhiteSpace(machinePath)) return;
+            string combined = string.IsNullOrWhiteSpace(userPath) ? machinePath :
+                string.IsNullOrWhiteSpace(machinePath) ? userPath : userPath + ";" + machinePath;
+            Environment.SetEnvironmentVariable("PATH", combined, EnvironmentVariableTarget.Process);
+        }
+
+        private static List<string> InstallRuntimes(List<string> runtimeNames, string wingetPath)
+        {
+            List<string> failures = new List<string>();
+            if (runtimeNames == null || runtimeNames.Count == 0) return failures;
+            if (string.IsNullOrWhiteSpace(wingetPath))
+            {
+                failures.Add("WinGet was not found; install the selected runtimes manually from their official publishers.");
+                return failures;
+            }
+
+            foreach (string runtimeName in runtimeNames)
+            {
+                string packageId;
+                if (!RuntimePackageIds.TryGetValue(runtimeName, out packageId))
+                {
+                    failures.Add(runtimeName + ": no approved WinGet package mapping");
+                    continue;
+                }
+
+                ProcessStartInfo startInfo = new ProcessStartInfo
+                {
+                    FileName = wingetPath,
+                    Arguments = "install --id " + packageId + " --exact --accept-source-agreements --accept-package-agreements",
+                    UseShellExecute = false,
+                    CreateNoWindow = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    WorkingDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
+                };
+
+                try
+                {
+                    using (Process process = new Process { StartInfo = startInfo })
+                    {
+                        process.Start();
+                        Task<string> outputTask = process.StandardOutput.ReadToEndAsync();
+                        Task<string> errorTask = process.StandardError.ReadToEndAsync();
+                        if (!process.WaitForExit(RuntimeInstallTimeoutMilliseconds))
+                        {
+                            try { process.CloseMainWindow(); } catch { }
+                            failures.Add(runtimeName + ": WinGet installation exceeded the 30-minute wait; close it and retry if needed");
+                            continue;
+                        }
+                        Task.WaitAll(outputTask, errorTask);
+                        if (process.ExitCode != 0)
+                        {
+                            string detail = string.IsNullOrWhiteSpace(errorTask.Result) ? outputTask.Result : errorTask.Result;
+                            detail = detail == null ? "" : detail.Trim();
+                            if (detail.Length > 400) detail = detail.Substring(0, 400);
+                            failures.Add(runtimeName + ": WinGet failed (exit " + process.ExitCode + ")" +
+                                (string.IsNullOrEmpty(detail) ? "" : ": " + detail));
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    failures.Add(runtimeName + ": " + ex.Message);
+                }
+            }
+            return failures;
         }
 
         private void RegisterExtension(string ext, string progId, string description)

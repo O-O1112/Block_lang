@@ -67,6 +67,11 @@ Invoke-CommunityTest 'standard-version' 'block.exe' @('--version') 'Block Langua
 Invoke-CommunityTest 'native-control-flow' 'block.exe' @((Join-Path $root 'examples\native-control-flow.blk')) 'pass'
 Invoke-CommunityTest 'native-language-core' 'block.exe' @((Join-Path $root 'examples\native-language-core.blk')) 'Hello Block'
 
+$showcasePath = Join-Path $root 'examples\polyglot-15-languages.blk'
+if (Test-Path -LiteralPath $showcasePath) {
+    Invoke-CommunityTest '15-language-showcase-plan' 'block-plus.exe' @('plan', '--json', $showcasePath) '"kind"\s*:\s*"ExecutionPlan"'
+}
+
 $python = Get-Command python.exe -ErrorAction SilentlyContinue
 $node = Get-Command node.exe -ErrorAction SilentlyContinue
 if (-not $SkipPolyglot -and $python -and $node) {
